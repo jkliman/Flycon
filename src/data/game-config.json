@@ -1,0 +1,425 @@
+{
+  "games": {
+    "star-citizen": {
+      "id": "star-citizen",
+      "name": "Star Citizen",
+      "shortName": "SC",
+      "defaultMappingPath": "C:\\Program Files\\Roberts Space Industries\\StarCitizen\\LIVE\\USER\\Client\\0\\Controls\\Mappings",
+      "fileExtension": ".xml",
+      "categories": {
+        "Flight - Basic": {
+          "actionGroups": ["spaceship_movement", "spaceship_general", "seat_general"],
+          "icon": "flight"
+        },
+        "Flight - View": {
+          "actionGroups": ["spaceship_view"],
+          "icon": "view"
+        },
+        "Flight - Power": {
+          "actionGroups": ["spaceship_power", "vehicle_capacitor_assignment"],
+          "icon": "power"
+        },
+        "Flight - Quantum & Docking": {
+          "actionGroups": ["spaceship_quantum", "spaceship_docking"],
+          "icon": "quantum"
+        },
+        "Weapons": {
+          "actionGroups": ["spaceship_weapons"],
+          "icon": "weapons"
+        },
+        "Missiles & Countermeasures": {
+          "actionGroups": ["spaceship_missiles", "spaceship_defensive"],
+          "icon": "missiles"
+        },
+        "Targeting": {
+          "actionGroups": ["spaceship_targeting", "spaceship_targeting_advanced"],
+          "icon": "targeting"
+        },
+        "Radar & Scanning": {
+          "actionGroups": ["spaceship_radar", "spaceship_scanning", "radar_tagging"],
+          "icon": "radar"
+        },
+        "Mining & Salvage": {
+          "actionGroups": ["spaceship_mining", "spaceship_salvage"],
+          "icon": "mining"
+        },
+        "Turret": {
+          "actionGroups": ["turret_movement", "turret_advanced"],
+          "icon": "turret"
+        },
+        "Ground Vehicle": {
+          "actionGroups": ["vehicle_general", "vehicle_driver"],
+          "icon": "vehicle"
+        },
+        "On Foot": {
+          "actionGroups": ["player", "prone"],
+          "icon": "player"
+        },
+        "EVA": {
+          "actionGroups": ["zero_gravity_eva", "zero_gravity_traversal"],
+          "icon": "eva"
+        },
+        "Social & UI": {
+          "actionGroups": ["default", "ui_notification", "player_choice"],
+          "icon": "ui"
+        },
+        "Camera": {
+          "actionGroups": ["view_director_mode"],
+          "icon": "camera"
+        }
+      },
+      "actionPatterns": {
+        "spaceship_movement": "^v_(strafe|roll|pitch|yaw|afterburner|space_brake|speed|accel|ifcs|lock_rotation|toggle_landing|autoland|toggle_vtol|transform)",
+        "spaceship_general": "^v_(flightready|self_destruct|toggle_all_doors|lock_all|unlock_all|close_all|open_all|eject|emergency_exit|horn)",
+        "spaceship_view": "^v_view_",
+        "spaceship_power": "^v_power_",
+        "vehicle_capacitor_assignment": "^v_capacitor_",
+        "spaceship_quantum": "^v_(toggle_qdrive|toggle_quantum)",
+        "spaceship_docking": "^v_(dock|invoke_docking|toggle_docking)",
+        "spaceship_weapons": "^v_(attack|weapon_change|weapon_gimbal|weapon_manual|weapon_pip|weapon_bombing)",
+        "spaceship_missiles": "^v_weapon_(cycle_missile|launch_missile|decrease_max|increase_max|reset_max|toggle_launch)",
+        "spaceship_defensive": "^v_(weapon_countermeasure|shield_)",
+        "spaceship_targeting": "^v_target_",
+        "spaceship_targeting_advanced": "^v_(look_ahead|target_lock|target_pin|target_tracking)",
+        "spaceship_radar": "^v_(invoke_ping|inc_ping|dec_ping)",
+        "spaceship_scanning": "^v_scanning_|^v_(inc_scan|dec_scan)",
+        "radar_tagging": "^tag_",
+        "spaceship_mining": "^v_(mining|toggle_mining|decrease_mining|increase_mining|jettison)",
+        "spaceship_salvage": "^v_salvage_|^v_toggle_salvage",
+        "turret_movement": "^turret_(pitch|yaw|toggle_mouse)",
+        "turret_advanced": "^turret_(change|esp|gyro|instant|limiter|recenter|remote)",
+        "vehicle_general": "^v_(boost|brake|move_)",
+        "vehicle_driver": "^v_mgv_",
+        "player": "^(attack1|crouch|jump|sprint|walk|reload|holster|melee|throw|toggle_flashlight|weapon_|zoom|selectprimary|selectsecondary|selectpistol|selectgadget|selectMelee|selectUnarmed|selectUtility|consume|drop|inspect|customize|ledgegrab|lean)",
+        "prone": "^prone_",
+        "zero_gravity_eva": "^eva_",
+        "zero_gravity_traversal": "^zgt_",
+        "default": "^(mobiglas|visor_wipe|stopwatch|thirdperson|free_thirdperson|pl_hud|port_modification)",
+        "ui_notification": "^ui_notification_",
+        "player_choice": "^pc_",
+        "view_director_mode": "^view_",
+        "seat_general": "^v_toggle_(mining_mode|salvage_mode|scan_mode|quantum_mode|missile_mode)"
+      }
+    },
+    "msfs2024": {
+      "id": "msfs2024",
+      "name": "Microsoft Flight Simulator 2024",
+      "shortName": "MSFS",
+      "defaultMappingPath": "",
+      "fileExtension": ".xml",
+      "categories": {
+        "Autopilot": {
+          "actionGroups": ["autopilot"],
+          "icon": "autopilot"
+        },
+        "Engine Controls": {
+          "actionGroups": ["engine"],
+          "icon": "engine"
+        },
+        "Flight Controls": {
+          "actionGroups": ["flightControls"],
+          "icon": "flight"
+        },
+        "Electrical": {
+          "actionGroups": ["electrical"],
+          "icon": "electrical"
+        },
+        "Fuel System": {
+          "actionGroups": ["fuel"],
+          "icon": "fuel"
+        },
+        "Landing Gear": {
+          "actionGroups": ["landingGear"],
+          "icon": "gear"
+        },
+        "Radio & Navigation": {
+          "actionGroups": ["radioNavigation", "gps", "vor"],
+          "icon": "radio"
+        },
+        "Instrumentation": {
+          "actionGroups": ["instrumentation"],
+          "icon": "instruments"
+        },
+        "Helicopter": {
+          "actionGroups": ["helicopter"],
+          "icon": "helicopter"
+        },
+        "View & Camera": {
+          "actionGroups": ["viewCamera"],
+          "icon": "camera"
+        },
+        "Misc Aircraft": {
+          "actionGroups": ["miscAircraft"],
+          "icon": "misc"
+        },
+        "Simulation": {
+          "actionGroups": ["simulation", "slew"],
+          "icon": "simulation"
+        },
+        "Multiplayer": {
+          "actionGroups": ["multiplayer"],
+          "icon": "multiplayer"
+        },
+        "ATC": {
+          "actionGroups": ["atc"],
+          "icon": "atc"
+        },
+        "G1000": {
+          "actionGroups": ["g1000"],
+          "icon": "g1000"
+        }
+      },
+      "actionsDataFile": "msfs-events.json"
+    },
+    "dcs-world": {
+      "id": "dcs-world",
+      "name": "DCS World",
+      "shortName": "DCS",
+      "defaultMappingPath": "",
+      "fileExtension": ".lua",
+      "categories": {
+        "Flight Controls": {
+          "actionGroups": ["flightControls"],
+          "icon": "flight"
+        },
+        "Engine Controls": {
+          "actionGroups": ["engine"],
+          "icon": "engine"
+        },
+        "Landing Gear": {
+          "actionGroups": ["landingGear"],
+          "icon": "gear"
+        },
+        "Autopilot": {
+          "actionGroups": ["autopilot"],
+          "icon": "autopilot"
+        },
+        "Weapons": {
+          "actionGroups": ["weapons"],
+          "icon": "weapons"
+        },
+        "Targeting & Sensors": {
+          "actionGroups": ["targeting"],
+          "icon": "targeting"
+        },
+        "Countermeasures": {
+          "actionGroups": ["countermeasures"],
+          "icon": "missiles"
+        },
+        "Communications": {
+          "actionGroups": ["communications"],
+          "icon": "radio"
+        },
+        "Navigation": {
+          "actionGroups": ["navigation"],
+          "icon": "navigation"
+        },
+        "Displays & MFD": {
+          "actionGroups": ["displays"],
+          "icon": "instruments"
+        },
+        "Electrical System": {
+          "actionGroups": ["electrical"],
+          "icon": "electrical"
+        },
+        "Lighting": {
+          "actionGroups": ["lighting"],
+          "icon": "lighting"
+        },
+        "Cockpit Systems": {
+          "actionGroups": ["cockpitSystems"],
+          "icon": "cockpit"
+        },
+        "Views": {
+          "actionGroups": ["views"],
+          "icon": "camera"
+        },
+        "General Controls": {
+          "actionGroups": ["generalControls"],
+          "icon": "misc"
+        },
+        "Helicopter Controls": {
+          "actionGroups": ["helicopterControls"],
+          "icon": "helicopter"
+        }
+      },
+      "actionsDataFile": "dcs-events.json"
+    },
+    "xplane": {
+      "id": "xplane",
+      "name": "X-Plane 12",
+      "shortName": "XP12",
+      "defaultMappingPath": "",
+      "fileExtension": ".prf",
+      "categories": {
+        "Flight Controls": {
+          "actionGroups": ["flightControls"],
+          "icon": "flight"
+        },
+        "Landing Gear": {
+          "actionGroups": ["landingGear"],
+          "icon": "gear"
+        },
+        "Engine Controls": {
+          "actionGroups": ["engine"],
+          "icon": "engine"
+        },
+        "Autopilot": {
+          "actionGroups": ["autopilot"],
+          "icon": "autopilot"
+        },
+        "Radios & Navigation": {
+          "actionGroups": ["radios"],
+          "icon": "radio"
+        },
+        "Transponder": {
+          "actionGroups": ["transponder"],
+          "icon": "transponder"
+        },
+        "Electrical System": {
+          "actionGroups": ["electrical"],
+          "icon": "electrical"
+        },
+        "Fuel System": {
+          "actionGroups": ["fuel"],
+          "icon": "fuel"
+        },
+        "Lights": {
+          "actionGroups": ["lights"],
+          "icon": "lighting"
+        },
+        "Anti-Ice & Heat": {
+          "actionGroups": ["ice"],
+          "icon": "ice"
+        },
+        "Instruments": {
+          "actionGroups": ["instruments"],
+          "icon": "instruments"
+        },
+        "GPS & FMS": {
+          "actionGroups": ["gps"],
+          "icon": "gps"
+        },
+        "Views & Camera": {
+          "actionGroups": ["views"],
+          "icon": "camera"
+        },
+        "Helicopter": {
+          "actionGroups": ["helicopter"],
+          "icon": "helicopter"
+        },
+        "Simulation": {
+          "actionGroups": ["simulation"],
+          "icon": "simulation"
+        },
+        "Weapons": {
+          "actionGroups": ["weapons"],
+          "icon": "weapons"
+        },
+        "General": {
+          "actionGroups": ["general"],
+          "icon": "misc"
+        },
+        "Magnetos & Ignition": {
+          "actionGroups": ["magnetos"],
+          "icon": "ignition"
+        }
+      },
+      "actionsDataFile": "xplane-events.json"
+    },
+    "elite-dangerous": {
+      "id": "elite-dangerous",
+      "name": "Elite Dangerous",
+      "shortName": "ED",
+      "defaultMappingPath": "",
+      "fileExtension": ".binds",
+      "categories": {
+        "Flight Rotation": {
+          "actionGroups": ["flightRotation"],
+          "icon": "flight"
+        },
+        "Flight Thrust": {
+          "actionGroups": ["flightThrust"],
+          "icon": "thrust"
+        },
+        "Flight Throttle": {
+          "actionGroups": ["flightThrottle"],
+          "icon": "throttle"
+        },
+        "Flight Miscellaneous": {
+          "actionGroups": ["flightMisc"],
+          "icon": "misc"
+        },
+        "Targeting": {
+          "actionGroups": ["targeting"],
+          "icon": "targeting"
+        },
+        "Weapons": {
+          "actionGroups": ["weapons"],
+          "icon": "weapons"
+        },
+        "Cooling & Countermeasures": {
+          "actionGroups": ["cooling"],
+          "icon": "missiles"
+        },
+        "Ship Systems": {
+          "actionGroups": ["shipSystems"],
+          "icon": "systems"
+        },
+        "Power Distribution": {
+          "actionGroups": ["powerDistribution"],
+          "icon": "power"
+        },
+        "Sensors & Radar": {
+          "actionGroups": ["radar"],
+          "icon": "radar"
+        },
+        "UI Focus & Panels": {
+          "actionGroups": ["uiFocus"],
+          "icon": "ui"
+        },
+        "UI Navigation": {
+          "actionGroups": ["uiNavigation"],
+          "icon": "navigation"
+        },
+        "Headlook & Camera": {
+          "actionGroups": ["headlook"],
+          "icon": "view"
+        },
+        "Camera Suite": {
+          "actionGroups": ["camera"],
+          "icon": "camera"
+        },
+        "Full Spectrum Scanner": {
+          "actionGroups": ["fss"],
+          "icon": "scanner"
+        },
+        "Detailed Surface Scanner": {
+          "actionGroups": ["dss"],
+          "icon": "scanner"
+        },
+        "SRV Controls": {
+          "actionGroups": ["srv"],
+          "icon": "vehicle"
+        },
+        "Fighter Controls": {
+          "actionGroups": ["fighter"],
+          "icon": "fighter"
+        },
+        "Multi-Crew": {
+          "actionGroups": ["multiCrew"],
+          "icon": "multicrew"
+        },
+        "On Foot (Odyssey)": {
+          "actionGroups": ["onFoot"],
+          "icon": "player"
+        },
+        "Miscellaneous": {
+          "actionGroups": ["misc"],
+          "icon": "misc"
+        }
+      },
+      "actionsDataFile": "elite-events.json"
+    }
+  }
+}

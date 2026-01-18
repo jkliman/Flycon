@@ -1,0 +1,1295 @@
+/* HOTAS / Joystick Visualization Styles */
+
+/* Utility class to hide elements */
+.hidden {
+  display: none !important;
+}
+
+.hotas-container {
+  display: flex;
+  gap: 60px;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px;
+}
+
+/* Joystick */
+.joystick-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.joystick-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.joystick-visual {
+  position: relative;
+  width: 300px;
+  height: 450px;
+}
+
+/* Joystick Base */
+.joystick-base {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250px;
+  height: 80px;
+  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-radius: 20px;
+  border: 2px solid #3a3a3a;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Joystick Grip */
+.joystick-grip {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 250px;
+  background: linear-gradient(90deg, #252525 0%, #3a3a3a 50%, #252525 100%);
+  border-radius: 40px 40px 20px 20px;
+  border: 2px solid #4a4a4a;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.3),
+    inset -10px 0 20px rgba(0, 0, 0, 0.2),
+    inset 10px 0 20px rgba(255, 255, 255, 0.05);
+}
+
+/* Joystick Top */
+.joystick-top {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(180deg, #3a3a3a 0%, #252525 100%);
+  border-radius: 50%;
+  border: 2px solid #4a4a4a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Joystick Buttons */
+.js-btn {
+  position: absolute;
+  background: linear-gradient(180deg, #3a3a3a 0%, #252525 100%);
+  border: 2px solid #4a4a4a;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #888;
+}
+
+.js-btn:hover {
+  background: linear-gradient(180deg, #4a4a4a 0%, #353535 100%);
+  border-color: var(--accent-primary);
+}
+
+.js-btn.bound {
+  background: linear-gradient(180deg, #1e4a7a 0%, #153a5f 100%);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* Primary Fire Button (Trigger) */
+.js-trigger {
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 60px;
+  border-radius: 10px;
+}
+
+/* Hat Switch */
+.js-hat {
+  top: 35px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 50px;
+}
+
+.hat-container {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+}
+
+.hat-btn {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(180deg, #4a4a4a 0%, #353535 100%);
+  border: 2px solid #5a5a5a;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 8px;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hat-btn:hover {
+  background: linear-gradient(180deg, #5a5a5a 0%, #454545 100%);
+}
+
+.hat-btn.bound {
+  background: linear-gradient(180deg, #1e4a7a 0%, #153a5f 100%);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.hat-up { top: 0; left: 50%; transform: translateX(-50%); }
+.hat-down { bottom: 0; left: 50%; transform: translateX(-50%); }
+.hat-left { left: 0; top: 50%; transform: translateY(-50%); }
+.hat-right { right: 0; top: 50%; transform: translateY(-50%); }
+.hat-center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #2a2a2a;
+}
+
+/* Grip Buttons */
+.js-btn-1 { top: 130px; left: 10px; width: 25px; height: 25px; }
+.js-btn-2 { top: 130px; right: 10px; width: 25px; height: 25px; }
+.js-btn-3 { top: 170px; left: 5px; width: 25px; height: 25px; }
+.js-btn-4 { top: 170px; right: 5px; width: 25px; height: 25px; }
+.js-btn-5 { top: 210px; left: 10px; width: 25px; height: 25px; }
+.js-btn-6 { top: 210px; right: 10px; width: 25px; height: 25px; }
+
+/* Base Buttons */
+.js-base-btn {
+  position: absolute;
+  bottom: 20px;
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(180deg, #3a3a3a 0%, #252525 100%);
+  border: 2px solid #4a4a4a;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-size: 9px;
+  color: #888;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.js-base-btn:hover {
+  background: linear-gradient(180deg, #4a4a4a 0%, #353535 100%);
+}
+
+.js-base-btn.bound {
+  background: linear-gradient(180deg, #1e4a7a 0%, #153a5f 100%);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.js-base-1 { left: 20px; }
+.js-base-2 { left: 60px; }
+.js-base-3 { right: 60px; }
+.js-base-4 { right: 20px; }
+
+/* Throttle */
+.throttle-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.throttle-visual {
+  position: relative;
+  width: 350px;
+  height: 400px;
+}
+
+/* Throttle Base */
+.throttle-base {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 150px;
+  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-radius: 20px;
+  border: 2px solid #3a3a3a;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.4),
+    inset 0 2px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Throttle Handle */
+.throttle-handle {
+  position: absolute;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 180px;
+  background: linear-gradient(90deg, #252525 0%, #3a3a3a 50%, #252525 100%);
+  border-radius: 20px;
+  border: 2px solid #4a4a4a;
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.3),
+    inset -10px 0 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Throttle Slider Rail */
+.throttle-rail {
+  position: absolute;
+  bottom: 130px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 200px;
+  background: linear-gradient(90deg, #1a1a1a 0%, #252525 50%, #1a1a1a 100%);
+  border-radius: 10px;
+  border: 1px solid #3a3a3a;
+}
+
+/* Throttle Buttons */
+.th-btn {
+  position: absolute;
+  background: linear-gradient(180deg, #3a3a3a 0%, #252525 100%);
+  border: 2px solid #4a4a4a;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #888;
+}
+
+.th-btn:hover {
+  background: linear-gradient(180deg, #4a4a4a 0%, #353535 100%);
+  border-color: var(--accent-primary);
+}
+
+.th-btn.bound {
+  background: linear-gradient(180deg, #1e4a7a 0%, #153a5f 100%);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* Throttle Handle Buttons */
+.th-btn-1 { top: 20px; left: 15px; width: 30px; height: 30px; }
+.th-btn-2 { top: 20px; right: 15px; width: 30px; height: 30px; }
+.th-btn-3 { top: 60px; left: 10px; width: 25px; height: 25px; }
+.th-btn-4 { top: 60px; right: 10px; width: 25px; height: 25px; }
+.th-btn-5 { top: 100px; left: 15px; width: 25px; height: 25px; }
+.th-btn-6 { top: 100px; right: 15px; width: 25px; height: 25px; }
+
+/* Mini Stick on Throttle */
+.th-ministick {
+  position: absolute;
+  top: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle at 30% 30%, #4a4a4a 0%, #252525 100%);
+  border-radius: 50%;
+  border: 2px solid #5a5a5a;
+  cursor: pointer;
+}
+
+.th-ministick.bound {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(0, 162, 255, 0.3);
+}
+
+/* Throttle Base Controls */
+.th-base-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 15px;
+}
+
+.th-toggle {
+  width: 35px;
+  height: 50px;
+  background: linear-gradient(180deg, #3a3a3a 0%, #252525 100%);
+  border: 2px solid #4a4a4a;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  padding-bottom: 5px;
+  font-size: 8px;
+  color: #888;
+}
+
+.th-toggle::before {
+  content: '';
+  width: 20px;
+  height: 25px;
+  background: linear-gradient(180deg, #5a5a5a 0%, #3a3a3a 100%);
+  border-radius: 4px 4px 2px 2px;
+  margin-bottom: 5px;
+}
+
+.th-toggle:hover {
+  background: linear-gradient(180deg, #4a4a4a 0%, #353535 100%);
+}
+
+.th-toggle.bound {
+  background: linear-gradient(180deg, #1e4a7a 0%, #153a5f 100%);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* Rotary Encoders */
+.th-rotary {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  background: radial-gradient(circle at 30% 30%, #3a3a3a 0%, #252525 100%);
+  border-radius: 50%;
+  border: 3px solid #4a4a4a;
+  cursor: pointer;
+}
+
+.th-rotary::after {
+  content: '';
+  position: absolute;
+  width: 4px;
+  height: 15px;
+  background: #666;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.th-rotary.bound {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(0, 162, 255, 0.3);
+}
+
+.th-rotary-1 { bottom: 90px; left: 20px; }
+.th-rotary-2 { bottom: 90px; right: 20px; }
+
+/* Sliders */
+.th-slider {
+  position: absolute;
+  width: 25px;
+  height: 80px;
+  background: linear-gradient(90deg, #1a1a1a 0%, #252525 50%, #1a1a1a 100%);
+  border-radius: 12px;
+  border: 2px solid #3a3a3a;
+  cursor: pointer;
+}
+
+.th-slider::after {
+  content: '';
+  position: absolute;
+  width: 30px;
+  height: 20px;
+  background: linear-gradient(180deg, #4a4a4a 0%, #353535 100%);
+  border-radius: 4px;
+  left: 50%;
+  top: 30px;
+  transform: translateX(-50%);
+  border: 1px solid #5a5a5a;
+}
+
+.th-slider.bound::after {
+  background: linear-gradient(180deg, #1e4a7a 0%, #153a5f 100%);
+  border-color: var(--accent-primary);
+}
+
+.th-slider-1 { bottom: 80px; left: 80px; }
+.th-slider-2 { bottom: 80px; right: 80px; }
+
+/* HOTAS Bindings List */
+.hotas-bindings {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-top: 30px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  max-width: 800px;
+}
+
+.hotas-bindings-section h4 {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.hotas-binding-row {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.hotas-binding-input {
+  min-width: 100px;
+  font-weight: 600;
+  color: var(--accent-primary);
+  font-size: 13px;
+}
+
+.hotas-binding-action {
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.hotas-binding-category {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-primary);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+/* Device Selection Tabs */
+.hotas-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.hotas-tab {
+  padding: 10px 20px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 13px;
+}
+
+.hotas-tab:hover {
+  background: var(--bg-hover);
+}
+
+.hotas-tab.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+/* Dual Stick Setup */
+.dual-stick-container {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+}
+
+.stick-label {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Device Wrapper */
+.hotas-device-wrapper {
+  display: flex;
+  gap: 60px;
+  justify-content: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.device-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Axis Indicators */
+.axis-indicator {
+  position: absolute;
+  font-size: 10px;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.axis-indicator.x-axis { bottom: -30px; left: 0; }
+.axis-indicator.y-axis { bottom: -30px; left: 50%; transform: translateX(-50%); }
+.axis-indicator.twist-axis { bottom: -30px; right: 0; }
+
+/* ===== X56 SPECIFIC STYLES ===== */
+.x56-throttle .throttle-visual { width: 320px; height: 450px; }
+.x56-throttle .throttle-base { width: 280px; height: 180px; }
+.x56-throttle .throttle-handle { width: 120px; height: 200px; bottom: 140px; }
+
+/* X56 Throttle Rotary Encoders */
+.x56-throttle .th-rotary { width: 40px; height: 40px; }
+.x56-throttle .th-rotary-1 { bottom: 30px; left: 30px; }
+.x56-throttle .th-rotary-2 { bottom: 30px; left: 80px; }
+.x56-throttle .th-rotary-3 { bottom: 30px; right: 80px; }
+.x56-throttle .th-rotary-4 { bottom: 30px; right: 30px; }
+
+/* X56 Toggle Row */
+.th-toggle-row {
+  position: absolute;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+}
+
+.x56-throttle .th-toggle { width: 30px; height: 45px; font-size: 7px; }
+
+/* X56 Mode Dial */
+.th-mode-dial {
+  position: absolute;
+  bottom: 145px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 35px;
+  height: 35px;
+  background: radial-gradient(circle at 30% 30%, #4a4a4a 0%, #252525 100%);
+  border-radius: 50%;
+  border: 2px solid #5a5a5a;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+}
+
+.th-mode-dial.bound {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* X56 Scroll Wheel */
+.th-scroll {
+  position: absolute;
+  bottom: 145px;
+  right: 30px;
+  width: 20px;
+  height: 40px;
+  background: linear-gradient(90deg, #1a1a1a, #2a2a2a, #1a1a1a);
+  border-radius: 10px;
+  border: 2px solid #3a3a3a;
+  cursor: pointer;
+}
+
+.th-scroll.bound { border-color: var(--accent-primary); }
+
+/* X56 Throttle Hats */
+.th-hat {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+}
+
+.th-hat1 { top: 20px; left: 10px; }
+.th-hat2 { top: 20px; right: 10px; }
+
+/* X56 Throttle Buttons */
+.x56-throttle .th-btn-e { top: 80px; left: 15px; width: 25px; height: 25px; }
+.x56-throttle .th-btn-f { top: 80px; right: 15px; width: 25px; height: 25px; }
+.x56-throttle .th-btn-g { top: 115px; left: 10px; width: 22px; height: 22px; }
+.x56-throttle .th-btn-h { top: 115px; right: 10px; width: 22px; height: 22px; }
+.x56-throttle .th-btn-i { top: 150px; left: 15px; width: 22px; height: 22px; }
+.x56-throttle .th-btn-j { top: 150px; right: 15px; width: 22px; height: 22px; }
+.x56-throttle .th-btn-k { bottom: 15px; left: 50%; transform: translateX(-50%); width: 25px; height: 25px; }
+
+/* X56 RTY Slider */
+.th-rty-slider {
+  position: absolute;
+  left: -40px;
+  top: 100px;
+  width: 25px;
+  height: 120px;
+  background: linear-gradient(90deg, #1a1a1a, #252525, #1a1a1a);
+  border-radius: 12px;
+  border: 2px solid #3a3a3a;
+  cursor: pointer;
+}
+
+.th-rty-slider .slider-knob {
+  position: absolute;
+  width: 30px;
+  height: 25px;
+  background: linear-gradient(180deg, #4a4a4a, #353535);
+  border-radius: 5px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid #5a5a5a;
+}
+
+.th-rty-slider.bound { border-color: var(--accent-primary); }
+
+/* X56 Throttle Axis */
+.th-axis-rail {
+  position: absolute;
+  left: -70px;
+  top: 50px;
+  width: 20px;
+  height: 300px;
+  background: linear-gradient(90deg, #0a0a0a, #1a1a1a, #0a0a0a);
+  border-radius: 10px;
+  border: 2px solid #2a2a2a;
+}
+
+.th-axis-indicator {
+  position: absolute;
+  width: 25px;
+  height: 40px;
+  background: linear-gradient(180deg, #3a3a3a, #252525);
+  border-radius: 5px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  border: 1px solid #4a4a4a;
+}
+
+.th-axis-label {
+  position: absolute;
+  left: -85px;
+  bottom: -25px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* X56 Stick */
+.x56-stick .joystick-visual { width: 300px; height: 420px; }
+.x56-stick .joystick-grip { width: 90px; height: 260px; }
+
+/* X56 Stick Buttons */
+.x56-stick .js-btn-a { top: 100px; left: 5px; width: 22px; height: 22px; }
+.x56-stick .js-btn-b { top: 100px; right: 5px; width: 22px; height: 22px; }
+.x56-stick .js-btn-c { top: 135px; left: 8px; width: 22px; height: 22px; }
+.x56-stick .js-btn-d { top: 135px; right: 8px; width: 22px; height: 22px; }
+
+/* X56 Stick Hats */
+.x56-stick .js-hat1 { top: 25px; left: 5px; width: 45px; height: 45px; }
+.x56-stick .js-hat2 { top: 25px; right: 5px; width: 45px; height: 45px; }
+.x56-stick .js-pov {
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 55px;
+  height: 55px;
+}
+
+/* X56 Pinky */
+.js-pinky {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 45px;
+  height: 25px;
+  background: linear-gradient(180deg, #3a3a3a, #252525);
+  border: 2px solid #4a4a4a;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #888;
+}
+
+.js-pinky.bound {
+  background: linear-gradient(180deg, #1e4a7a, #153a5f);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* X56 Ministick */
+.js-ministick {
+  position: absolute;
+  top: 170px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 35px;
+  height: 35px;
+  background: radial-gradient(circle at 30% 30%, #4a4a4a, #252525);
+  border-radius: 50%;
+  border: 2px solid #5a5a5a;
+  cursor: pointer;
+}
+
+.js-ministick.bound {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(0, 162, 255, 0.3);
+}
+
+/* X56 Thumb Rotary */
+.js-thumb-rotary {
+  position: absolute;
+  top: 210px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 30px;
+  background: radial-gradient(circle at 30% 30%, #3a3a3a, #252525);
+  border-radius: 50%;
+  border: 2px solid #4a4a4a;
+  cursor: pointer;
+}
+
+.js-thumb-rotary::after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 10px;
+  background: #666;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.js-thumb-rotary.bound {
+  border-color: var(--accent-primary);
+}
+
+/* ===== MOZA AB9 SPECIFIC STYLES ===== */
+.moza-ab9 .joystick-visual { width: 320px; height: 480px; }
+.moza-ab9 .joystick-base { width: 200px; height: 100px; background: linear-gradient(180deg, #1a1a1a, #0d0d0d); }
+.moza-ab9 .joystick-grip {
+  width: 95px;
+  height: 280px;
+  background: linear-gradient(90deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+  border-color: #3a3a3a;
+}
+
+.moza-twist-lock {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 9px;
+  color: var(--text-muted);
+  padding: 3px 8px;
+  background: var(--bg-primary);
+  border-radius: 4px;
+}
+
+/* MOZA Triggers */
+.moza-trigger {
+  bottom: 100px;
+  width: 35px;
+  height: 50px;
+  background: linear-gradient(180deg, #cc3333, #992222);
+  border-color: #dd4444;
+}
+
+.moza-trigger-2 {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 30px;
+  background: linear-gradient(180deg, #3a3a3a, #252525);
+  border: 2px solid #4a4a4a;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #888;
+}
+
+.moza-trigger-2.bound {
+  background: linear-gradient(180deg, #1e4a7a, #153a5f);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* MOZA POV */
+.moza-pov {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 55px;
+  height: 55px;
+}
+
+/* MOZA Hat 2 */
+.moza-hat2 {
+  position: absolute;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 50px;
+}
+
+/* MOZA Analog Stick */
+.moza-analog {
+  position: absolute;
+  top: 145px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle at 30% 30%, #4a4a4a, #252525);
+  border-radius: 50%;
+  border: 2px solid #5a5a5a;
+  cursor: pointer;
+}
+
+.moza-analog.bound {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(0, 162, 255, 0.3);
+}
+
+/* MOZA Buttons */
+.moza-btn {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(180deg, #3a3a3a, #252525);
+  border: 2px solid #4a4a4a;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  color: #888;
+  transition: all 0.15s ease;
+}
+
+.moza-btn:hover { border-color: var(--accent-primary); }
+
+.moza-btn.bound {
+  background: linear-gradient(180deg, #1e4a7a, #153a5f);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.moza-btn-1 { top: 195px; left: 8px; }
+.moza-btn-2 { top: 195px; right: 8px; }
+.moza-btn-3 { top: 225px; left: 12px; }
+.moza-btn-4 { top: 225px; right: 12px; }
+.moza-btn-5 { top: 255px; left: 8px; }
+.moza-btn-6 { top: 255px; right: 8px; }
+
+/* MOZA Pinky */
+.moza-pinky {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50px;
+  height: 22px;
+  background: linear-gradient(180deg, #3a3a3a, #252525);
+  border: 2px solid #4a4a4a;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: #888;
+}
+
+.moza-pinky.bound {
+  background: linear-gradient(180deg, #1e4a7a, #153a5f);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* MOZA Paddle */
+.moza-paddle {
+  position: absolute;
+  bottom: 130px;
+  right: -25px;
+  width: 20px;
+  height: 50px;
+  background: linear-gradient(90deg, #3a3a3a, #252525);
+  border: 2px solid #4a4a4a;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 7px;
+  color: #888;
+  writing-mode: vertical-rl;
+}
+
+.moza-paddle.bound {
+  background: linear-gradient(90deg, #1e4a7a, #153a5f);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* MOZA Scroll */
+.moza-scroll {
+  position: absolute;
+  top: 130px;
+  right: -20px;
+  width: 18px;
+  height: 35px;
+  background: linear-gradient(90deg, #1a1a1a, #2a2a2a, #1a1a1a);
+  border-radius: 9px;
+  border: 2px solid #3a3a3a;
+  cursor: pointer;
+}
+
+.moza-scroll .scroll-indicator {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: #4a4a4a;
+  border-radius: 50%;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.moza-scroll.bound { border-color: var(--accent-primary); }
+
+/* ===== VKB GLADIATOR SPECIFIC STYLES ===== */
+.vkb-gladiator .joystick-visual { width: 320px; height: 500px; }
+.vkb-gladiator .joystick-base {
+  width: 220px;
+  height: 120px;
+  background: linear-gradient(180deg, #222, #111);
+  border-color: #333;
+}
+.vkb-gladiator .joystick-grip {
+  width: 100px;
+  height: 300px;
+  bottom: 90px;
+  background: linear-gradient(90deg, #1a1a1a 0%, #333 50%, #1a1a1a 100%);
+  border-color: #444;
+}
+
+/* VKB Base Buttons */
+.vkb-base-btn {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(180deg, #3a3a3a, #252525);
+  border: 2px solid #4a4a4a;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: #888;
+  transition: all 0.15s ease;
+}
+
+.vkb-base-btn:hover { border-color: var(--accent-primary); }
+
+.vkb-base-btn.bound {
+  background: linear-gradient(180deg, #1e4a7a, #153a5f);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.vkb-base-a1 { bottom: 25px; left: 25px; }
+.vkb-base-a2 { bottom: 25px; left: 65px; }
+.vkb-base-a3 { bottom: 25px; right: 65px; }
+.vkb-base-a4 { bottom: 25px; right: 25px; }
+
+/* VKB Base Encoders */
+.vkb-base-encoder {
+  position: absolute;
+  width: 35px;
+  height: 35px;
+  background: radial-gradient(circle at 30% 30%, #3a3a3a, #1a1a1a);
+  border-radius: 50%;
+  border: 2px solid #4a4a4a;
+  cursor: pointer;
+}
+
+.vkb-base-encoder::after {
+  content: '';
+  position: absolute;
+  width: 3px;
+  height: 12px;
+  background: #666;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.vkb-base-encoder.bound { border-color: var(--accent-primary); }
+
+.vkb-enc-1 { bottom: 70px; left: 35px; }
+.vkb-enc-2 { bottom: 70px; right: 35px; }
+
+/* VKB Rapid Fire */
+.vkb-rapid-fire {
+  position: absolute;
+  bottom: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 20px;
+  background: linear-gradient(180deg, #cc3333, #992222);
+  border: 2px solid #dd4444;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 700;
+  color: white;
+}
+
+.vkb-rapid-fire.bound { box-shadow: 0 0 10px rgba(0, 162, 255, 0.4); }
+
+/* VKB Trigger */
+.vkb-trigger {
+  width: 40px;
+  height: 55px;
+  bottom: 80px;
+  background: linear-gradient(180deg, #cc3333, #992222);
+  border-color: #dd4444;
+}
+
+/* VKB Flip Trigger */
+.vkb-flip-trigger {
+  position: absolute;
+  bottom: 145px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 35px;
+  height: 25px;
+  background: linear-gradient(180deg, #3a3a3a, #252525);
+  border: 2px solid #4a4a4a;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: #888;
+}
+
+.vkb-flip-trigger.bound {
+  background: linear-gradient(180deg, #1e4a7a, #153a5f);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* VKB POV Hat */
+.vkb-pov {
+  position: absolute;
+  top: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 55px;
+  height: 55px;
+}
+
+/* VKB Hat 2 */
+.vkb-hat2 {
+  position: absolute;
+  top: 80px;
+  left: 8px;
+  width: 45px;
+  height: 45px;
+}
+
+/* VKB Hat 3 (Castle) */
+.vkb-hat3 {
+  position: absolute;
+  top: 80px;
+  right: 8px;
+  width: 45px;
+  height: 45px;
+}
+
+.castle-hat .hat-btn {
+  background: linear-gradient(180deg, #444, #333);
+}
+
+/* VKB Analog */
+.vkb-analog {
+  position: absolute;
+  top: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 40px;
+  background: radial-gradient(circle at 30% 30%, #4a4a4a, #252525);
+  border-radius: 50%;
+  border: 2px solid #5a5a5a;
+  cursor: pointer;
+}
+
+.vkb-analog.bound {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(0, 162, 255, 0.3);
+}
+
+/* VKB Buttons */
+.vkb-btn {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(180deg, #3a3a3a, #252525);
+  border: 2px solid #4a4a4a;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: #888;
+  transition: all 0.15s ease;
+}
+
+.vkb-btn:hover { border-color: var(--accent-primary); }
+
+.vkb-btn.bound {
+  background: linear-gradient(180deg, #1e4a7a, #153a5f);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.vkb-btn-1 { top: 195px; left: 10px; }
+.vkb-btn-2 { top: 195px; right: 10px; }
+.vkb-btn-3 { top: 225px; left: 15px; }
+.vkb-btn-4 { top: 225px; right: 15px; }
+
+/* VKB Pinky Button */
+.vkb-pinky {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 45px;
+  height: 22px;
+  background: linear-gradient(180deg, #3a3a3a, #252525);
+  border: 2px solid #4a4a4a;
+  border-radius: 5px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: #888;
+}
+
+.vkb-pinky.bound {
+  background: linear-gradient(180deg, #1e4a7a, #153a5f);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+/* VKB Pinky Lever */
+.vkb-pinky-lever {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 50px;
+  background: linear-gradient(90deg, #1a1a1a, #2a2a2a, #1a1a1a);
+  border-radius: 8px;
+  border: 2px solid #3a3a3a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+
+.vkb-pinky-lever .lever-pos {
+  width: 20px;
+  height: 18px;
+  background: linear-gradient(180deg, #4a4a4a, #353535);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  color: #888;
+  transition: all 0.15s ease;
+}
+
+.vkb-pinky-lever .lever-pos:hover { background: linear-gradient(180deg, #5a5a5a, #454545); }
+
+.vkb-pinky-lever .lever-pos.bound {
+  background: linear-gradient(180deg, #1e4a7a, #153a5f);
+  color: var(--accent-primary);
+}
+
+/* Active State */
+[data-button].active {
+  transform: scale(1.1);
+  box-shadow: 0 0 15px rgba(0, 162, 255, 0.5) !important;
+  z-index: 10;
+}

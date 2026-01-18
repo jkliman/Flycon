@@ -1,0 +1,72 @@
+{
+    "flight_basic": [
+        "spaceship_general",
+        "spaceship_view",
+        "spaceship_movement",
+        "spaceship_power",
+        "seat_general",
+        "spaceship_quantum",
+        "spaceship_docking",
+        "vehicle_capacitor_assignment",
+        "spaceship_hud",
+        "lights_controller",
+        "stopwatch"
+    ],
+    "v_weapon_defense": [
+        "spaceship_weapons",
+        "spaceship_missiles",
+        "spaceship_defensive"
+    ],
+    "v_targeting_radar": [
+        "spaceship_targeting_advanced",
+        "spaceship_targeting",
+        "spaceship_target_hailing",
+        "spaceship_radar",
+        "radar_tagging",
+        "spaceship_scanning"
+    ],
+    "v_mining_salvaging": [
+        "spaceship_mining",
+        "spaceship_salvage"
+    ],
+    "turret_all": [
+        "turret_movement",
+        "turret_advanced"
+    ],
+    "groundV_basic": [
+        "vehicle_general",
+        "spaceship_general",
+        "spaceship_power",
+        "seat_general",
+        "vehicle_driver",
+        "vehicle_capacitor_assignment",
+        "lights_controller"
+    ],
+    "onFoot_eva_all": [
+        "player",
+        "prone",
+        "incapacitated",
+        "tractor_beam",
+        "zero_gravity_eva",
+        "zero_gravity_traversal"
+    ],
+    "p_general_social": [
+        "default",
+        "ui_notification"
+    ],
+    "p_interactions": [
+        "player_choice"
+    ],
+    "p_emotes": [
+        "player_emotes"
+    ],
+    "voipFoipHeadTracking": [
+        "player_input_optical_tracking"
+    ],
+    "ea_spectator": [
+        "spectator"
+    ],
+    "camera": [
+        "view_director_mode"
+    ]
+}

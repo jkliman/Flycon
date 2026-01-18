@@ -1,0 +1,363 @@
+{
+  "version": "1.0",
+  "source": "DCS World SDK Documentation and Community Resources",
+  "lastUpdated": "2026-01-16",
+  "notes": "DCS World uses Lua-based input commands. Commands are aircraft-specific but share common categories.",
+  "luaFormat": {
+    "description": "DCS input commands use Lua table format",
+    "example": "{down = command_id, up = command_id, cockpit_device_id = device_id, value_down = 1.0, value_up = 0.0, name = 'Command Name', category = {'Category Name'}}"
+  },
+  "categories": {
+    "flightControls": {
+      "name": "Flight Controls",
+      "description": "Primary flight control axes and trim",
+      "events": [
+        {"id": "PITCH_AXIS", "description": "Pitch axis (joystick forward/back)", "type": "axis"},
+        {"id": "ROLL_AXIS", "description": "Roll axis (joystick left/right)", "type": "axis"},
+        {"id": "RUDDER_AXIS", "description": "Rudder/Yaw axis (pedals or twist)", "type": "axis"},
+        {"id": "THRUST_AXIS", "description": "Throttle axis", "type": "axis"},
+        {"id": "PITCH_TRIM_UP", "description": "Pitch trim nose up", "type": "button"},
+        {"id": "PITCH_TRIM_DOWN", "description": "Pitch trim nose down", "type": "button"},
+        {"id": "ROLL_TRIM_LEFT", "description": "Roll trim left", "type": "button"},
+        {"id": "ROLL_TRIM_RIGHT", "description": "Roll trim right", "type": "button"},
+        {"id": "RUDDER_TRIM_LEFT", "description": "Rudder trim left", "type": "button"},
+        {"id": "RUDDER_TRIM_RIGHT", "description": "Rudder trim right", "type": "button"},
+        {"id": "TRIM_RESET", "description": "Reset all trim", "type": "button"},
+        {"id": "FLAPS_UP", "description": "Flaps up", "type": "button"},
+        {"id": "FLAPS_DOWN", "description": "Flaps down", "type": "button"},
+        {"id": "FLAPS_TOGGLE", "description": "Toggle flaps", "type": "button"},
+        {"id": "SPEED_BRAKE_ON", "description": "Speed brake extend", "type": "button"},
+        {"id": "SPEED_BRAKE_OFF", "description": "Speed brake retract", "type": "button"},
+        {"id": "SPEED_BRAKE_TOGGLE", "description": "Toggle speed brake", "type": "button"},
+        {"id": "WHEEL_BRAKE", "description": "Wheel brakes", "type": "button"},
+        {"id": "WHEEL_BRAKE_LEFT", "description": "Left wheel brake", "type": "button"},
+        {"id": "WHEEL_BRAKE_RIGHT", "description": "Right wheel brake", "type": "button"},
+        {"id": "PARKING_BRAKE", "description": "Parking brake toggle", "type": "button"},
+        {"id": "NWS_TOGGLE", "description": "Nose wheel steering toggle", "type": "button"}
+      ]
+    },
+    "engine": {
+      "name": "Engine Controls",
+      "description": "Engine start, shutdown, and management",
+      "events": [
+        {"id": "THROTTLE_AXIS", "description": "Throttle axis", "type": "axis"},
+        {"id": "THROTTLE_LEFT_AXIS", "description": "Left throttle axis (twin engine)", "type": "axis"},
+        {"id": "THROTTLE_RIGHT_AXIS", "description": "Right throttle axis (twin engine)", "type": "axis"},
+        {"id": "THROTTLE_INC", "description": "Increase throttle", "type": "button"},
+        {"id": "THROTTLE_DEC", "description": "Decrease throttle", "type": "button"},
+        {"id": "THROTTLE_IDLE", "description": "Throttle to idle", "type": "button"},
+        {"id": "THROTTLE_MIL", "description": "Throttle to military power", "type": "button"},
+        {"id": "THROTTLE_AB", "description": "Throttle to afterburner", "type": "button"},
+        {"id": "ENGINE_START", "description": "Engine start", "type": "button"},
+        {"id": "ENGINE_STOP", "description": "Engine stop/shutdown", "type": "button"},
+        {"id": "ENGINE_LEFT_START", "description": "Left engine start", "type": "button"},
+        {"id": "ENGINE_RIGHT_START", "description": "Right engine start", "type": "button"},
+        {"id": "APU_START", "description": "APU start", "type": "button"},
+        {"id": "APU_STOP", "description": "APU stop", "type": "button"},
+        {"id": "FUEL_DUMP", "description": "Fuel dump", "type": "button"},
+        {"id": "FUEL_PROBE_TOGGLE", "description": "Aerial refueling probe toggle", "type": "button"}
+      ]
+    },
+    "landingGear": {
+      "name": "Landing Gear",
+      "description": "Landing gear and related systems",
+      "events": [
+        {"id": "GEAR_TOGGLE", "description": "Landing gear toggle", "type": "button"},
+        {"id": "GEAR_UP", "description": "Landing gear up", "type": "button"},
+        {"id": "GEAR_DOWN", "description": "Landing gear down", "type": "button"},
+        {"id": "HOOK_TOGGLE", "description": "Tailhook toggle", "type": "button"},
+        {"id": "LAUNCH_BAR_TOGGLE", "description": "Launch bar toggle (carrier ops)", "type": "button"},
+        {"id": "ANTI_SKID_TOGGLE", "description": "Anti-skid toggle", "type": "button"},
+        {"id": "GEAR_EMERGENCY", "description": "Emergency gear extension", "type": "button"}
+      ]
+    },
+    "autopilot": {
+      "name": "Autopilot",
+      "description": "Autopilot and flight director modes",
+      "events": [
+        {"id": "AP_MASTER", "description": "Autopilot master toggle", "type": "button"},
+        {"id": "AP_ENGAGE", "description": "Autopilot engage", "type": "button"},
+        {"id": "AP_DISENGAGE", "description": "Autopilot disengage", "type": "button"},
+        {"id": "AP_ATT_HOLD", "description": "Attitude hold mode", "type": "button"},
+        {"id": "AP_ALT_HOLD", "description": "Altitude hold mode", "type": "button"},
+        {"id": "AP_HDG_HOLD", "description": "Heading hold mode", "type": "button"},
+        {"id": "AP_BARO_ALT", "description": "Barometric altitude hold", "type": "button"},
+        {"id": "AP_RADAR_ALT", "description": "Radar altitude hold", "type": "button"},
+        {"id": "AP_PATH_HOLD", "description": "Path/Route hold", "type": "button"},
+        {"id": "AP_BANK_HOLD", "description": "Bank angle hold", "type": "button"},
+        {"id": "AP_AUTOTHROTTLE", "description": "Auto throttle toggle", "type": "button"},
+        {"id": "AP_EMERGENCY_LEVEL", "description": "Emergency level flight", "type": "button"}
+      ]
+    },
+    "weapons": {
+      "name": "Weapons",
+      "description": "Weapons systems and stores management",
+      "events": [
+        {"id": "MASTER_ARM_TOGGLE", "description": "Master arm toggle", "type": "button"},
+        {"id": "MASTER_ARM_ON", "description": "Master arm on", "type": "button"},
+        {"id": "MASTER_ARM_OFF", "description": "Master arm off/safe", "type": "button"},
+        {"id": "WEAPON_RELEASE", "description": "Weapon release/fire", "type": "button"},
+        {"id": "GUN_TRIGGER", "description": "Gun trigger (first/second stage)", "type": "button"},
+        {"id": "GUN_TRIGGER_FIRST", "description": "Gun trigger first stage", "type": "button"},
+        {"id": "GUN_TRIGGER_SECOND", "description": "Gun trigger second stage", "type": "button"},
+        {"id": "PICKLE", "description": "Pickle button (bomb release)", "type": "button"},
+        {"id": "JETTISON_STORES", "description": "Jettison stores", "type": "button"},
+        {"id": "JETTISON_SELECTIVE", "description": "Selective jettison", "type": "button"},
+        {"id": "WEAPON_STEP", "description": "Step through weapons", "type": "button"},
+        {"id": "WEAPON_AA", "description": "Select air-to-air weapon", "type": "button"},
+        {"id": "WEAPON_AG", "description": "Select air-to-ground weapon", "type": "button"},
+        {"id": "WEAPON_GUN", "description": "Select gun", "type": "button"},
+        {"id": "STATION_SELECT_LEFT", "description": "Select left station", "type": "button"},
+        {"id": "STATION_SELECT_RIGHT", "description": "Select right station", "type": "button"},
+        {"id": "SMS_PAGE", "description": "Stores management page", "type": "button"}
+      ]
+    },
+    "targeting": {
+      "name": "Targeting & Sensors",
+      "description": "Target designation and sensor controls",
+      "events": [
+        {"id": "TDC_UP", "description": "Target designator cursor up", "type": "button"},
+        {"id": "TDC_DOWN", "description": "Target designator cursor down", "type": "button"},
+        {"id": "TDC_LEFT", "description": "Target designator cursor left", "type": "button"},
+        {"id": "TDC_RIGHT", "description": "Target designator cursor right", "type": "button"},
+        {"id": "TDC_DEPRESS", "description": "Target designator cursor depress/select", "type": "button"},
+        {"id": "TDC_AXIS_X", "description": "TDC horizontal axis", "type": "axis"},
+        {"id": "TDC_AXIS_Y", "description": "TDC vertical axis", "type": "axis"},
+        {"id": "CAGE_UNCAGE", "description": "Cage/uncage sensor", "type": "button"},
+        {"id": "UNDESIGNATE", "description": "Undesignate target", "type": "button"},
+        {"id": "TGP_ZOOM_IN", "description": "Targeting pod zoom in", "type": "button"},
+        {"id": "TGP_ZOOM_OUT", "description": "Targeting pod zoom out", "type": "button"},
+        {"id": "TGP_LASER", "description": "Targeting pod laser", "type": "button"},
+        {"id": "TGP_IR_POLARITY", "description": "TGP IR polarity toggle", "type": "button"},
+        {"id": "RADAR_ELEVATION_UP", "description": "Radar elevation up", "type": "button"},
+        {"id": "RADAR_ELEVATION_DOWN", "description": "Radar elevation down", "type": "button"},
+        {"id": "RADAR_RANGE_INC", "description": "Radar range increase", "type": "button"},
+        {"id": "RADAR_RANGE_DEC", "description": "Radar range decrease", "type": "button"},
+        {"id": "LOCK_TARGET", "description": "Lock target", "type": "button"},
+        {"id": "UNLOCK_TARGET", "description": "Unlock target", "type": "button"},
+        {"id": "NEXT_TARGET", "description": "Next target", "type": "button"},
+        {"id": "PREV_TARGET", "description": "Previous target", "type": "button"}
+      ]
+    },
+    "countermeasures": {
+      "name": "Countermeasures",
+      "description": "Defensive systems and countermeasures",
+      "events": [
+        {"id": "FLARE_DISPENSE", "description": "Dispense flares", "type": "button"},
+        {"id": "CHAFF_DISPENSE", "description": "Dispense chaff", "type": "button"},
+        {"id": "ECM_TOGGLE", "description": "ECM toggle", "type": "button"},
+        {"id": "CMDS_DISPENSE", "description": "CMDS dispense (auto program)", "type": "button"},
+        {"id": "CMDS_MODE_CYCLE", "description": "CMDS mode cycle", "type": "button"},
+        {"id": "CMDS_PROGRAM_INC", "description": "CMDS program increment", "type": "button"},
+        {"id": "CMDS_PROGRAM_DEC", "description": "CMDS program decrement", "type": "button"},
+        {"id": "RWR_POWER", "description": "RWR power toggle", "type": "button"},
+        {"id": "RWR_MODE", "description": "RWR mode cycle", "type": "button"},
+        {"id": "JAMMER_TOGGLE", "description": "Jammer toggle", "type": "button"}
+      ]
+    },
+    "communications": {
+      "name": "Communications",
+      "description": "Radio and communication systems",
+      "events": [
+        {"id": "PTT_UHF", "description": "Push to talk UHF radio", "type": "button"},
+        {"id": "PTT_VHF", "description": "Push to talk VHF radio", "type": "button"},
+        {"id": "PTT_ICS", "description": "Push to talk intercom", "type": "button"},
+        {"id": "RADIO_CHANNEL_INC", "description": "Radio channel increment", "type": "button"},
+        {"id": "RADIO_CHANNEL_DEC", "description": "Radio channel decrement", "type": "button"},
+        {"id": "RADIO_VOLUME_INC", "description": "Radio volume increase", "type": "button"},
+        {"id": "RADIO_VOLUME_DEC", "description": "Radio volume decrease", "type": "button"},
+        {"id": "RADIO_SQUELCH", "description": "Radio squelch toggle", "type": "button"},
+        {"id": "IFF_IDENT", "description": "IFF identification", "type": "button"},
+        {"id": "DATALINK_POWER", "description": "Datalink power toggle", "type": "button"}
+      ]
+    },
+    "navigation": {
+      "name": "Navigation",
+      "description": "Navigation systems and waypoints",
+      "events": [
+        {"id": "TACAN_POWER", "description": "TACAN power toggle", "type": "button"},
+        {"id": "TACAN_MODE", "description": "TACAN mode cycle", "type": "button"},
+        {"id": "TACAN_CHANNEL_INC", "description": "TACAN channel increment", "type": "button"},
+        {"id": "TACAN_CHANNEL_DEC", "description": "TACAN channel decrement", "type": "button"},
+        {"id": "TACAN_XY_TOGGLE", "description": "TACAN X/Y toggle", "type": "button"},
+        {"id": "ILS_POWER", "description": "ILS power toggle", "type": "button"},
+        {"id": "ILS_CHANNEL_INC", "description": "ILS channel increment", "type": "button"},
+        {"id": "ILS_CHANNEL_DEC", "description": "ILS channel decrement", "type": "button"},
+        {"id": "WAYPOINT_INC", "description": "Next waypoint", "type": "button"},
+        {"id": "WAYPOINT_DEC", "description": "Previous waypoint", "type": "button"},
+        {"id": "WAYPOINT_DESIGNATE", "description": "Designate waypoint", "type": "button"},
+        {"id": "HSI_COURSE_INC", "description": "HSI course increment", "type": "button"},
+        {"id": "HSI_COURSE_DEC", "description": "HSI course decrement", "type": "button"},
+        {"id": "HSI_HEADING_INC", "description": "HSI heading increment", "type": "button"},
+        {"id": "HSI_HEADING_DEC", "description": "HSI heading decrement", "type": "button"},
+        {"id": "INS_ALIGN", "description": "INS alignment", "type": "button"},
+        {"id": "GPS_POWER", "description": "GPS power toggle", "type": "button"}
+      ]
+    },
+    "displays": {
+      "name": "Displays & MFD",
+      "description": "Multi-function displays and HUD",
+      "events": [
+        {"id": "HUD_BRIGHTNESS_INC", "description": "HUD brightness increase", "type": "button"},
+        {"id": "HUD_BRIGHTNESS_DEC", "description": "HUD brightness decrease", "type": "button"},
+        {"id": "HUD_MODE_CYCLE", "description": "HUD mode cycle", "type": "button"},
+        {"id": "HUD_DECLUTTER", "description": "HUD declutter", "type": "button"},
+        {"id": "LEFT_DDI_PB01", "description": "Left DDI pushbutton 1", "type": "button"},
+        {"id": "LEFT_DDI_PB02", "description": "Left DDI pushbutton 2", "type": "button"},
+        {"id": "LEFT_DDI_PB03", "description": "Left DDI pushbutton 3", "type": "button"},
+        {"id": "LEFT_DDI_PB04", "description": "Left DDI pushbutton 4", "type": "button"},
+        {"id": "LEFT_DDI_PB05", "description": "Left DDI pushbutton 5", "type": "button"},
+        {"id": "RIGHT_DDI_PB01", "description": "Right DDI pushbutton 1", "type": "button"},
+        {"id": "RIGHT_DDI_PB02", "description": "Right DDI pushbutton 2", "type": "button"},
+        {"id": "RIGHT_DDI_PB03", "description": "Right DDI pushbutton 3", "type": "button"},
+        {"id": "RIGHT_DDI_PB04", "description": "Right DDI pushbutton 4", "type": "button"},
+        {"id": "RIGHT_DDI_PB05", "description": "Right DDI pushbutton 5", "type": "button"},
+        {"id": "MFD_GAIN_INC", "description": "MFD gain increase", "type": "button"},
+        {"id": "MFD_GAIN_DEC", "description": "MFD gain decrease", "type": "button"},
+        {"id": "MFD_CONTRAST_INC", "description": "MFD contrast increase", "type": "button"},
+        {"id": "MFD_CONTRAST_DEC", "description": "MFD contrast decrease", "type": "button"},
+        {"id": "MFD_BRIGHTNESS_INC", "description": "MFD brightness increase", "type": "button"},
+        {"id": "MFD_BRIGHTNESS_DEC", "description": "MFD brightness decrease", "type": "button"}
+      ]
+    },
+    "electrical": {
+      "name": "Electrical System",
+      "description": "Electrical power and generators",
+      "events": [
+        {"id": "BATTERY_TOGGLE", "description": "Battery switch toggle", "type": "button"},
+        {"id": "BATTERY_ON", "description": "Battery on", "type": "button"},
+        {"id": "BATTERY_OFF", "description": "Battery off", "type": "button"},
+        {"id": "GENERATOR_LEFT", "description": "Left generator toggle", "type": "button"},
+        {"id": "GENERATOR_RIGHT", "description": "Right generator toggle", "type": "button"},
+        {"id": "EXTERNAL_POWER", "description": "External power toggle", "type": "button"},
+        {"id": "INVERTER", "description": "Inverter toggle", "type": "button"},
+        {"id": "AVIONICS_MASTER", "description": "Avionics master toggle", "type": "button"}
+      ]
+    },
+    "lighting": {
+      "name": "Lighting",
+      "description": "Interior and exterior lighting",
+      "events": [
+        {"id": "NAV_LIGHTS_TOGGLE", "description": "Navigation lights toggle", "type": "button"},
+        {"id": "ANTI_COLLISION_TOGGLE", "description": "Anti-collision lights toggle", "type": "button"},
+        {"id": "STROBE_LIGHTS_TOGGLE", "description": "Strobe lights toggle", "type": "button"},
+        {"id": "FORMATION_LIGHTS_INC", "description": "Formation lights increase", "type": "button"},
+        {"id": "FORMATION_LIGHTS_DEC", "description": "Formation lights decrease", "type": "button"},
+        {"id": "LANDING_LIGHTS_TOGGLE", "description": "Landing lights toggle", "type": "button"},
+        {"id": "TAXI_LIGHTS_TOGGLE", "description": "Taxi lights toggle", "type": "button"},
+        {"id": "COCKPIT_LIGHTS_INC", "description": "Cockpit lights increase", "type": "button"},
+        {"id": "COCKPIT_LIGHTS_DEC", "description": "Cockpit lights decrease", "type": "button"},
+        {"id": "CONSOLE_LIGHTS_INC", "description": "Console lights increase", "type": "button"},
+        {"id": "CONSOLE_LIGHTS_DEC", "description": "Console lights decrease", "type": "button"},
+        {"id": "FLOOD_LIGHTS_TOGGLE", "description": "Flood lights toggle", "type": "button"},
+        {"id": "INSTRUMENT_LIGHTS_INC", "description": "Instrument lights increase", "type": "button"},
+        {"id": "INSTRUMENT_LIGHTS_DEC", "description": "Instrument lights decrease", "type": "button"}
+      ]
+    },
+    "cockpitSystems": {
+      "name": "Cockpit Systems",
+      "description": "Canopy, seat, and environmental systems",
+      "events": [
+        {"id": "CANOPY_OPEN", "description": "Canopy open", "type": "button"},
+        {"id": "CANOPY_CLOSE", "description": "Canopy close", "type": "button"},
+        {"id": "CANOPY_TOGGLE", "description": "Canopy toggle", "type": "button"},
+        {"id": "CANOPY_JETTISON", "description": "Canopy jettison", "type": "button"},
+        {"id": "EJECT", "description": "Eject", "type": "button"},
+        {"id": "SEAT_ARM", "description": "Ejection seat arm", "type": "button"},
+        {"id": "SEAT_HEIGHT_INC", "description": "Seat height increase", "type": "button"},
+        {"id": "SEAT_HEIGHT_DEC", "description": "Seat height decrease", "type": "button"},
+        {"id": "OXYGEN_TOGGLE", "description": "Oxygen system toggle", "type": "button"},
+        {"id": "PITOT_HEAT", "description": "Pitot heat toggle", "type": "button"},
+        {"id": "ENGINE_ANTI_ICE", "description": "Engine anti-ice toggle", "type": "button"},
+        {"id": "WINDSHIELD_DEFOG", "description": "Windshield defog", "type": "button"},
+        {"id": "CABIN_PRESSURE", "description": "Cabin pressure control", "type": "button"},
+        {"id": "AIR_CONDITION", "description": "Air conditioning control", "type": "button"}
+      ]
+    },
+    "views": {
+      "name": "Views",
+      "description": "Camera and view controls",
+      "events": [
+        {"id": "VIEW_COCKPIT", "description": "Cockpit view", "type": "button"},
+        {"id": "VIEW_EXTERNAL", "description": "External view", "type": "button"},
+        {"id": "VIEW_FLYBY", "description": "Flyby view", "type": "button"},
+        {"id": "VIEW_TOWER", "description": "Tower view", "type": "button"},
+        {"id": "VIEW_PADLOCK", "description": "Padlock view", "type": "button"},
+        {"id": "VIEW_PAN_UP", "description": "Pan view up", "type": "button"},
+        {"id": "VIEW_PAN_DOWN", "description": "Pan view down", "type": "button"},
+        {"id": "VIEW_PAN_LEFT", "description": "Pan view left", "type": "button"},
+        {"id": "VIEW_PAN_RIGHT", "description": "Pan view right", "type": "button"},
+        {"id": "VIEW_ZOOM_IN", "description": "Zoom in", "type": "button"},
+        {"id": "VIEW_ZOOM_OUT", "description": "Zoom out", "type": "button"},
+        {"id": "VIEW_CENTER", "description": "Center view", "type": "button"},
+        {"id": "VIEW_SNAP_F1", "description": "Snap view front", "type": "button"},
+        {"id": "VIEW_SNAP_LEFT", "description": "Snap view left", "type": "button"},
+        {"id": "VIEW_SNAP_RIGHT", "description": "Snap view right", "type": "button"},
+        {"id": "VIEW_SNAP_REAR", "description": "Snap view rear", "type": "button"},
+        {"id": "MIRROR_TOGGLE", "description": "Mirror toggle", "type": "button"}
+      ]
+    },
+    "generalControls": {
+      "name": "General Controls",
+      "description": "General game and simulation controls",
+      "events": [
+        {"id": "PAUSE", "description": "Pause simulation", "type": "button"},
+        {"id": "ACCELERATE_TIME", "description": "Accelerate time", "type": "button"},
+        {"id": "DECELERATE_TIME", "description": "Decelerate time", "type": "button"},
+        {"id": "NORMAL_TIME", "description": "Normal time", "type": "button"},
+        {"id": "ACTIVE_PAUSE", "description": "Active pause", "type": "button"},
+        {"id": "SCREENSHOT", "description": "Screenshot", "type": "button"},
+        {"id": "LABELS_TOGGLE", "description": "Labels toggle", "type": "button"},
+        {"id": "KNEEBOARD_TOGGLE", "description": "Kneeboard toggle", "type": "button"},
+        {"id": "KNEEBOARD_NEXT", "description": "Kneeboard next page", "type": "button"},
+        {"id": "KNEEBOARD_PREV", "description": "Kneeboard previous page", "type": "button"},
+        {"id": "BRIEFING_TOGGLE", "description": "Briefing toggle", "type": "button"},
+        {"id": "CHAT_TOGGLE", "description": "Chat toggle", "type": "button"},
+        {"id": "COMMS_MENU", "description": "Communications menu", "type": "button"}
+      ]
+    },
+    "helicopterControls": {
+      "name": "Helicopter Controls",
+      "description": "Helicopter-specific controls",
+      "events": [
+        {"id": "COLLECTIVE_AXIS", "description": "Collective axis", "type": "axis"},
+        {"id": "COLLECTIVE_INC", "description": "Collective increase", "type": "button"},
+        {"id": "COLLECTIVE_DEC", "description": "Collective decrease", "type": "button"},
+        {"id": "ROTOR_BRAKE", "description": "Rotor brake", "type": "button"},
+        {"id": "ROTOR_RPM_INC", "description": "Rotor RPM increase", "type": "button"},
+        {"id": "ROTOR_RPM_DEC", "description": "Rotor RPM decrease", "type": "button"},
+        {"id": "GOVERNOR_TOGGLE", "description": "Governor toggle", "type": "button"},
+        {"id": "FORCE_TRIM", "description": "Force trim", "type": "button"},
+        {"id": "AUTOPILOT_HOVER", "description": "Autopilot hover hold", "type": "button"},
+        {"id": "CYCLIC_TRIM_RESET", "description": "Cyclic trim reset", "type": "button"}
+      ]
+    }
+  },
+  "supportedAircraft": [
+    "A-10A", "A-10C", "A-10C_2",
+    "AH-64D",
+    "AJS37",
+    "AV-8B",
+    "Bf-109K-4",
+    "C-101",
+    "F-5E", "F-14A", "F-14B", "F-15C", "F-15E", "F-16C", "F-86F",
+    "FA-18C",
+    "FW-190A8", "FW-190D9",
+    "I-16",
+    "JF-17",
+    "Ka-50", "Ka-50_3",
+    "L-39C",
+    "MB-339",
+    "Mi-8MTV2", "Mi-24P",
+    "MiG-15bis", "MiG-19P", "MiG-21bis", "MiG-29",
+    "Mirage-F1",
+    "Mosquito FB Mk VI",
+    "P-47D", "P-51D",
+    "SA342",
+    "Spitfire LF Mk IX",
+    "Su-25", "Su-25T", "Su-27", "Su-33",
+    "TF-51D",
+    "UH-1H",
+    "Yak-52"
+  ]
+}

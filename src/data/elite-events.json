@@ -1,0 +1,382 @@
+{
+  "version": "1.0",
+  "source": "Elite Dangerous Game Documentation and Community Resources",
+  "lastUpdated": "2026-01-16",
+  "notes": "Elite Dangerous uses XML-based .binds files. Actions use PascalCase naming convention.",
+  "bindingsFormat": {
+    "description": "Elite Dangerous bindings use XML format with action tags",
+    "location": "%LOCALAPPDATA%\\Frontier Developments\\Elite Dangerous\\Options\\Bindings",
+    "fileExtensions": [".binds", ".3.0.binds", ".4.0.binds"],
+    "example": "<YawLeftButton><Primary Device=\"Keyboard\" Key=\"Key_A\"/></YawLeftButton>"
+  },
+  "categories": {
+    "flightRotation": {
+      "name": "Flight Rotation",
+      "description": "Ship rotation controls - yaw, roll, pitch",
+      "events": [
+        {"id": "YawAxisRaw", "description": "Yaw axis (raw input)", "type": "axis"},
+        {"id": "YawLeftButton", "description": "Yaw left", "type": "button"},
+        {"id": "YawRightButton", "description": "Yaw right", "type": "button"},
+        {"id": "YawToRollButton", "description": "Yaw into roll mode", "type": "button"},
+        {"id": "RollAxisRaw", "description": "Roll axis (raw input)", "type": "axis"},
+        {"id": "RollLeftButton", "description": "Roll left", "type": "button"},
+        {"id": "RollRightButton", "description": "Roll right", "type": "button"},
+        {"id": "PitchAxisRaw", "description": "Pitch axis (raw input)", "type": "axis"},
+        {"id": "PitchUpButton", "description": "Pitch up", "type": "button"},
+        {"id": "PitchDownButton", "description": "Pitch down", "type": "button"}
+      ]
+    },
+    "flightThrust": {
+      "name": "Flight Thrust",
+      "description": "Lateral, vertical, and forward/backward thrust",
+      "events": [
+        {"id": "LateralThrustRaw", "description": "Lateral thrust axis", "type": "axis"},
+        {"id": "LeftThrustButton", "description": "Thrust left", "type": "button"},
+        {"id": "RightThrustButton", "description": "Thrust right", "type": "button"},
+        {"id": "VerticalThrustRaw", "description": "Vertical thrust axis", "type": "axis"},
+        {"id": "UpThrustButton", "description": "Thrust up", "type": "button"},
+        {"id": "DownThrustButton", "description": "Thrust down", "type": "button"},
+        {"id": "AheadThrust", "description": "Forward/backward thrust axis", "type": "axis"},
+        {"id": "ForwardThrustButton", "description": "Thrust forward", "type": "button"},
+        {"id": "BackwardThrustButton", "description": "Thrust backward", "type": "button"}
+      ]
+    },
+    "flightThrottle": {
+      "name": "Flight Throttle",
+      "description": "Throttle and speed presets",
+      "events": [
+        {"id": "ThrottleAxis", "description": "Throttle axis", "type": "axis"},
+        {"id": "ThrottleIncrement", "description": "Increase throttle", "type": "button"},
+        {"id": "ThrottleDecrement", "description": "Decrease throttle", "type": "button"},
+        {"id": "SetSpeedMinus100", "description": "Set speed -100%", "type": "button"},
+        {"id": "SetSpeedMinus75", "description": "Set speed -75%", "type": "button"},
+        {"id": "SetSpeedMinus50", "description": "Set speed -50%", "type": "button"},
+        {"id": "SetSpeedMinus25", "description": "Set speed -25%", "type": "button"},
+        {"id": "SetSpeedZero", "description": "Set speed 0% (full stop)", "type": "button"},
+        {"id": "SetSpeed25", "description": "Set speed 25%", "type": "button"},
+        {"id": "SetSpeed50", "description": "Set speed 50%", "type": "button"},
+        {"id": "SetSpeed75", "description": "Set speed 75%", "type": "button"},
+        {"id": "SetSpeed100", "description": "Set speed 100%", "type": "button"}
+      ]
+    },
+    "flightMisc": {
+      "name": "Flight Miscellaneous",
+      "description": "Flight assist, boost, and other flight controls",
+      "events": [
+        {"id": "ToggleFlightAssist", "description": "Toggle flight assist", "type": "button"},
+        {"id": "UseBoostJuice", "description": "Engine boost", "type": "button"},
+        {"id": "ToggleReverseThrottleInput", "description": "Reverse throttle", "type": "button"},
+        {"id": "DisableRotationCorrectToggle", "description": "Disable rotation correction", "type": "button"},
+        {"id": "OrbitLinesToggle", "description": "Toggle orbit lines", "type": "button"},
+        {"id": "SelectTarget", "description": "Select target ahead", "type": "button"},
+        {"id": "HyperSuperCombination", "description": "Hyperspace/Supercruise", "type": "button"},
+        {"id": "Supercruise", "description": "Supercruise", "type": "button"},
+        {"id": "Hyperspace", "description": "Hyperspace jump", "type": "button"}
+      ]
+    },
+    "targeting": {
+      "name": "Targeting",
+      "description": "Target selection and cycling",
+      "events": [
+        {"id": "SelectTarget", "description": "Select target ahead", "type": "button"},
+        {"id": "CycleNextTarget", "description": "Cycle next target", "type": "button"},
+        {"id": "CyclePreviousTarget", "description": "Cycle previous target", "type": "button"},
+        {"id": "SelectHighestThreat", "description": "Select highest threat", "type": "button"},
+        {"id": "CycleNextHostileTarget", "description": "Cycle next hostile target", "type": "button"},
+        {"id": "CyclePreviousHostileTarget", "description": "Cycle previous hostile target", "type": "button"},
+        {"id": "TargetWingman0", "description": "Target wingman 1", "type": "button"},
+        {"id": "TargetWingman1", "description": "Target wingman 2", "type": "button"},
+        {"id": "TargetWingman2", "description": "Target wingman 3", "type": "button"},
+        {"id": "SelectTargetsTarget", "description": "Select wingman's target", "type": "button"},
+        {"id": "WingNavLock", "description": "Wingman nav-lock", "type": "button"},
+        {"id": "CycleNextSubsystem", "description": "Cycle next subsystem", "type": "button"},
+        {"id": "CyclePreviousSubsystem", "description": "Cycle previous subsystem", "type": "button"},
+        {"id": "TargetNextRouteSystem", "description": "Target next system in route", "type": "button"}
+      ]
+    },
+    "weapons": {
+      "name": "Weapons",
+      "description": "Weapon firing and fire group controls",
+      "events": [
+        {"id": "PrimaryFire", "description": "Primary fire", "type": "button"},
+        {"id": "SecondaryFire", "description": "Secondary fire", "type": "button"},
+        {"id": "CycleFireGroupNext", "description": "Cycle next fire group", "type": "button"},
+        {"id": "CycleFireGroupPrevious", "description": "Cycle previous fire group", "type": "button"},
+        {"id": "DeployHardpointToggle", "description": "Deploy/retract hardpoints", "type": "button"},
+        {"id": "DeployHardpointsOnFire", "description": "Firing deploys hardpoints", "type": "button"}
+      ]
+    },
+    "cooling": {
+      "name": "Cooling & Countermeasures",
+      "description": "Heat management and defensive systems",
+      "events": [
+        {"id": "DeployHeatSink", "description": "Deploy heat sink", "type": "button"},
+        {"id": "UseShieldCell", "description": "Use shield cell bank", "type": "button"},
+        {"id": "FireChaffLauncher", "description": "Fire chaff launcher", "type": "button"},
+        {"id": "ChargeECM", "description": "Charge ECM", "type": "button"},
+        {"id": "ToggleSilentRunning", "description": "Toggle silent running", "type": "button"}
+      ]
+    },
+    "shipSystems": {
+      "name": "Ship Systems",
+      "description": "Cargo, landing gear, lights, and ship systems",
+      "events": [
+        {"id": "ShipSpotLightToggle", "description": "Toggle ship lights", "type": "button"},
+        {"id": "LandingGearToggle", "description": "Toggle landing gear", "type": "button"},
+        {"id": "ToggleCargoScoop", "description": "Toggle cargo scoop", "type": "button"},
+        {"id": "EjectAllCargo", "description": "Eject all cargo", "type": "button"},
+        {"id": "NightVisionToggle", "description": "Toggle night vision", "type": "button"},
+        {"id": "ToggleButtonUpInput", "description": "Toggle button up input", "type": "button"},
+        {"id": "RecallDismissShip", "description": "Recall/dismiss ship", "type": "button"}
+      ]
+    },
+    "powerDistribution": {
+      "name": "Power Distribution",
+      "description": "Power management for engines, weapons, and systems",
+      "events": [
+        {"id": "IncreaseEnginesPower", "description": "Increase engines power", "type": "button"},
+        {"id": "IncreaseWeaponsPower", "description": "Increase weapons power", "type": "button"},
+        {"id": "IncreaseSystemsPower", "description": "Increase systems power", "type": "button"},
+        {"id": "ResetPowerDistribution", "description": "Reset power distribution", "type": "button"},
+        {"id": "IncreaseEnginesPower_Buggy", "description": "SRV: Increase engines power", "type": "button"},
+        {"id": "IncreaseWeaponsPower_Buggy", "description": "SRV: Increase weapons power", "type": "button"},
+        {"id": "IncreaseSystemsPower_Buggy", "description": "SRV: Increase systems power", "type": "button"},
+        {"id": "ResetPowerDistribution_Buggy", "description": "SRV: Reset power distribution", "type": "button"}
+      ]
+    },
+    "radar": {
+      "name": "Sensors & Radar",
+      "description": "Radar and sensor controls",
+      "events": [
+        {"id": "RadarIncreaseRange", "description": "Increase sensor range", "type": "button"},
+        {"id": "RadarDecreaseRange", "description": "Decrease sensor range", "type": "button"},
+        {"id": "RadarRangeAxis", "description": "Sensor range axis", "type": "axis"},
+        {"id": "IncreaseRadarSensitivity", "description": "Increase radar sensitivity", "type": "button"},
+        {"id": "DecreaseRadarSensitivity", "description": "Decrease radar sensitivity", "type": "button"}
+      ]
+    },
+    "uiFocus": {
+      "name": "UI Focus & Panels",
+      "description": "Panel focus and UI navigation",
+      "events": [
+        {"id": "UIFocus", "description": "UI focus mode", "type": "button"},
+        {"id": "FocusLeftPanel", "description": "Focus navigation panel (left)", "type": "button"},
+        {"id": "FocusCommsPanel", "description": "Focus comms panel (top)", "type": "button"},
+        {"id": "QuickCommsPanel", "description": "Quick comms panel", "type": "button"},
+        {"id": "FocusRadarPanel", "description": "Focus role panel (bottom)", "type": "button"},
+        {"id": "FocusRightPanel", "description": "Focus systems panel (right)", "type": "button"},
+        {"id": "CycleNextPanel", "description": "Cycle next panel", "type": "button"},
+        {"id": "CyclePreviousPanel", "description": "Cycle previous panel", "type": "button"},
+        {"id": "GalaxyMapOpen", "description": "Open galaxy map", "type": "button"},
+        {"id": "SystemMapOpen", "description": "Open system map", "type": "button"},
+        {"id": "OpenCodexGoToDiscovery", "description": "Open codex", "type": "button"},
+        {"id": "PlayerHUDModeToggle", "description": "Toggle HUD mode", "type": "button"}
+      ]
+    },
+    "uiNavigation": {
+      "name": "UI Navigation",
+      "description": "Interface navigation controls",
+      "events": [
+        {"id": "UI_Up", "description": "UI navigate up", "type": "button"},
+        {"id": "UI_Down", "description": "UI navigate down", "type": "button"},
+        {"id": "UI_Left", "description": "UI navigate left", "type": "button"},
+        {"id": "UI_Right", "description": "UI navigate right", "type": "button"},
+        {"id": "UI_Select", "description": "UI select", "type": "button"},
+        {"id": "UI_Back", "description": "UI back", "type": "button"},
+        {"id": "UI_Toggle", "description": "UI toggle", "type": "button"},
+        {"id": "CycleNextPage", "description": "Cycle next page", "type": "button"},
+        {"id": "CyclePreviousPage", "description": "Cycle previous page", "type": "button"}
+      ]
+    },
+    "headlook": {
+      "name": "Headlook & Camera",
+      "description": "Headlook and free camera controls",
+      "events": [
+        {"id": "HeadLookToggle", "description": "Toggle headlook", "type": "button"},
+        {"id": "HeadLookReset", "description": "Reset headlook", "type": "button"},
+        {"id": "HeadLookPitchUp", "description": "Look up", "type": "button"},
+        {"id": "HeadLookPitchDown", "description": "Look down", "type": "button"},
+        {"id": "HeadLookYawLeft", "description": "Look left", "type": "button"},
+        {"id": "HeadLookYawRight", "description": "Look right", "type": "button"},
+        {"id": "HeadLookPitchAxis", "description": "Headlook pitch axis", "type": "axis"},
+        {"id": "HeadLookYawAxis", "description": "Headlook yaw axis", "type": "axis"}
+      ]
+    },
+    "camera": {
+      "name": "Camera Suite",
+      "description": "External and free camera controls",
+      "events": [
+        {"id": "PhotoCameraToggle", "description": "Toggle camera suite", "type": "button"},
+        {"id": "PhotoCameraToggle_Buggy", "description": "SRV: Toggle camera suite", "type": "button"},
+        {"id": "VanityCameraScrollLeft", "description": "Previous camera", "type": "button"},
+        {"id": "VanityCameraScrollRight", "description": "Next camera", "type": "button"},
+        {"id": "ToggleFreeCam", "description": "Toggle free camera", "type": "button"},
+        {"id": "FreeCamToggleHUD", "description": "Free cam toggle HUD", "type": "button"},
+        {"id": "FreeCamSpeedInc", "description": "Free cam speed increase", "type": "button"},
+        {"id": "FreeCamSpeedDec", "description": "Free cam speed decrease", "type": "button"},
+        {"id": "FreeCamZoomIn", "description": "Free cam zoom in", "type": "button"},
+        {"id": "FreeCamZoomOut", "description": "Free cam zoom out", "type": "button"},
+        {"id": "FixCameraRelativeToggle", "description": "Fix camera position", "type": "button"},
+        {"id": "FixCameraWorldToggle", "description": "Fix camera world position", "type": "button"},
+        {"id": "QuitCamera", "description": "Exit camera suite", "type": "button"},
+        {"id": "VanityCameraOne", "description": "Cockpit camera", "type": "button"},
+        {"id": "VanityCameraTwo", "description": "Commander camera", "type": "button"},
+        {"id": "VanityCameraThree", "description": "Co-pilot camera", "type": "button"},
+        {"id": "VanityCameraFour", "description": "Front camera", "type": "button"},
+        {"id": "VanityCameraFive", "description": "Back camera", "type": "button"},
+        {"id": "VanityCameraSix", "description": "Low camera", "type": "button"}
+      ]
+    },
+    "fss": {
+      "name": "Full Spectrum Scanner",
+      "description": "Discovery scanner and FSS controls",
+      "events": [
+        {"id": "ExplorationFSSEnter", "description": "Enter FSS mode", "type": "button"},
+        {"id": "ExplorationFSSQuit", "description": "Exit FSS mode", "type": "button"},
+        {"id": "ExplorationFSSDiscoveryScan", "description": "FSS discovery scan (honk)", "type": "button"},
+        {"id": "ExplorationFSSCameraPitchIncreaseButton", "description": "FSS pitch up", "type": "button"},
+        {"id": "ExplorationFSSCameraPitchDecreaseButton", "description": "FSS pitch down", "type": "button"},
+        {"id": "ExplorationFSSCameraYawIncreaseButton", "description": "FSS yaw right", "type": "button"},
+        {"id": "ExplorationFSSCameraYawDecreaseButton", "description": "FSS yaw left", "type": "button"},
+        {"id": "ExplorationFSSCameraPitch", "description": "FSS camera pitch axis", "type": "axis"},
+        {"id": "ExplorationFSSCameraYaw", "description": "FSS camera yaw axis", "type": "axis"},
+        {"id": "ExplorationFSSZoomIn", "description": "FSS zoom in", "type": "button"},
+        {"id": "ExplorationFSSZoomOut", "description": "FSS zoom out", "type": "button"},
+        {"id": "ExplorationFSSMiniZoomIn", "description": "FSS stepped zoom in", "type": "button"},
+        {"id": "ExplorationFSSMiniZoomOut", "description": "FSS stepped zoom out", "type": "button"},
+        {"id": "ExplorationFSSRadioTuningX_Increase", "description": "FSS tuning right", "type": "button"},
+        {"id": "ExplorationFSSRadioTuningX_Decrease", "description": "FSS tuning left", "type": "button"},
+        {"id": "ExplorationFSSRadioTuningX_Raw", "description": "FSS tuning axis", "type": "axis"},
+        {"id": "ExplorationFSSTarget", "description": "FSS target current signal", "type": "button"},
+        {"id": "ExplorationFSSShowHelp", "description": "FSS show help", "type": "button"}
+      ]
+    },
+    "dss": {
+      "name": "Detailed Surface Scanner",
+      "description": "DSS probe launching controls",
+      "events": [
+        {"id": "ExplorationSAAChangeScannedAreaViewToggle", "description": "DSS toggle scan area view", "type": "button"},
+        {"id": "ExplorationSAAExitThirdPerson", "description": "Exit DSS", "type": "button"},
+        {"id": "ExplorationSAANextGenus", "description": "DSS next genus", "type": "button"},
+        {"id": "ExplorationSAAPreviousGenus", "description": "DSS previous genus", "type": "button"},
+        {"id": "SAAThirdPersonPitchUpButton", "description": "DSS pitch up", "type": "button"},
+        {"id": "SAAThirdPersonPitchDownButton", "description": "DSS pitch down", "type": "button"},
+        {"id": "SAAThirdPersonYawLeftButton", "description": "DSS yaw left", "type": "button"},
+        {"id": "SAAThirdPersonYawRightButton", "description": "DSS yaw right", "type": "button"},
+        {"id": "SAAThirdPersonFovInButton", "description": "DSS zoom in", "type": "button"},
+        {"id": "SAAThirdPersonFovOutButton", "description": "DSS zoom out", "type": "button"}
+      ]
+    },
+    "srv": {
+      "name": "SRV Controls",
+      "description": "Surface Recon Vehicle controls",
+      "events": [
+        {"id": "SteeringAxis", "description": "SRV steering axis", "type": "axis"},
+        {"id": "SteerLeftButton", "description": "SRV steer left", "type": "button"},
+        {"id": "SteerRightButton", "description": "SRV steer right", "type": "button"},
+        {"id": "BuggyRollAxisRaw", "description": "SRV roll axis", "type": "axis"},
+        {"id": "BuggyRollLeftButton", "description": "SRV roll left", "type": "button"},
+        {"id": "BuggyRollRightButton", "description": "SRV roll right", "type": "button"},
+        {"id": "BuggyPitchAxis", "description": "SRV pitch axis", "type": "axis"},
+        {"id": "BuggyPitchUpButton", "description": "SRV pitch up", "type": "button"},
+        {"id": "BuggyPitchDownButton", "description": "SRV pitch down", "type": "button"},
+        {"id": "DriveSpeedAxis", "description": "SRV throttle axis", "type": "axis"},
+        {"id": "BuggyThrottleIncrement", "description": "SRV throttle increase", "type": "button"},
+        {"id": "BuggyThrottleDecrement", "description": "SRV throttle decrease", "type": "button"},
+        {"id": "BuggyPrimaryFireButton", "description": "SRV primary fire", "type": "button"},
+        {"id": "BuggySecondaryFireButton", "description": "SRV secondary fire", "type": "button"},
+        {"id": "AutoBreakBuggyButton", "description": "SRV handbrake", "type": "button"},
+        {"id": "HeadlightsBuggyButton", "description": "SRV headlights", "type": "button"},
+        {"id": "ToggleBuggyTurretButton", "description": "SRV toggle turret", "type": "button"},
+        {"id": "SelectTarget_Buggy", "description": "SRV select target ahead", "type": "button"},
+        {"id": "VerticalThrustersButton", "description": "SRV vertical thrusters", "type": "button"},
+        {"id": "ToggleDriveAssist", "description": "Toggle drive assist", "type": "button"},
+        {"id": "BuggyToggleReverseThrottleInput", "description": "SRV reverse throttle", "type": "button"}
+      ]
+    },
+    "fighter": {
+      "name": "Fighter Controls",
+      "description": "Ship-launched fighter controls",
+      "events": [
+        {"id": "OrderDefensiveBehaviour", "description": "Order: Defensive", "type": "button"},
+        {"id": "OrderAggressiveBehaviour", "description": "Order: Aggressive", "type": "button"},
+        {"id": "OrderFocusTarget", "description": "Order: Focus target", "type": "button"},
+        {"id": "OrderHoldFire", "description": "Order: Hold fire", "type": "button"},
+        {"id": "OrderHoldPosition", "description": "Order: Hold position", "type": "button"},
+        {"id": "OrderFollow", "description": "Order: Follow", "type": "button"},
+        {"id": "OrderRequestDock", "description": "Order: Request dock", "type": "button"},
+        {"id": "OpenOrders", "description": "Open orders menu", "type": "button"}
+      ]
+    },
+    "multiCrew": {
+      "name": "Multi-Crew",
+      "description": "Multi-crew specific controls",
+      "events": [
+        {"id": "MultiCrewToggleMode", "description": "Toggle multi-crew mode", "type": "button"},
+        {"id": "MultiCrewPrimaryFire", "description": "Multi-crew primary fire", "type": "button"},
+        {"id": "MultiCrewSecondaryFire", "description": "Multi-crew secondary fire", "type": "button"},
+        {"id": "MultiCrewPrimaryUtilityFire", "description": "Multi-crew primary utility", "type": "button"},
+        {"id": "MultiCrewSecondaryUtilityFire", "description": "Multi-crew secondary utility", "type": "button"},
+        {"id": "MultiCrewThirdPersonPitchUpButton", "description": "Multi-crew pitch up", "type": "button"},
+        {"id": "MultiCrewThirdPersonPitchDownButton", "description": "Multi-crew pitch down", "type": "button"},
+        {"id": "MultiCrewThirdPersonYawLeftButton", "description": "Multi-crew yaw left", "type": "button"},
+        {"id": "MultiCrewThirdPersonYawRightButton", "description": "Multi-crew yaw right", "type": "button"},
+        {"id": "MultiCrewThirdPersonFovInButton", "description": "Multi-crew zoom in", "type": "button"},
+        {"id": "MultiCrewThirdPersonFovOutButton", "description": "Multi-crew zoom out", "type": "button"},
+        {"id": "MultiCrewCockpitUICycleForward", "description": "Multi-crew cycle UI forward", "type": "button"},
+        {"id": "MultiCrewCockpitUICycleBackward", "description": "Multi-crew cycle UI backward", "type": "button"}
+      ]
+    },
+    "onFoot": {
+      "name": "On Foot (Odyssey)",
+      "description": "On-foot controls for Odyssey expansion",
+      "events": [
+        {"id": "HumanoidForwardButton", "description": "Move forward", "type": "button"},
+        {"id": "HumanoidBackwardButton", "description": "Move backward", "type": "button"},
+        {"id": "HumanoidStrafeLeftButton", "description": "Strafe left", "type": "button"},
+        {"id": "HumanoidStrafeRightButton", "description": "Strafe right", "type": "button"},
+        {"id": "HumanoidSprintButton", "description": "Sprint", "type": "button"},
+        {"id": "HumanoidCrouchButton", "description": "Crouch/Toggle crouch", "type": "button"},
+        {"id": "HumanoidJumpButton", "description": "Jump", "type": "button"},
+        {"id": "HumanoidPrimaryFireButton", "description": "Primary fire", "type": "button"},
+        {"id": "HumanoidZoomButton", "description": "Aim down sights", "type": "button"},
+        {"id": "HumanoidReloadButton", "description": "Reload", "type": "button"},
+        {"id": "HumanoidSelectPrimaryWeaponButton", "description": "Select primary weapon", "type": "button"},
+        {"id": "HumanoidSelectSecondaryWeaponButton", "description": "Select secondary weapon", "type": "button"},
+        {"id": "HumanoidHideWeaponButton", "description": "Holster weapon", "type": "button"},
+        {"id": "HumanoidSelectUtilityWeaponButton", "description": "Select utility item", "type": "button"},
+        {"id": "HumanoidSelectNextWeaponButton", "description": "Cycle next weapon", "type": "button"},
+        {"id": "HumanoidSelectPreviousWeaponButton", "description": "Cycle previous weapon", "type": "button"},
+        {"id": "HumanoidSwitchToRechargeTool", "description": "Switch to energylink", "type": "button"},
+        {"id": "HumanoidSwitchToCompAnalyser", "description": "Switch to profile analyser", "type": "button"},
+        {"id": "HumanoidToggleToolModeButton", "description": "Toggle tool mode", "type": "button"},
+        {"id": "HumanoidSelectNextGrenadeTypeButton", "description": "Cycle grenade type", "type": "button"},
+        {"id": "HumanoidThrowGrenadeButton", "description": "Throw grenade", "type": "button"},
+        {"id": "HumanoidMeleeButton", "description": "Melee attack", "type": "button"},
+        {"id": "HumanoidOpenAccessPanelButton", "description": "Open access panel", "type": "button"},
+        {"id": "HumanoidInteractButton", "description": "Interact", "type": "button"},
+        {"id": "HumanoidToggleFlashlightButton", "description": "Toggle flashlight", "type": "button"},
+        {"id": "HumanoidToggleNightVisionButton", "description": "Toggle night vision", "type": "button"},
+        {"id": "HumanoidToggleShieldsButton", "description": "Toggle personal shields", "type": "button"},
+        {"id": "HumanoidEmoteWheelButton", "description": "Open emote wheel", "type": "button"},
+        {"id": "HumanoidItemWheelButton", "description": "Open item wheel", "type": "button"},
+        {"id": "HumanoidConflictContextualUIButton", "description": "Show conflict zone info", "type": "button"}
+      ]
+    },
+    "misc": {
+      "name": "Miscellaneous",
+      "description": "General game controls",
+      "events": [
+        {"id": "MicrophoneMute", "description": "Mute microphone", "type": "button"},
+        {"id": "Pause", "description": "Pause menu", "type": "button"},
+        {"id": "FriendsMenu", "description": "Friends menu", "type": "button"},
+        {"id": "HMDReset", "description": "Reset HMD orientation", "type": "button"},
+        {"id": "OculusReset", "description": "Reset Oculus orientation", "type": "button"},
+        {"id": "Screenshot", "description": "Take screenshot", "type": "button"},
+        {"id": "HighResScreenshot", "description": "High resolution screenshot", "type": "button"},
+        {"id": "ShowPGScoreSummaryInput", "description": "Show score summary", "type": "button"},
+        {"id": "ShowFrameRate", "description": "Show frame rate", "type": "button"}
+      ]
+    }
+  }
+}

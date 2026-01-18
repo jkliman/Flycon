@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self';">
+  <title>FLYCON - Flight Control Mapping Software</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/keyboard.css">
+  <link rel="stylesheet" href="css/gamepad.css">
+  <link rel="stylesheet" href="css/hotas.css">
+  <link rel="stylesheet" href="css/controller-image.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo">
+        <span class="logo-text">FLYCON</span>
+        <span class="logo-subtitle">Flight Control Mapping Software</span>
+      </div>
+      <div class="game-selector">
+        <label for="game-select">Game:</label>
+        <select id="game-select" class="game-dropdown">
+          <option value="star-citizen">Star Citizen</option>
+          <option value="msfs2024">MSFS 2024</option>
+          <option value="dcs-world">DCS World</option>
+          <option value="xplane">X-Plane 12</option>
+          <option value="elite-dangerous">Elite Dangerous</option>
+        </select>
+      </div>
+      <nav class="header-nav">
+        <button class="nav-btn active" data-view="brand">HOTAS</button>
+        <button class="nav-btn" data-view="gamepad">Gamepad</button>
+        <button class="nav-btn" data-view="keyboard">Keyboard</button>
+      </nav>
+      <div class="header-actions">
+        <div class="action-group">
+          <button id="btn-load-file" class="action-btn-sm" title="Load Bindings">📂</button>
+          <span class="action-label">Load Bindings</span>
+        </div>
+        <div class="action-group">
+          <button id="btn-export" class="action-btn-sm export-btn" title="Export Bindings">💾</button>
+          <span class="action-label">Save Bindings</span>
+        </div>
+        <div class="action-group target-group">
+          <button id="btn-select-folder" class="action-btn-sm folder-btn" title="Select Export Folder">📁</button>
+          <div class="target-info">
+            <span class="mapping-path" id="mapping-path" title="Click folder icon to change">Select folder...</span>
+            <span class="action-sublabel">Select folder to export bindings</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Sidebar - Categories & Custom Bindings List -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <button class="sidebar-toggle" id="sidebar-toggle" title="Collapse sidebar">◀</button>
+          <h3>Categories</h3>
+          <input type="text" id="search-bindings" placeholder="Search..." class="search-input">
+        </div>
+        <!-- Categories list with bindings - dynamically populated based on game -->
+        <div class="category-list" id="category-list">
+          <!-- Categories will be dynamically generated based on selected game -->
+        </div>
+      </aside>
+
+      <!-- Visualization Area -->
+      <section class="visualization-area">
+        <!-- Device Visualization -->
+        <div class="device-container" id="device-container">
+          <!-- Brand Selection View (Initial Screen) -->
+          <div class="device-view active" id="brand-view">
+            <div class="brand-selection-container">
+              <h2 class="selection-title">Select Your Hardware Brand</h2>
+              <div class="brand-grid">
+                <!-- Logitech -->
+                <div class="brand-card" data-brand="logitech">
+                  <div class="brand-logo">
+                    <img src="../../assets/Logo/logitech-Logo.png" alt="Logitech">
+                  </div>
+                </div>
+                <!-- MOZA -->
+                <div class="brand-card" data-brand="moza">
+                  <div class="brand-logo">
+                    <img src="../../assets/Logo/moza logo.jpg" alt="MOZA">
+                  </div>
+                </div>
+                <!-- VKB -->
+                <div class="brand-card" data-brand="vkb">
+                  <div class="brand-logo">
+                    <img src="../../assets/Logo/download.png" alt="VKB">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hardware Selection View (After Brand Selection) -->
+          <div class="device-view" id="hardware-view">
+            <div class="hardware-selection-container">
+              <button class="back-btn" id="back-to-brands">← Back to Brands</button>
+              <h2 class="selection-title" id="hardware-title">Select Hardware</h2>
+              <div class="hardware-grid" id="hardware-grid">
+                <!-- Hardware cards will be dynamically populated -->
+              </div>
+            </div>
+          </div>
+
+          <!-- HOTAS Config View -->
+          <div class="device-view" id="hotas-view">
+            <div class="config-header">
+              <button class="back-btn" id="back-to-hardware">← Back to Hardware</button>
+              <h2 class="config-title" id="config-title">Configure Device</h2>
+            </div>
+            <div class="hotas-container" id="hotas-container">
+              <!-- HOTAS will be rendered here -->
+            </div>
+          </div>
+
+          <!-- Gamepad View -->
+          <div class="device-view" id="gamepad-view">
+            <div class="gamepad-container" id="gamepad-container">
+              <!-- Gamepad will be rendered here -->
+            </div>
+          </div>
+
+          <!-- Keyboard View -->
+          <div class="device-view" id="keyboard-view">
+            <div class="keyboard-container" id="keyboard-container">
+              <!-- Keyboard will be rendered here -->
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+
+    <!-- Manual Entry Modal -->
+    <div class="modal" id="manual-entry-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Manual Binding Entry</h2>
+          <button class="modal-close" id="close-manual-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="manual-device">Device Type</label>
+            <select id="manual-device">
+              <option value="keyboard">Keyboard</option>
+              <option value="mouse">Mouse</option>
+              <option value="gamepad">Gamepad</option>
+              <option value="joystick">Joystick</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="manual-key">Key / Button</label>
+            <input type="text" id="manual-key" placeholder="Press a key or enter button name">
+          </div>
+          <div class="form-group">
+            <label for="manual-action">Action</label>
+            <input type="text" id="manual-action" placeholder="e.g., v_attack1">
+          </div>
+          <div class="form-group">
+            <label for="manual-category">Category</label>
+            <select id="manual-category">
+              <option value="flight">Flight - Movement</option>
+              <option value="weapons">Flight - Weapons</option>
+              <option value="targeting">Flight - Targeting</option>
+              <option value="shields">Flight - Shields</option>
+              <option value="power">Flight - Power</option>
+              <option value="mining">Mining</option>
+              <option value="fps">On Foot</option>
+              <option value="vehicles">Ground Vehicles</option>
+              <option value="social">Social / VOIP</option>
+              <option value="ui">User Interface</option>
+            </select>
+          </div>
+          <button class="btn-primary" id="btn-add-binding">Add Binding</button>
+        </div>
+        <div class="modal-footer">
+          <div class="manual-bindings-list" id="manual-bindings-list">
+            <h4>Added Bindings</h4>
+            <ul id="added-bindings"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Load Modal -->
+    <div class="modal" id="file-load-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Load Keybinding File</h2>
+          <button class="modal-close" id="close-file-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="detected-paths" id="detected-paths">
+            <h4>Detected Star Citizen Installations</h4>
+            <div class="paths-list" id="paths-list">
+              <p>Searching...</p>
+            </div>
+          </div>
+          <div class="divider">
+            <span>OR</span>
+          </div>
+          <button class="btn-secondary" id="btn-browse-file">Browse for File...</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="export-modal">
+      <div class="modal-content export-modal-content">
+        <div class="modal-header">
+          <h2>Export Bindings</h2>
+          <button class="modal-close" id="close-export-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="export-filename">File Name</label>
+            <div class="filename-input-wrapper">
+              <input type="text" id="export-filename" placeholder="layout_my_bindings">
+              <span class="filename-ext">.xml</span>
+            </div>
+          </div>
+          <div class="export-info">
+            <p class="export-path-label">Export to:</p>
+            <p class="export-path" id="export-path">No folder selected</p>
+          </div>
+          <button class="btn-primary" id="btn-confirm-export">Export Bindings</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Switch Confirmation Modal -->
+    <div class="modal" id="game-switch-modal">
+      <div class="modal-content confirm-modal-content">
+        <div class="modal-header">
+          <h2>Switch Game Profile</h2>
+          <button class="modal-close" id="close-game-switch-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="confirm-icon">⚠️</div>
+          <p class="confirm-message">You have existing control mappings.</p>
+          <div class="confirm-warning">
+            Switching to a different game profile will remove all your current bindings. This action cannot be undone.
+          </div>
+          <div class="confirm-buttons">
+            <button class="btn-cancel" id="btn-cancel-switch">Go Back</button>
+            <button class="btn-danger" id="btn-confirm-switch">Switch Anyway</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status Bar with Connected Devices -->
+    <footer class="status-bar">
+      <div class="status-left">
+        <span class="status-text" id="status-text">Ready - No bindings loaded</span>
+      </div>
+      <div class="status-devices" id="connected-devices">
+        <span class="status-label">Connected:</span>
+        <div class="device-indicators" id="device-indicators">
+          <span class="device-indicator disconnected" id="indicator-gamepad" title="Gamepad">
+            <span class="indicator-dot"></span>
+            <span class="indicator-name">Gamepad</span>
+          </span>
+          <span class="device-indicator disconnected" id="indicator-hotas" title="HOTAS">
+            <span class="indicator-dot"></span>
+            <span class="indicator-name">HOTAS</span>
+          </span>
+        </div>
+      </div>
+      <span class="status-info" id="status-info"></span>
+    </footer>
+
+    <!-- Alpha Build Notification Ribbon -->
+    <div class="alpha-ribbon">
+      <span class="alpha-badge">ALPHA</span>
+      <span class="alpha-text">This application is still in development. The app may not function correctly and may have many bugs.</span>
+    </div>
+  </div>
+
+  <script src="js/keyboard-context-menu.js"></script>
+  <script src="js/keyboard.js"></script>
+  <script src="js/gamepad.js"></script>
+  <script src="js/hotas.js"></script>
+  <script src="js/parser.js"></script>
+  <!-- Image-based visualizers with live input -->
+  <script src="js/gamepad-live.js"></script>
+  <script src="js/gamepad-context-menu.js"></script>
+  <script src="js/gamepad-image.js"></script>
+  <script src="js/binding-context-menu.js"></script>
+  <script src="js/hotas-image.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

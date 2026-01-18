@@ -1,0 +1,1007 @@
+/* Gamepad Visualization Styles */
+
+.gamepad-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+}
+
+.gamepad-visual {
+  position: relative;
+  width: 700px;
+  height: 450px;
+}
+
+/* Gamepad Body - Xbox Style */
+.gamepad-body {
+  position: absolute;
+  width: 600px;
+  height: 380px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, #2a2a2a 0%, #1a1a1a 100%);
+  border-radius: 180px 180px 100px 100px;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -5px 20px rgba(0, 0, 0, 0.3);
+  border: 2px solid #3a3a3a;
+}
+
+/* Controller Grips */
+.gamepad-grip {
+  position: absolute;
+  width: 120px;
+  height: 200px;
+  bottom: -60px;
+  background: linear-gradient(180deg, #252525 0%, #1a1a1a 100%);
+  border-radius: 40px 40px 60px 60px;
+  border: 2px solid #3a3a3a;
+}
+
+.gamepad-grip.left {
+  left: 40px;
+  transform: rotate(-15deg);
+}
+
+.gamepad-grip.right {
+  right: 40px;
+  transform: rotate(15deg);
+}
+
+/* Thumbsticks */
+.thumbstick {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  background: radial-gradient(circle at 30% 30%, #4a4a4a 0%, #252525 100%);
+  border-radius: 50%;
+  border: 3px solid #5a5a5a;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.thumbstick::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle at 30% 30%, #3a3a3a 0%, #1a1a1a 100%);
+  border-radius: 50%;
+  border: 2px solid #4a4a4a;
+}
+
+.thumbstick:hover {
+  transform: scale(1.05);
+  border-color: var(--accent-primary);
+}
+
+.thumbstick.bound {
+  border-color: var(--accent-primary);
+  box-shadow:
+    0 4px 8px rgba(0, 0, 0, 0.4),
+    0 0 15px rgba(0, 162, 255, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.thumbstick-left {
+  left: 100px;
+  top: 120px;
+}
+
+.thumbstick-right {
+  right: 140px;
+  top: 200px;
+}
+
+/* D-Pad */
+.dpad {
+  position: absolute;
+  left: 140px;
+  top: 220px;
+  width: 100px;
+  height: 100px;
+}
+
+.dpad-btn {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(180deg, #3a3a3a 0%, #252525 100%);
+  border: 2px solid #4a4a4a;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 14px;
+}
+
+.dpad-btn:hover {
+  background: linear-gradient(180deg, #4a4a4a 0%, #353535 100%);
+}
+
+.dpad-btn.bound {
+  background: linear-gradient(180deg, #1e4a7a 0%, #153a5f 100%);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.dpad-up {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 6px 6px 0 0;
+}
+
+.dpad-down {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 0 0 6px 6px;
+}
+
+.dpad-left {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 6px 0 0 6px;
+}
+
+.dpad-right {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  border-radius: 0 6px 6px 0;
+}
+
+.dpad-center {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 4px;
+  background: #2a2a2a;
+}
+
+/* Face Buttons */
+.face-buttons {
+  position: absolute;
+  right: 100px;
+  top: 100px;
+  width: 120px;
+  height: 120px;
+}
+
+.face-btn {
+  position: absolute;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: 3px solid;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.face-btn:hover {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
+
+.face-btn:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
+.face-btn-y {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #f0c030 0%, #d4a520 100%);
+  border-color: #ffdd55;
+  color: #333;
+}
+
+.face-btn-a {
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #40a040 0%, #308030 100%);
+  border-color: #50c050;
+  color: white;
+}
+
+.face-btn-x {
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, #4080d0 0%, #3060a0 100%);
+  border-color: #60a0e0;
+  color: white;
+}
+
+.face-btn-b {
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, #d04040 0%, #a03030 100%);
+  border-color: #e05050;
+  color: white;
+}
+
+.face-btn.bound::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  top: -5px;
+  right: -5px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--accent-primary);
+}
+
+/* Bumpers and Triggers */
+.bumper {
+  position: absolute;
+  width: 120px;
+  height: 35px;
+  top: 20px;
+  background: linear-gradient(180deg, #3a3a3a 0%, #252525 100%);
+  border: 2px solid #4a4a4a;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+}
+
+.bumper:hover {
+  background: linear-gradient(180deg, #4a4a4a 0%, #353535 100%);
+}
+
+.bumper.bound {
+  background: linear-gradient(180deg, #1e4a7a 0%, #153a5f 100%);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.bumper-left {
+  left: 80px;
+}
+
+.bumper-right {
+  right: 80px;
+}
+
+.trigger {
+  position: absolute;
+  width: 80px;
+  height: 60px;
+  top: -30px;
+  background: linear-gradient(180deg, #3a3a3a 0%, #252525 100%);
+  border: 2px solid #4a4a4a;
+  border-radius: 15px 15px 30px 30px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+}
+
+.trigger:hover {
+  background: linear-gradient(180deg, #4a4a4a 0%, #353535 100%);
+}
+
+.trigger.bound {
+  background: linear-gradient(180deg, #1e4a7a 0%, #153a5f 100%);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.trigger-left {
+  left: 100px;
+}
+
+.trigger-right {
+  right: 100px;
+}
+
+/* Center Buttons */
+.center-buttons {
+  position: absolute;
+  left: 50%;
+  top: 100px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.center-btn {
+  width: 35px;
+  height: 35px;
+  background: linear-gradient(180deg, #3a3a3a 0%, #252525 100%);
+  border: 2px solid #4a4a4a;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #888;
+}
+
+.center-btn:hover {
+  background: linear-gradient(180deg, #4a4a4a 0%, #353535 100%);
+}
+
+.center-btn.bound {
+  background: linear-gradient(180deg, #1e4a7a 0%, #153a5f 100%);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.xbox-btn {
+  width: 50px;
+  height: 50px;
+  background: radial-gradient(circle at 30% 30%, #2a2a2a 0%, #1a1a1a 100%);
+  border: 3px solid #4a4a4a;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Gamepad Labels */
+.gamepad-label {
+  position: absolute;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.label-ls { left: 85px; top: 200px; }
+.label-rs { right: 125px; top: 280px; }
+.label-dpad { left: 155px; top: 330px; }
+
+/* Binding Legend */
+.gamepad-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  max-width: 700px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.legend-button {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.legend-button.face {
+  border-radius: 50%;
+}
+
+.legend-button.bound {
+  background: var(--key-bound);
+  border: 2px solid var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.legend-button.unbound {
+  background: var(--key-unbound);
+  border: 2px solid var(--border-color);
+  color: var(--text-muted);
+}
+
+.legend-action {
+  color: var(--text-secondary);
+}
+
+/* PlayStation Style Variant */
+.gamepad-container.playstation .face-btn-y::before { content: '△'; }
+.gamepad-container.playstation .face-btn-a::before { content: '✕'; }
+.gamepad-container.playstation .face-btn-x::before { content: '□'; }
+.gamepad-container.playstation .face-btn-b::before { content: '○'; }
+
+.gamepad-container.playstation .face-btn {
+  background: linear-gradient(180deg, #3a3a3a 0%, #252525 100%);
+  border-color: #5a5a5a;
+  color: white;
+}
+
+/* Gamepad Binding Context Menu */
+.gamepad-binding-menu {
+  position: fixed;
+  z-index: 1000;
+  width: 320px;
+  max-height: 400px;
+  background: var(--bg-secondary, #111820);
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.gamepad-binding-menu .binding-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-tertiary, #1a2332);
+  border-bottom: 1px solid var(--border-color, #30363d);
+}
+
+.gamepad-binding-menu .binding-menu-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-primary, #00a2ff);
+}
+
+.gamepad-binding-menu .binding-menu-close {
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #8b949e);
+  font-size: 18px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gamepad-binding-menu .binding-menu-close:hover {
+  background: var(--bg-hover, #243044);
+  color: var(--text-primary, #e6edf3);
+}
+
+.gamepad-binding-menu .binding-menu-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.gamepad-binding-menu .binding-dropdown-group {
+  margin-bottom: 16px;
+}
+
+.gamepad-binding-menu .binding-dropdown-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary, #8b949e);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.gamepad-binding-menu .binding-dropdown {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg-tertiary, #1a2332);
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 4px;
+  color: var(--text-primary, #e6edf3);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.gamepad-binding-menu .binding-dropdown:focus {
+  outline: none;
+  border-color: var(--accent-primary, #00a2ff);
+}
+
+.gamepad-binding-menu .current-bindings-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color, #30363d);
+}
+
+.gamepad-binding-menu .current-bindings-list {
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.gamepad-binding-menu .no-bindings {
+  font-size: 11px;
+  color: var(--text-muted, #6e7681);
+  font-style: italic;
+  margin: 0;
+}
+
+.gamepad-binding-menu .current-binding-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  background: var(--bg-tertiary, #1a2332);
+  border-radius: 4px;
+  margin-bottom: 4px;
+}
+
+.gamepad-binding-menu .binding-action {
+  font-size: 11px;
+  color: var(--text-secondary, #8b949e);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gamepad-binding-menu .binding-remove-btn {
+  width: 20px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  color: var(--accent-danger, #ff4757);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.gamepad-binding-menu .binding-remove-btn:hover {
+  background: rgba(255, 71, 87, 0.2);
+}
+
+.gamepad-binding-menu .binding-menu-footer {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color, #30363d);
+  background: var(--bg-tertiary, #1a2332);
+}
+
+.gamepad-binding-menu .binding-apply-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--accent-primary, #00a2ff);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gamepad-binding-menu .binding-apply-btn:hover {
+  background: #0090e0;
+}
+
+.gamepad-binding-menu .binding-clear-btn {
+  padding: 8px 12px;
+  background: transparent;
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 4px;
+  color: var(--text-secondary, #8b949e);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.gamepad-binding-menu .binding-clear-btn:hover {
+  background: var(--bg-hover, #243044);
+  color: var(--text-primary, #e6edf3);
+}
+
+/* ===== Xbox Controller Image-Based Visualization ===== */
+
+.gamepad-image-container {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.gamepad-header {
+  text-align: center;
+}
+
+.gamepad-header h3 {
+  margin: 0;
+  color: var(--text-primary, #e6edf3);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.gamepad-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: var(--bg-tertiary, #1a2332);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #30363d);
+}
+
+.status-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.connected {
+  background: #40c040;
+  box-shadow: 0 0 8px rgba(64, 192, 64, 0.5);
+}
+
+.status-indicator.disconnected {
+  background: #666;
+}
+
+.status-text {
+  color: var(--text-primary, #e6edf3);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.status-hint {
+  color: var(--text-muted, #6e7681);
+  font-size: 11px;
+  margin-left: auto;
+}
+
+/* Xbox Controller Container - shrunk by 10% */
+.xbox-controller-container {
+  position: relative;
+  width: 90%;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
+.xbox-controller-image-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+}
+
+.xbox-controller-base-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+/* Xbox Hotspot Overlay */
+.xbox-hotspot-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Xbox hotspots - styled similar to HOTAS (transparent, hover/click detection only) */
+.xbox-hotspot {
+  position: absolute;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  z-index: 4;
+  pointer-events: all !important;
+}
+
+/* Face buttons (A, B, X, Y) - circular */
+.xbox-hotspot.face-button {
+  border-radius: 50%;
+}
+
+/* Thumbsticks - circular */
+.xbox-hotspot.thumbstick {
+  border-radius: 50%;
+}
+
+/* Bumpers - rounded rectangle */
+.xbox-hotspot.bumper {
+  border-radius: 12px;
+}
+
+/* D-Pad - rounded square */
+.xbox-hotspot.dpad {
+  border-radius: 50%;
+}
+
+/* Xbox hotspot hover - subtle glow like HOTAS */
+.xbox-hotspot:hover {
+  background: rgba(0, 162, 255, 0.15);
+  border: 2px solid rgba(0, 162, 255, 0.6);
+  box-shadow: 0 0 12px rgba(0, 162, 255, 0.4);
+}
+
+/* Xbox hotspot selected - matches HOTAS accent */
+.xbox-hotspot.selected {
+  background: rgba(0, 162, 255, 0.2);
+  border: 2px solid var(--accent-primary, #00a2ff);
+  box-shadow: 0 0 15px rgba(0, 162, 255, 0.6);
+}
+
+/* Xbox hotspot pressed (live input) */
+.xbox-hotspot.pressed {
+  background: rgba(0, 162, 255, 0.3);
+  border: 2px solid var(--accent-primary, #00a2ff);
+  box-shadow: 0 0 20px rgba(0, 162, 255, 0.8);
+}
+
+/* Bound indicator removed per user request */
+
+/* Gamepad Info Panel - Compact single-line at bottom */
+.gamepad-info-panel {
+  background: var(--bg-secondary, #111820);
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.gamepad-info-panel.compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  flex-shrink: 0;
+}
+
+.gamepad-info-panel.compact .info-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary, #8b949e);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gamepad-info-panel.compact .info-content {
+  flex: 1;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gamepad-info-panel.compact .hint-text {
+  color: var(--text-muted, #6e7681);
+  font-style: italic;
+}
+
+.gamepad-info-panel.compact .button-name {
+  font-weight: 600;
+  color: var(--accent-primary, #00a2ff);
+}
+
+.gamepad-info-panel.compact .no-binding {
+  color: var(--text-muted, #6e7681);
+  font-style: italic;
+}
+
+.gamepad-info-panel.compact .binding-actions {
+  color: var(--text-primary, #e6edf3);
+}
+
+/* Axis Display Panel - styled like HOTAS axis panel, shrunk by 20% */
+.axis-display-panel {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 6px 10px;
+  background: var(--bg-secondary, #111820);
+  border-radius: 8px;
+  border: 1px solid var(--border-color, #30363d);
+  flex-shrink: 0;
+  transform: scale(0.8);
+  transform-origin: top center;
+  margin-bottom: -20px;
+}
+
+.axis-display-header {
+  width: 100%;
+  text-align: center;
+  padding: 4px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary, #8b949e);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid var(--border-color, #30363d);
+  margin-bottom: 6px;
+}
+
+.axis-displays {
+  display: flex;
+  gap: 16px;
+  padding: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.axis-display-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.axis-display-label {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text-secondary, #8b949e);
+  text-transform: uppercase;
+}
+
+/* Axis Visual (Stick display) - styled like HOTAS */
+.axis-visual {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  background: var(--bg-tertiary, #1a2332);
+  border: 2px solid var(--border-color, #30363d);
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.axis-crosshair {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.axis-crosshair::before,
+.axis-crosshair::after {
+  content: '';
+  position: absolute;
+  background: var(--border-color, #30363d);
+}
+
+.axis-crosshair::before {
+  width: 1px;
+  height: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.axis-crosshair::after {
+  width: 100%;
+  height: 1px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.axis-dot {
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  background: var(--accent-primary, #00a2ff);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px rgba(0, 162, 255, 0.5);
+  transition: left 0.05s ease-out, top 0.05s ease-out;
+}
+
+.axis-values {
+  display: flex;
+  gap: 8px;
+  font-family: 'Consolas', monospace;
+  font-size: 9px;
+  color: var(--text-muted, #6e7681);
+}
+
+/* Trigger Bars - styled like HOTAS */
+.axis-display-group.triggers {
+  min-width: 80px;
+}
+
+.trigger-bars {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.trigger-bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.trigger-label {
+  font-size: 8px;
+  font-weight: 600;
+  color: var(--text-secondary, #8b949e);
+  text-transform: uppercase;
+}
+
+.trigger-bar {
+  width: 20px;
+  height: 48px;
+  background: var(--bg-tertiary, #1a2332);
+  border: 1px solid var(--border-color, #30363d);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.trigger-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  background: linear-gradient(to top, var(--accent-primary, #00a2ff), var(--accent-secondary, #00cc88));
+  transition: height 0.05s ease;
+  border-radius: 0 0 2px 2px;
+}
+
+.trigger-value {
+  font-size: 9px;
+  color: var(--text-muted, #6e7681);
+  font-family: 'Consolas', monospace;
+}
+
+/* Axis button trigger style - small version */
+.hotas-axis-btn.trigger-btn {
+  padding: 4px 8px;
+  font-size: 9px;
+}
+
+/* Controller Visual Wrapper */
+.controller-visual-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}

@@ -1,0 +1,2230 @@
+/* Image-Based Controller Visualization Styles */
+
+/* Container */
+.gamepad-image-container,
+.hotas-image-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  max-width: 100%;
+  margin: 0 auto;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Ensure containers in device views take full width */
+.gamepad-container,
+.hotas-container {
+  width: 100%;
+}
+
+/* Controller Selector Tabs */
+.controller-selector {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  padding: 6px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.controller-tab {
+  padding: 6px 14px;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.controller-tab:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.controller-tab.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+/* Status Bar */
+.gamepad-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+  font-size: 12px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-indicator.connected {
+  background: #4caf50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.status-indicator.disconnected {
+  background: #666;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.gamepad-status-bar .status-text {
+  color: var(--text-primary);
+  font-weight: 500;
+  flex: 1;
+}
+
+.gamepad-status-bar .status-hint {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* Controller Visual Wrapper */
+.controller-visual-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: var(--bg-secondary);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+/* SVG Controller Styles */
+.controller-svg {
+  width: 100%;
+  max-width: 700px;
+  height: auto;
+}
+
+.controller-svg .controller-button {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.controller-svg .controller-button:hover {
+  filter: brightness(1.3);
+}
+
+.controller-svg .controller-button.hover rect,
+.controller-svg .controller-button.hover circle,
+.controller-svg .controller-button.hover path {
+  stroke: var(--accent-primary) !important;
+  stroke-width: 3 !important;
+}
+
+.controller-svg .controller-button.selected rect,
+.controller-svg .controller-button.selected circle,
+.controller-svg .controller-button.selected path {
+  stroke: var(--accent-primary) !important;
+  stroke-width: 4 !important;
+  filter: url(#glow);
+}
+
+.controller-svg .controller-button.pressed rect,
+.controller-svg .controller-button.pressed circle {
+  fill: var(--accent-primary) !important;
+  filter: url(#glow);
+}
+
+.controller-svg .controller-button.bound rect,
+.controller-svg .controller-button.bound circle {
+  stroke: var(--accent-secondary, #00cc88) !important;
+}
+
+.controller-svg .controller-button.bound::after {
+  content: '';
+  position: absolute;
+}
+
+/* Thumbstick specific animations */
+.controller-svg .thumbstick {
+  transition: transform 0.1s ease-out;
+}
+
+.controller-svg .thumbstick.pressed circle:first-child {
+  transform: scale(0.95);
+  transform-origin: center;
+}
+
+/* Info Panel */
+.gamepad-info-panel {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  padding: 16px;
+  min-height: 100px;
+}
+
+.info-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-content .hint-text {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.button-info .button-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-primary);
+  margin-bottom: 10px;
+}
+
+.button-info .no-binding {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.binding-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.binding-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  border-left: 3px solid var(--accent-primary);
+}
+
+.binding-row .binding-action {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.binding-row .binding-category {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: capitalize;
+}
+
+/* Custom Bindings Section */
+.custom-bindings-section,
+.sc-bindings-section {
+  margin-bottom: 12px;
+}
+
+.section-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.custom-bindings-section .section-label {
+  color: #4fc3f7;
+}
+
+.binding-row.custom-binding {
+  border-left-color: #4fc3f7;
+  background: rgba(79, 195, 247, 0.1);
+}
+
+.binding-row .binding-direction {
+  color: #4fc3f7;
+  font-weight: 600;
+  font-size: 12px;
+  min-width: 80px;
+}
+
+/* Axis Display Panel */
+.axis-display-panel {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  padding: 16px;
+}
+
+.axis-display-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.axis-displays {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.axis-display-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.axis-display-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+/* Axis Visual (Stick display) */
+.axis-visual {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  background: var(--bg-tertiary);
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  overflow: hidden;
+}
+
+.axis-crosshair {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.axis-crosshair::before,
+.axis-crosshair::after {
+  content: '';
+  position: absolute;
+  background: var(--border-color);
+}
+
+.axis-crosshair::before {
+  width: 1px;
+  height: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.axis-crosshair::after {
+  width: 100%;
+  height: 1px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.axis-dot {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  background: var(--accent-primary);
+  border-radius: 50%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px rgba(0, 162, 255, 0.5);
+  transition: left 0.05s ease-out, top 0.05s ease-out;
+}
+
+.axis-values {
+  display: flex;
+  gap: 15px;
+  font-family: 'Consolas', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Trigger Bars */
+.axis-display-group.triggers {
+  min-width: 150px;
+}
+
+.trigger-bars {
+  display: flex;
+  gap: 30px;
+  justify-content: center;
+}
+
+.trigger-bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.trigger-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.trigger-bar {
+  width: 30px;
+  height: 80px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  border: 2px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.trigger-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 0%;
+  background: linear-gradient(to top, var(--accent-primary), var(--accent-secondary, #00cc88));
+  transition: height 0.05s ease-out;
+  border-radius: 0 0 4px 4px;
+}
+
+.trigger-value {
+  font-family: 'Consolas', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* HOTAS Image Visualizer Styles */
+.hotas-image-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  height: 100%;
+  overflow: hidden;
+}
+
+.hotas-device-selector {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 6px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.hotas-tab {
+  padding: 5px 12px;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hotas-tab:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.hotas-tab.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+.hotas-visual-wrapper {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 10px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  align-items: flex-start;
+}
+
+.hotas-device-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.device-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hotas-svg {
+  width: 100%;
+  max-width: 350px;
+  height: auto;
+}
+
+.hotas-svg .hotas-button {
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hotas-svg .hotas-button:hover {
+  filter: brightness(1.3);
+}
+
+.hotas-svg .hotas-button.hover rect,
+.hotas-svg .hotas-button.hover circle,
+.hotas-svg .hotas-button.hover ellipse,
+.hotas-svg .hotas-button.hover path {
+  stroke: var(--accent-primary) !important;
+  stroke-width: 3 !important;
+}
+
+.hotas-svg .hotas-button.selected rect,
+.hotas-svg .hotas-button.selected circle,
+.hotas-svg .hotas-button.selected ellipse,
+.hotas-svg .hotas-button.selected path {
+  stroke: var(--accent-primary) !important;
+  stroke-width: 4 !important;
+  filter: drop-shadow(0 0 8px var(--accent-primary));
+}
+
+.hotas-svg .hotas-button.bound rect,
+.hotas-svg .hotas-button.bound circle,
+.hotas-svg .hotas-button.bound ellipse {
+  stroke: var(--accent-secondary, #00cc88) !important;
+}
+
+/* HOTAS Axis Display */
+.hotas-axis-panel {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.hotas-axis-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.hotas-axis-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+/* Clickable axis button (replaces label) */
+.hotas-axis-btn {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  background: linear-gradient(to bottom, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+}
+
+.hotas-axis-btn:hover {
+  background: linear-gradient(to bottom, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15),
+              0 0 8px rgba(0, 162, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.hotas-axis-btn:active {
+  background: linear-gradient(to bottom, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3),
+              inset 0 1px 3px rgba(0, 0, 0, 0.2);
+  transform: translateY(1px);
+}
+
+.hotas-axis-btn.selected {
+  background: linear-gradient(to bottom, #00a2ff 0%, #0080cc 100%);
+  border-color: #00a2ff;
+  color: white;
+  box-shadow: 0 2px 6px rgba(0, 162, 255, 0.5),
+              inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* Vertical axis bar (for throttle) */
+.axis-bar-vertical {
+  width: 24px;
+  height: 60px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.axis-bar-vertical .axis-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to top, var(--accent-primary), var(--accent-secondary, #00cc88));
+  transition: height 0.05s ease-out;
+  border-radius: 0 0 6px 6px;
+}
+
+/* Horizontal axis bar */
+.axis-bar-horizontal {
+  width: 80px;
+  height: 16px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+}
+
+.axis-bar-horizontal .axis-fill {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  background: var(--accent-primary);
+  transition: width 0.05s ease-out, left 0.05s ease-out;
+}
+
+.axis-bar-horizontal .axis-center-line {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border-color);
+  transform: translateX(-50%);
+}
+
+/* Info Panel for HOTAS */
+.hotas-info-panel {
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  padding: 6px 10px;
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.hotas-info-panel .info-header {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.hotas-info-panel .info-content {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 11px;
+}
+
+.hotas-info-panel .button-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.hotas-info-panel .button-name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.hotas-info-panel .button-type {
+  font-size: 9px;
+  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.hotas-info-panel .no-binding {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.hotas-info-panel .sc-key-hint {
+  font-size: 8px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.hotas-info-panel .custom-bindings-section,
+.hotas-info-panel .sc-bindings-section {
+  margin: 0;
+}
+
+.hotas-info-panel .section-label {
+  display: none;
+}
+
+.hotas-info-panel .binding-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.hotas-info-panel .binding-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  border-left: 2px solid var(--accent-primary);
+  font-size: 10px;
+}
+
+.hotas-info-panel .binding-row.custom-binding {
+  border-left-color: #4fc3f7;
+}
+
+.hotas-info-panel .binding-row .binding-direction {
+  font-size: 10px;
+  min-width: auto;
+}
+
+.hotas-info-panel .binding-row .binding-action {
+  font-size: 10px;
+}
+
+.hotas-info-panel .hint-text {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Responsive adjustments */
+@media (max-width: 900px) {
+  .axis-displays {
+    gap: 20px;
+  }
+
+  .controller-svg {
+    max-width: 100%;
+  }
+
+  .hotas-visual-wrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .hotas-svg {
+    max-width: 280px;
+  }
+}
+
+/* Dark theme accent colors */
+:root {
+  --accent-secondary: #00cc88;
+}
+
+/* ========== HOTAS Image Specific Styles ========== */
+
+.hotas-device-pair {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.device-image-container {
+  position: relative;
+  display: inline-block;
+}
+
+.device-image {
+  max-width: 280px;
+  max-height: 350px;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
+
+.hotspot-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Hotspot Base Styles */
+.hotspot {
+  position: absolute;
+  border: 2px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  pointer-events: all;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hotspot:hover {
+  background: rgba(0, 162, 255, 0.2);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 15px rgba(0, 162, 255, 0.4);
+}
+
+.hotspot.selected {
+  background: rgba(0, 162, 255, 0.3);
+  border-color: var(--accent-primary);
+  border-width: 3px;
+  box-shadow: 0 0 20px rgba(0, 162, 255, 0.6);
+}
+
+.hotspot.bound {
+  border-color: var(--accent-secondary);
+}
+
+.hotspot.bound:not(.selected):not(:hover) {
+  background: rgba(0, 204, 136, 0.15);
+}
+
+.hotspot.pressed {
+  background: rgba(0, 162, 255, 0.5) !important;
+  border-color: #fff !important;
+  box-shadow: 0 0 25px rgba(0, 162, 255, 0.8);
+}
+
+/* Hotspot Type Variations */
+.hotspot-button {
+  border-radius: 50%;
+}
+
+.hotspot-hat {
+  border-radius: 8px;
+}
+
+.hotspot-axis {
+  border-radius: 4px;
+  border-style: dashed;
+}
+
+/* Hotspot Label */
+.hotspot-label {
+  position: absolute;
+  bottom: calc(100% + 5px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.9);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 100;
+}
+
+.hotspot:hover .hotspot-label,
+.hotspot.selected .hotspot-label {
+  opacity: 1;
+}
+
+/* SC Key hint */
+.sc-key-hint {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+  font-size: 11px;
+  color: var(--text-muted);
+  font-family: 'Consolas', monospace;
+}
+
+.button-type {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Axis Value Display */
+.axis-value {
+  font-family: 'Consolas', monospace;
+  font-size: 9px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ========== MOZA AB9 Image-Based Highlighting ========== */
+
+.ab9-single {
+  justify-content: center;
+}
+
+.ab9-unit {
+  max-width: 400px;
+}
+
+.ab9-container {
+  position: relative;
+  display: inline-block;
+  background: transparent;
+}
+
+.ab9-base-image {
+  max-width: 350px;
+  max-height: 400px;
+  height: auto;
+  display: block;
+  border: none;
+  outline: none;
+  background: transparent;
+  object-fit: contain;
+}
+
+/* Highlight layer sits between base image and hotspots */
+.ab9-highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Hotspot overlay must be above highlight layer */
+#ab9-overlay {
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Overlay images - display as-is from the image files */
+.ab9-highlight-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  opacity: 1;
+}
+
+/* AB9 hotspots - invisible, only used for click/hover detection */
+.ab9-hotspot {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  z-index: 4;
+  pointer-events: all !important;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.ab9-hotspot:hover,
+.ab9-hotspot.hover,
+.ab9-hotspot.selected {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ===== X56 COMBINED (THROTTLE + STICK) ===== */
+.x56-combined {
+  display: flex;
+  gap: 20px;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  flex: 1;
+}
+
+.x56-combined .x56-throttle-unit,
+.x56-combined .x56-stick-unit {
+  flex: 0 1 auto;
+}
+
+.x56-combined .x56-throttle-container,
+.x56-combined .x56-stick-container {
+  max-width: 450px;
+}
+
+/* ===== X56 THROTTLE IMAGE-BASED STYLES ===== */
+.x56-throttle-container {
+  position: relative;
+  width: 100%;
+  height: auto;
+  max-width: 600px;
+}
+
+.x56-throttle-base-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: none;
+  outline: none;
+  background: transparent;
+  object-fit: contain;
+}
+
+/* X56 Throttle highlight layer */
+.x56-throttle-highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* X56 Throttle overlay */
+#x56-throttle-overlay {
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* X56 Throttle highlight images - display as-is from the image files */
+.x56-throttle-highlight-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  opacity: 1;
+}
+
+/* X56 Throttle hotspots */
+.x56-throttle-hotspot {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  z-index: 4;
+  pointer-events: all !important;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.x56-throttle-hotspot:hover,
+.x56-throttle-hotspot.hover,
+.x56-throttle-hotspot.selected {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* ===== X56 STICK IMAGE-BASED STYLES ===== */
+.x56-stick-container {
+  position: relative;
+  width: 100%;
+  height: auto;
+  max-width: 600px;
+}
+
+.x56-stick-base-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: none;
+  outline: none;
+  background: transparent;
+  object-fit: contain;
+}
+
+/* X56 Stick highlight layer */
+.x56-stick-highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* X56 Stick overlay */
+#x56-stick-overlay {
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* X56 Stick highlight images - display as-is from the image files */
+.x56-stick-highlight-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  opacity: 1;
+}
+
+/* X56 Stick hotspots */
+.x56-stick-hotspot {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  z-index: 4;
+  pointer-events: all !important;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* X56 Stick hotspots - no visible hover area, just use highlight images */
+.x56-stick-hotspot:hover,
+.x56-stick-hotspot.hover,
+.x56-stick-hotspot.selected {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* ===== VKB LEFT IMAGE-BASED STYLES ===== */
+.vkb-left-container {
+  position: relative;
+  width: 100%;
+  height: auto;
+  max-width: 600px;
+}
+
+.vkb-left-base-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: none;
+  outline: none;
+  background: transparent;
+  object-fit: contain;
+}
+
+/* VKB Left highlight layer */
+.vkb-left-highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* VKB Left overlay */
+#vkb-left-overlay {
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* VKB Left highlight images - display as-is from the image files */
+.vkb-left-highlight-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  opacity: 1;
+}
+
+/* VKB Left hotspots */
+.vkb-left-hotspot {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  z-index: 4;
+  pointer-events: all !important;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* VKB Left hotspots - no visible hover area, just use highlight images */
+.vkb-left-hotspot:hover,
+.vkb-left-hotspot.hover,
+.vkb-left-hotspot.selected {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* ===== VKB RIGHT IMAGE-BASED STYLES ===== */
+.vkb-right-container {
+  position: relative;
+  width: 100%;
+  height: auto;
+  max-width: 600px;
+}
+
+.vkb-right-base-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: none;
+  outline: none;
+  background: transparent;
+  object-fit: contain;
+}
+
+/* VKB Right highlight layer */
+.vkb-right-highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* VKB Right overlay */
+#vkb-right-overlay {
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* VKB Right highlight images - display as-is from the image files */
+.vkb-right-highlight-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  opacity: 1;
+}
+
+/* VKB Right hotspots */
+.vkb-right-hotspot {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  z-index: 4;
+  pointer-events: all !important;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+/* VKB Right hotspots - no visible hover area, just use highlight images */
+.vkb-right-hotspot:hover,
+.vkb-right-hotspot.hover,
+.vkb-right-hotspot.selected {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* ========== Logitech Flight Yoke ========== */
+
+.flight-yoke-single {
+  display: flex;
+  justify-content: center;
+}
+
+.flight-yoke-unit {
+  max-width: 960px;
+}
+
+.flight-yoke-container {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+}
+
+.flight-yoke-base-image {
+  width: 100%;
+  max-width: 960px !important;
+  max-height: none !important;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Flight Yoke highlight layer */
+.flight-yoke-highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Flight Yoke overlay */
+#flight-yoke-overlay {
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Flight Yoke highlight images - display as-is from the image files */
+.flight-yoke-highlight-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  object-fit: contain;
+}
+
+/* Flight Yoke hotspots - invisible, only used for click/hover detection */
+.flight-yoke-hotspot {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  z-index: 4;
+  pointer-events: all !important;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.flight-yoke-hotspot:hover,
+.flight-yoke-hotspot.hover,
+.flight-yoke-hotspot.selected {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ========== Logitech Flight Throttle ========== */
+
+.flight-throttle-single {
+  display: flex;
+  justify-content: center;
+}
+
+.flight-throttle-unit {
+  max-width: 960px;
+}
+
+.flight-throttle-container {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+}
+
+.flight-throttle-base-image {
+  width: 100%;
+  max-width: 960px !important;
+  max-height: none !important;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Flight Throttle highlight layer */
+.flight-throttle-highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Flight Throttle overlay */
+#flight-throttle-overlay {
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Flight Throttle highlight images - display as-is from the image files */
+.flight-throttle-highlight-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  object-fit: contain;
+}
+
+/* Flight Throttle hotspots - invisible, only used for click/hover detection */
+.flight-throttle-hotspot {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  z-index: 4;
+  pointer-events: all !important;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.flight-throttle-hotspot:hover,
+.flight-throttle-hotspot.hover,
+.flight-throttle-hotspot.selected {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ========== Flight Yoke Layout ========== */
+
+.flight-yoke-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  justify-content: center;
+}
+
+.flight-yoke-axis-panel {
+  margin-top: 0;
+  padding: 16px;
+  min-width: 160px;
+  align-self: center;
+}
+
+.flight-yoke-axis-panel .axis-visual-yoke {
+  width: 120px;
+  height: 120px;
+}
+
+/* ========== Flight Throttle Layout ========== */
+
+.flight-throttle-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  justify-content: center;
+}
+
+.flight-throttle-axis-panel {
+  margin-top: 0;
+  padding: 16px;
+  align-self: center;
+}
+
+.throttle-axis-displays {
+  gap: 24px;
+}
+
+.throttle-lever-bar {
+  width: 36px;
+  height: 100px;
+}
+
+/* ========== Debug Mode for Hotspot Editing ========== */
+
+.debug-mode .hotspot-overlay {
+  pointer-events: auto !important;
+}
+
+.debug-mode .hotspot {
+  pointer-events: auto !important;
+  cursor: move;
+}
+
+.debug-editable {
+  border: 2px dashed rgba(0, 162, 255, 0.6) !important;
+  background: rgba(0, 162, 255, 0.15) !important;
+}
+
+.debug-editable:hover {
+  border-color: rgba(0, 162, 255, 0.9) !important;
+  background: rgba(0, 162, 255, 0.25) !important;
+}
+
+.debug-selected {
+  border: 2px solid #00ff88 !important;
+  background: rgba(0, 255, 136, 0.25) !important;
+  z-index: 100 !important;
+}
+
+.resize-handle {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  background: #00ff88;
+  border: 2px solid #fff;
+  border-radius: 2px;
+  cursor: se-resize;
+  z-index: 101;
+}
+
+.resize-handle:hover {
+  background: #00cc6a;
+  transform: scale(1.2);
+}
+
+/* Debug Panel */
+.hotspot-debug-panel {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 320px;
+  max-height: calc(100vh - 120px);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.debug-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #1a5a2e 0%, #0d3d1f 100%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.debug-panel-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #00ff88;
+}
+
+.debug-close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.debug-close-btn:hover {
+  color: var(--accent-danger);
+}
+
+.debug-panel-content {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.debug-info {
+  margin-bottom: 16px;
+  padding: 10px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.debug-info p {
+  margin: 0;
+}
+
+.debug-selected-info {
+  margin-bottom: 16px;
+  padding: 10px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  border-left: 3px solid #00ff88;
+}
+
+.debug-selected-info p {
+  margin: 4px 0;
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.debug-selected-info .no-selection {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.debug-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.debug-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.debug-input-group label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.debug-input-group input {
+  padding: 8px 10px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.debug-input-group input:focus {
+  outline: none;
+  border-color: #00ff88;
+}
+
+.debug-apply-btn {
+  grid-column: 1 / -1;
+  padding: 10px;
+  background: linear-gradient(135deg, #1a5a2e 0%, #0d3d1f 100%);
+  border: none;
+  border-radius: 6px;
+  color: #00ff88;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.debug-apply-btn:hover {
+  background: linear-gradient(135deg, #1f6b36 0%, #0f4a25 100%);
+}
+
+.debug-output {
+  border-top: 1px solid var(--border-color);
+  padding-top: 16px;
+}
+
+.debug-output h4 {
+  margin: 0 0 10px 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.debug-copy-btn {
+  padding: 6px 12px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 11px;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+
+.debug-copy-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+}
+
+.debug-copy-btn.copied {
+  background: #1a5a2e;
+  border-color: #00ff88;
+  color: #00ff88;
+}
+
+#debug-output-code {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 10px;
+  font-family: 'Monaco', 'Consolas', monospace;
+  color: var(--text-primary);
+  overflow-x: auto;
+  white-space: pre;
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 0;
+}
+
+/* ========== Binding Context Menu ========== */
+
+.binding-context-menu {
+  position: fixed;
+  z-index: 1000;
+  width: 350px;
+  max-height: 80vh;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.binding-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.binding-menu-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.binding-menu-close {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.binding-menu-close:hover {
+  color: var(--text-primary);
+}
+
+.binding-menu-body {
+  padding: 16px;
+  overflow-y: auto;
+  flex: 1;
+  max-height: 50vh;
+}
+
+.binding-dropdown-group {
+  margin-bottom: 16px;
+}
+
+.binding-dropdown-group:last-child {
+  margin-bottom: 0;
+}
+
+.binding-dropdown-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.binding-dropdown-wrapper {
+  position: relative;
+}
+
+.binding-dropdown {
+  width: 100%;
+  padding: 10px 12px;
+  padding-right: 32px;
+  font-size: 13px;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  appearance: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.binding-dropdown:hover {
+  border-color: var(--accent-primary);
+}
+
+.binding-dropdown:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 162, 255, 0.2);
+}
+
+.binding-dropdown-wrapper::after {
+  content: '';
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid var(--text-muted);
+  pointer-events: none;
+}
+
+.binding-dropdown option {
+  padding: 8px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.binding-dropdown optgroup {
+  font-weight: 600;
+  color: var(--accent-primary);
+  background: var(--bg-secondary);
+  padding: 8px 0;
+}
+
+.binding-menu-footer {
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
+}
+
+.binding-apply-btn,
+.binding-clear-btn {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.binding-apply-btn {
+  background: var(--accent-primary);
+  color: white;
+}
+
+.binding-apply-btn:hover {
+  background: #0090e0;
+  box-shadow: 0 2px 8px rgba(0, 162, 255, 0.4);
+}
+
+.binding-clear-btn {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.binding-clear-btn:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+/* Scrollbar styling for menu body */
+.binding-menu-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.binding-menu-body::-webkit-scrollbar-track {
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+}
+
+.binding-menu-body::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.binding-menu-body::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Responsive for HOTAS */
+@media (max-width: 800px) {
+  .hotas-device-pair {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .device-image {
+    max-width: 280px;
+  }
+
+  .ab9-base-image {
+    max-width: 300px;
+  }
+
+  .hotas-axis-panel {
+    flex-direction: column;
+  }
+
+  .binding-context-menu {
+    width: 300px;
+    max-height: 70vh;
+  }
+}
+
+/* ===== X56 MODE SELECTOR PANEL ===== */
+.x56-combined-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.x56-content-area {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 15px;
+  width: 100%;
+}
+
+.x56-mode-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 18px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  gap: 9px;
+  width: 210px;
+  flex-shrink: 0;
+}
+
+.mode-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.mode-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.75px;
+  text-transform: uppercase;
+}
+
+.mode-current-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mode-dial {
+  display: flex;
+  gap: 9px;
+  justify-content: center;
+  align-items: center;
+}
+
+.mode-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+}
+
+.mode-btn .mode-label,
+.mode-btn .mode-icon {
+  color: inherit;
+}
+
+/* Default mode button */
+.mode-btn.mode-default {
+  border-color: #666;
+  color: #999;
+}
+
+.mode-btn.mode-default:hover {
+  background: #444;
+  border-color: #888;
+}
+
+.mode-btn.mode-default.active {
+  background: #555;
+  border-color: #aaa;
+  box-shadow: 0 0 12px rgba(170, 170, 170, 0.4);
+}
+
+/* M1 Mode - Orange (Ctrl) */
+.mode-btn.mode-m1 {
+  border-color: #ff8c00;
+  color: #ff8c00;
+}
+
+.mode-btn.mode-m1:hover {
+  background: rgba(255, 140, 0, 0.2);
+}
+
+.mode-btn.mode-m1.active {
+  background: #ff8c00;
+  color: #000;
+  box-shadow: 0 0 15px rgba(255, 140, 0, 0.6);
+  transform: scale(1.1);
+}
+
+/* M2 Mode - Red (Alt) */
+.mode-btn.mode-m2 {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.mode-btn.mode-m2:hover {
+  background: rgba(220, 53, 69, 0.2);
+}
+
+.mode-btn.mode-m2.active {
+  background: #dc3545;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(220, 53, 69, 0.6);
+  transform: scale(1.1);
+}
+
+/* S1 Mode - Green (Shift) */
+.mode-btn.mode-s1 {
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.mode-btn.mode-s1:hover {
+  background: rgba(40, 167, 69, 0.2);
+}
+
+.mode-btn.mode-s1.active {
+  background: #28a745;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(40, 167, 69, 0.6);
+  transform: scale(1.1);
+}
+
+.mode-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.mode-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  justify-content: center;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.legend-m1 .legend-dot {
+  background: #ff8c00;
+}
+
+.legend-m2 .legend-dot {
+  background: #dc3545;
+}
+
+.legend-s1 .legend-dot {
+  background: #28a745;
+}
+
+.mode-note {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  margin: 0;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-color);
+  width: 100%;
+  line-height: 1.3;
+}
+
+/* Mode indicator in binding context menu */
+.mode-indicator {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+.mode-indicator.mode-m1 {
+  background: #ff8c00;
+  color: #000;
+}
+
+.mode-indicator.mode-m2 {
+  background: #dc3545;
+  color: #fff;
+}
+
+.mode-indicator.mode-s1 {
+  background: #28a745;
+  color: #fff;
+}
+
+.mode-warning {
+  background: rgba(255, 193, 7, 0.15);
+  border: 1px solid #ffc107;
+  color: #ffc107;
+  padding: 6px 12px;
+  font-size: 11px;
+  text-align: center;
+  border-radius: 4px;
+  margin: 0 12px;
+}
+
+/* ===== X52 PRO FLIGHT SYSTEM STYLES ===== */
+.x52-single {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.x52-unit {
+  flex: 1;
+  max-width: 900px;
+}
+
+.x52-container {
+  position: relative;
+  width: 100%;
+  height: auto;
+  max-width: 900px;
+}
+
+.x52-base-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.x52-highlight-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* X52 overlay */
+#x52-overlay {
+  z-index: 3;
+  pointer-events: none;
+}
+
+.x52-highlight-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+/* X52 Hotspot Styles */
+.x52-hotspot {
+  background: rgba(30, 144, 255, 0.2);
+  border: 2px solid rgba(30, 144, 255, 0.6);
+}
+
+.x52-hotspot:hover {
+  background: rgba(30, 144, 255, 0.4);
+  border-color: #1e90ff;
+}
+
+.x52-hotspot.selected {
+  background: rgba(30, 144, 255, 0.5);
+  border-color: #1e90ff;
+  box-shadow: 0 0 10px rgba(30, 144, 255, 0.5);
+}
+
