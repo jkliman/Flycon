@@ -7,7 +7,12 @@ Flight Control Mapping Software - Visualize and manage keybindings for flight si
 - Visual HOTAS mapping interface
 - Support for multiple controllers:
   - Logitech X56 HOTAS (Throttle + Stick)
-  - Alpha Bravo 9 Button Box
+  - Moza AB9 MH15 Flight Stick
+  - VKB Gladiator controllers
+  - Logitech Flight yoke
+  - Logitech Flight System Throttle
+  - Xbox controller
+  - Keyboard and Mouse
 - Game support:
   - Star Citizen
   - Microsoft Flight Simulator 2024
@@ -16,6 +21,7 @@ Flight Control Mapping Software - Visualize and manage keybindings for flight si
   - Elite Dangerous
 - X56 Mode switching (M1/M2/S1) with modifier keys (Ctrl/Alt/Shift)
 - Export bindings to game-specific formats
+- import bindings
 
 ## Installation
 
