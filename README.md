@@ -21,19 +21,5 @@ Flight Control Mapping Software - Visualize and manage keybindings for flight si
 
 Download the latest release from the [Releases](https://github.com/jklim/flycon/releases) page.
 
-## Development
+Install the MSI file.
 
-```bash
-# Install dependencies
-npm install
-
-# Run in development mode
-npm run dev
-
-# Build for production
-npm run build:win
-```
-
-## License
-
-MIT
