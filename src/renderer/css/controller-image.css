@@ -60,12 +60,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
+  padding: 4px 10px;
   background: var(--bg-secondary);
   border-radius: 6px;
   border: 1px solid var(--border-color);
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: 11px;
 }
 
 .status-indicator {
@@ -412,12 +412,171 @@
   color: var(--text-muted);
 }
 
+/* Horizontal Axis Bar (for yaw/twist display) */
+.axis-bar {
+  position: relative;
+  width: 100px;
+  height: 20px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  border: 2px solid var(--border-color);
+  overflow: hidden;
+}
+
+.horizontal-axis-bar {
+  width: 100px;
+  height: 16px;
+}
+
+.axis-bar-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0%;
+  left: 50%;
+  background: var(--accent-primary);
+  transition: width 0.05s ease-out, left 0.05s ease-out;
+}
+
+.axis-bar-center {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: var(--border-color);
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+.axis-value {
+  font-family: 'Consolas', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  min-width: 40px;
+  text-align: center;
+}
+
+/* Clickable Axis Bind Button */
+.axis-bind-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.axis-bind-btn:hover {
+  background: rgba(0, 162, 255, 0.15);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.axis-bind-btn.selected {
+  background: var(--accent-primary);
+  color: #fff;
+  border-color: var(--accent-primary);
+}
+
+.axis-bind-btn.bound {
+  color: var(--success-color, #28a745);
+  border-color: rgba(40, 167, 69, 0.3);
+}
+
+.axis-bind-btn.bound:hover {
+  background: rgba(40, 167, 69, 0.15);
+  border-color: var(--success-color, #28a745);
+}
+
+/* Axis Label Row (for Pitch/Roll side-by-side) */
+.axis-label-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  justify-content: center;
+}
+
+.axis-label-separator {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* VKB Wrapper styling */
+.vkb-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
+.vkb-axis-panel {
+  width: 100%;
+  max-width: 400px;
+}
+
+.vkb-axis-displays {
+  justify-content: center;
+}
+
+.vkb-axis-panel .button-input-display {
+  margin-top: 12px;
+  padding: 8px 12px;
+  min-height: 36px;
+}
+
+.vkb-axis-panel .button-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vkb-axis-panel .button-input-label {
+  font-size: 11px;
+}
+
+.vkb-axis-panel .button-config-btn {
+  font-size: 9px;
+  padding: 4px 10px;
+}
+
+.vkb-axis-panel .button-input-list {
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+/* X56 Axis Panel styling */
+.x56-axis-panel {
+  margin-top: 10px;
+}
+
+.x56-axis-displays {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+/* X52 Axis Panel styling */
+.x52-axis-panel {
+  margin-top: 10px;
+}
+
+.x52-axis-displays {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
 /* HOTAS Image Visualizer Styles */
 .hotas-image-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
+  gap: 6px;
+  padding: 0 10px 10px 10px;
   height: 100%;
   overflow: hidden;
 }
@@ -459,10 +618,10 @@
 
 .hotas-visual-wrapper {
   display: flex;
-  gap: 20px;
+  gap: 15px;
   justify-content: center;
   flex-wrap: wrap;
-  padding: 10px;
+  padding: 6px;
   background: var(--bg-secondary);
   border-radius: 10px;
   border: 1px solid var(--border-color);
@@ -1015,6 +1174,24 @@
   max-width: 450px;
 }
 
+/* ===== X56 THROTTLE WRAPPER (STANDALONE) ===== */
+.x56-throttle-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* ===== X56 STICK WRAPPER (STANDALONE) ===== */
+.x56-stick-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
 /* ===== X56 THROTTLE IMAGE-BASED STYLES ===== */
 .x56-throttle-container {
   position: relative;
@@ -1487,22 +1664,26 @@
   pointer-events: auto !important;
 }
 
-.debug-mode .hotspot {
+.debug-mode .hotspot,
+.debug-mode [class*="-hotspot"] {
   pointer-events: auto !important;
-  cursor: move;
+  cursor: move !important;
 }
 
-.debug-editable {
+.debug-editable,
+.debug-mode [class*="-hotspot"].debug-editable {
   border: 2px dashed rgba(0, 162, 255, 0.6) !important;
   background: rgba(0, 162, 255, 0.15) !important;
 }
 
-.debug-editable:hover {
+.debug-editable:hover,
+.debug-mode [class*="-hotspot"].debug-editable:hover {
   border-color: rgba(0, 162, 255, 0.9) !important;
   background: rgba(0, 162, 255, 0.25) !important;
 }
 
-.debug-selected {
+.debug-selected,
+.debug-mode [class*="-hotspot"].debug-selected {
   border: 2px solid #00ff88 !important;
   background: rgba(0, 255, 136, 0.25) !important;
   z-index: 100 !important;
@@ -1932,7 +2113,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   width: 100%;
 }
 
@@ -1940,7 +2121,7 @@
   display: flex;
   flex-direction: row;
   align-items: flex-start;
-  gap: 15px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -1948,12 +2129,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 12px 18px;
+  padding: 8px 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
-  border-radius: 10px;
-  gap: 9px;
-  width: 210px;
+  border-radius: 8px;
+  gap: 6px;
+  width: 180px;
   flex-shrink: 0;
 }
 
@@ -1961,11 +2142,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
 }
 
 .mode-title {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--text-secondary);
   letter-spacing: 0.75px;
@@ -1973,25 +2154,25 @@
 }
 
 .mode-current-label {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .mode-dial {
   display: flex;
-  gap: 9px;
+  gap: 6px;
   justify-content: center;
   align-items: center;
 }
 
 .mode-btn {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 3px solid;
+  border: 2px solid;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
@@ -2077,28 +2258,28 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
 }
 
 .mode-legend {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   justify-content: center;
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
+  gap: 5px;
+  font-size: 10px;
   color: var(--text-secondary);
 }
 
 .legend-dot {
-  width: 9px;
-  height: 9px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
 }
 
@@ -2168,21 +2349,25 @@
 }
 
 .x52-unit {
-  flex: 1;
-  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
 }
 
 .x52-container {
   position: relative;
-  width: 100%;
+  display: inline-block;
+  width: auto;
   height: auto;
-  max-width: 900px;
 }
 
 .x52-base-image {
-  width: 100%;
-  height: auto;
   display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 280px;
 }
 
 .x52-highlight-layer {
@@ -2197,6 +2382,11 @@
 
 /* X52 overlay */
 #x52-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   z-index: 3;
   pointer-events: none;
 }
@@ -2206,25 +2396,921 @@
   top: 0;
   left: 0;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: contain;
   pointer-events: none;
   transition: all 0.2s ease;
 }
 
-/* X52 Hotspot Styles */
+/* X52 Hotspot Styles - invisible, only used for click/hover detection */
 .x52-hotspot {
-  background: rgba(30, 144, 255, 0.2);
-  border: 2px solid rgba(30, 144, 255, 0.6);
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  z-index: 4;
+  pointer-events: all !important;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s ease;
 }
 
-.x52-hotspot:hover {
-  background: rgba(30, 144, 255, 0.4);
-  border-color: #1e90ff;
-}
-
+.x52-hotspot:hover,
+.x52-hotspot.hover,
 .x52-hotspot.selected {
-  background: rgba(30, 144, 255, 0.5);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* X52 Debug Mode Support */
+.debug-mode #x52-overlay {
+  pointer-events: auto !important;
+}
+
+.debug-mode .x52-hotspot {
+  pointer-events: auto !important;
+  cursor: move !important;
+}
+
+.debug-mode .x52-hotspot.debug-editable {
+  border: 2px dashed rgba(0, 162, 255, 0.6) !important;
+  background: rgba(0, 162, 255, 0.15) !important;
+}
+
+.debug-mode .x52-hotspot.debug-selected {
+  border: 2px solid #00ff88 !important;
+  background: rgba(0, 255, 136, 0.25) !important;
+  z-index: 100 !important;
+}
+
+/* ===== X52 MODE SELECTOR PANEL ===== */
+.x52-combined-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.x52-content-area {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 15px;
+  width: 100%;
+}
+
+.x52-mode-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 18px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  gap: 9px;
+  width: 210px;
+  flex-shrink: 0;
+}
+
+/* X52 Mode 1 - Blue (Ctrl) */
+.mode-btn.x52-mode1 {
   border-color: #1e90ff;
-  box-shadow: 0 0 10px rgba(30, 144, 255, 0.5);
+  color: #1e90ff;
+}
+
+.mode-btn.x52-mode1:hover {
+  background: rgba(30, 144, 255, 0.2);
+}
+
+.mode-btn.x52-mode1.active {
+  background: #1e90ff;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(30, 144, 255, 0.6);
+  transform: scale(1.1);
+}
+
+/* X52 Mode 2 - Red (Alt) */
+.mode-btn.x52-mode2 {
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.mode-btn.x52-mode2:hover {
+  background: rgba(220, 53, 69, 0.2);
+}
+
+.mode-btn.x52-mode2.active {
+  background: #dc3545;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(220, 53, 69, 0.6);
+  transform: scale(1.1);
+}
+
+/* X52 Mode 3 - Green (Shift) */
+.mode-btn.x52-mode3 {
+  border-color: #28a745;
+  color: #28a745;
+}
+
+.mode-btn.x52-mode3:hover {
+  background: rgba(40, 167, 69, 0.2);
+}
+
+.mode-btn.x52-mode3.active {
+  background: #28a745;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(40, 167, 69, 0.6);
+  transform: scale(1.1);
+}
+
+/* X52 Mode legend colors */
+.legend-x52-mode1 .legend-dot {
+  background: #1e90ff;
+}
+
+.legend-x52-mode2 .legend-dot {
+  background: #dc3545;
+}
+
+.legend-x52-mode3 .legend-dot {
+  background: #28a745;
+}
+
+/* X52 Mode indicator in binding context menu */
+.mode-indicator.x52-mode1 {
+  background: #1e90ff;
+  color: #fff;
+}
+
+.mode-indicator.x52-mode2 {
+  background: #dc3545;
+  color: #fff;
+}
+
+.mode-indicator.x52-mode3 {
+  background: #28a745;
+  color: #fff;
+}
+
+/* ===== Live Input Panel (Full Width Under Controllers) ===== */
+.live-input-panel {
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  padding: 16px;
+  margin-top: 16px;
+  width: 100%;
+}
+
+/* Compact version of live input panel */
+.live-input-panel.compact {
+  padding: 10px 14px;
+  margin-top: 10px;
+  border-radius: 8px;
+}
+
+.live-input-panel.compact .live-input-header {
+  font-size: 11px;
+  margin-bottom: 8px;
+}
+
+.live-input-panel.compact .live-input-content {
+  gap: 8px;
+}
+
+.live-input-panel.compact .axis-displays {
+  gap: 16px;
+}
+
+.live-input-panel.compact .axis-display-group {
+  gap: 4px;
+}
+
+.live-input-panel.compact .axis-visual {
+  width: 70px;
+  height: 70px;
+}
+
+.live-input-panel.compact .axis-visual.compact {
+  width: 60px;
+  height: 60px;
+}
+
+.live-input-panel.compact .axis-dot {
+  width: 10px;
+  height: 10px;
+}
+
+.live-input-panel.compact .trigger-bar,
+.live-input-panel.compact .throttle-lever-bar {
+  width: 24px;
+  height: 60px;
+}
+
+.live-input-panel.compact .axis-bar {
+  width: 70px;
+  height: 12px;
+}
+
+.live-input-panel.compact .axis-value,
+.live-input-panel.compact .trigger-value {
+  font-size: 9px;
+}
+
+.live-input-panel.compact .axis-bind-btn {
+  font-size: 8px;
+  padding: 3px 6px;
+}
+
+.live-input-panel.compact .button-input-display {
+  padding: 8px 10px;
+  min-height: 32px;
+}
+
+.live-input-panel.compact .button-input-label {
+  font-size: 10px;
+}
+
+.live-input-panel.compact .button-input-list {
+  font-size: 11px;
+  gap: 4px;
+}
+
+.live-input-panel.compact .button-input-item {
+  padding: 2px 6px;
+  font-size: 9px;
+}
+
+.live-input-header {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.live-input-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Button Input Display Section */
+.button-input-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  min-height: 44px;
+}
+
+.button-input-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.button-input-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.button-input-list.active {
+  color: var(--accent-primary);
+}
+
+.button-input-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: var(--accent-primary);
+  color: white;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  animation: buttonPressedPulse 0.3s ease;
+}
+
+@keyframes buttonPressedPulse {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Button input row - for label and configure button */
+.button-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Button Configure Button */
+.button-config-btn {
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.button-config-btn:hover {
+  background: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+/* ===== BUTTON MAPPING PROMPT ===== */
+.button-mapping-prompt {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  backdrop-filter: blur(4px);
+}
+
+.mapping-prompt-content {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 32px;
+  text-align: center;
+  max-width: 400px;
+  animation: promptFadeIn 0.3s ease;
+}
+
+@keyframes promptFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mapping-prompt-content h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px;
+}
+
+.mapping-prompt-content p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.mapping-prompt-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.mapping-prompt-actions button {
+  padding: 10px 20px;
+  font-size: 13px;
+}
+
+/* ===== BUTTON MAPPING WIZARD ===== */
+.button-mapping-wizard {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wizard-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.wizard-panel {
+  position: relative;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  width: 420px;
+  max-width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: wizardSlideIn 0.3s ease;
+}
+
+@keyframes wizardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.wizard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.wizard-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.wizard-progress-text {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.wizard-progress-bar {
+  height: 4px;
+  background: var(--bg-tertiary);
+}
+
+.wizard-progress-fill {
+  height: 100%;
+  background: var(--accent-primary);
+  transition: width 0.3s ease;
+}
+
+.wizard-body {
+  padding: 24px;
+}
+
+.wizard-instruction {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.wizard-device-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.device-badge-stick {
+  background: rgba(33, 150, 243, 0.15);
+  color: #2196f3;
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.device-badge-throttle {
+  background: rgba(255, 152, 0, 0.15);
+  color: #ff9800;
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.wizard-btn-skip-device {
+  background: rgba(255, 152, 0, 0.1);
+  border-color: rgba(255, 152, 0, 0.3);
+  color: #ff9800;
+}
+
+.wizard-btn-skip-device:hover {
+  background: rgba(255, 152, 0, 0.2);
+  border-color: rgba(255, 152, 0, 0.5);
+}
+
+.wizard-control-name {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.wizard-control-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.wizard-detection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80px;
+}
+
+.wizard-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.waiting-pulse {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  animation: waitingPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes waitingPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
+.wizard-detected {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  animation: detectedPop 0.3s ease;
+}
+
+@keyframes detectedPop {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.detected-icon {
+  font-size: 24px;
+  color: #4caf50;
+}
+
+.detected-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: #4caf50;
+}
+
+.wizard-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-color);
+  background: var(--bg-tertiary);
+  border-radius: 0 0 12px 12px;
+}
+
+.wizard-footer button {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.wizard-footer button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.wizard-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 20px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.wizard-close-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* Wizard hotspot highlight */
+.hotspot.wizard-highlight {
+  box-shadow: 0 0 0 3px var(--accent-primary), 0 0 20px 5px rgba(var(--accent-primary-rgb, 66, 165, 245), 0.5);
+  animation: wizardHighlightPulse 1.5s ease-in-out infinite;
+  z-index: 10;
+}
+
+@keyframes wizardHighlightPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 3px var(--accent-primary), 0 0 20px 5px rgba(var(--accent-primary-rgb, 66, 165, 245), 0.3);
+  }
+  50% {
+    box-shadow: 0 0 0 4px var(--accent-primary), 0 0 30px 10px rgba(var(--accent-primary-rgb, 66, 165, 245), 0.5);
+  }
+}
+
+/* Physical button press highlight - same as hover but with slight glow */
+.hotspot.button-physically-pressed {
+  z-index: 5;
+}
+
+/* X56 Live Input Panel specifics */
+.x56-live-input-panel {
+  padding: 10px 14px;
+  margin-top: 8px;
+}
+
+.x56-live-input-panel .live-input-header {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.x56-live-input-panel .axis-displays {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.x56-live-input-panel .axis-visual {
+  width: 70px;
+  height: 70px;
+}
+
+/* Compact axis visual for thumbstick */
+.axis-visual.compact {
+  width: 60px;
+  height: 60px;
+}
+
+.x56-live-input-panel .trigger-bar,
+.x56-live-input-panel .throttle-lever-bar {
+  width: 22px;
+  height: 55px;
+}
+
+.x56-live-input-panel .axis-bar {
+  width: 65px;
+  height: 10px;
+}
+
+.x56-live-input-panel .button-input-display {
+  padding: 8px 12px;
+  min-height: 36px;
+}
+
+.x56-live-input-panel .axis-bind-btn {
+  font-size: 9px;
+  padding: 3px 6px;
+}
+
+.x56-live-input-panel .axis-value,
+.x56-live-input-panel .trigger-value {
+  font-size: 10px;
+}
+
+.x56-live-input-panel .axis-values {
+  font-size: 9px;
+}
+
+/* Thumbstick group - separated Thumb, X, Y controls */
+.thumbstick-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.thumbstick-axes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.thumbstick-axis-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.thumbstick-axis-item .axis-display-label {
+  min-width: 20px;
+  text-align: center;
+}
+
+.thumbstick-axis-item .horizontal-axis-bar.compact {
+  width: 50px;
+  height: 8px;
+}
+
+.thumbstick-axis-item .axis-value {
+  font-size: 9px;
+  min-width: 35px;
+}
+
+.axis-bind-btn.small {
+  font-size: 9px;
+  padding: 2px 6px;
+  min-width: 20px;
+}
+
+/* X52 Live Input Panel specifics */
+.x52-live-input-panel {
+  padding: 10px 14px;
+  margin-top: 8px;
+}
+
+.x52-live-input-panel .live-input-header {
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.x52-live-input-panel .axis-displays {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.x52-live-input-panel .axis-visual {
+  width: 70px;
+  height: 70px;
+}
+
+.x52-live-input-panel .trigger-bar,
+.x52-live-input-panel .throttle-lever-bar {
+  width: 22px;
+  height: 55px;
+}
+
+.x52-live-input-panel .axis-bar {
+  width: 65px;
+  height: 10px;
+}
+
+.x52-live-input-panel .button-input-display {
+  padding: 8px 12px;
+  min-height: 36px;
+}
+
+.x52-live-input-panel .axis-bind-btn {
+  font-size: 9px;
+  padding: 3px 6px;
+}
+
+.x52-live-input-panel .axis-value,
+.x52-live-input-panel .trigger-value {
+  font-size: 10px;
+}
+
+.x52-live-input-panel .axis-values {
+  font-size: 9px;
+}
+
+/* AB9 wrapper for layout */
+.ab9-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+/* AB9 content area - horizontal layout with image and side panel */
+.ab9-content-area {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  justify-content: center;
+}
+
+/* AB9 Live Input Panel specifics - positioned on the right */
+.ab9-live-input-panel {
+  padding: 10px 12px;
+  margin-top: 24px;
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.ab9-live-input-panel .live-input-header {
+  font-size: 10px;
+  margin-bottom: 8px;
+}
+
+.ab9-live-input-panel .live-input-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ab9-live-input-panel .axis-displays {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.ab9-live-input-panel .axis-display-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ab9-live-input-panel .axis-label-row {
+  font-size: 9px;
+}
+
+.ab9-live-input-panel .axis-visual {
+  width: 60px;
+  height: 60px;
+}
+
+.ab9-live-input-panel .axis-values {
+  font-size: 8px;
+  gap: 8px;
+}
+
+.ab9-live-input-panel .button-input-display {
+  padding: 6px 8px;
+  min-height: unset;
+}
+
+.ab9-live-input-panel .button-input-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.ab9-live-input-panel .button-input-label {
+  font-size: 9px;
+}
+
+.ab9-live-input-panel .button-config-btn {
+  font-size: 8px;
+  padding: 3px 8px;
+}
+
+.ab9-live-input-panel .button-input-list {
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.ab9-live-input-panel .axis-bind-btn {
+  font-size: 8px;
+  padding: 2px 5px;
 }
 

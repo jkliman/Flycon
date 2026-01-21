@@ -32,8 +32,21 @@ class HOTASImageVisualizer {
       'x56_th_rty3',         // Rotary 3 axis
       'x56_th_rty4',         // Rotary 4 axis
       'x56_th_top_knob',     // Top rotary knob
-      'x56_th_bottom_knob'   // Bottom rotary knob
+      'x56_th_bottom_knob',  // Bottom rotary knob
+      // X52 excluded controls
+      'x52_js_trigger',      // Trigger
+      'x52_js_fire',         // Fire/Missile button
+      'x52_th_rt1',          // RT1 Rotary axis
+      'x52_th_rt2'           // RT2 Rotary axis
     ];
+
+    // X52 Mode switching (Mode 1, Mode 2, Mode 3)
+    this.x52CurrentMode = 'mode1'; // 'mode1', 'mode2', 'mode3'
+    this.x52ModeModifiers = {
+      'mode1': 'lctrl',   // Ctrl
+      'mode2': 'lalt',    // Alt
+      'mode3': 'lshift'   // Shift
+    };
 
     // Debug mode for editing hotspot positions
     this.debugMode = false;
@@ -46,8 +59,32 @@ class HOTASImageVisualizer {
     this.debugPanelDragging = false;
     this.debugPanelOffset = { x: 0, y: 0 };
 
+    // Button mapping configuration wizard
+    this.buttonMappingWizard = {
+      active: false,
+      currentStep: 0,
+      steps: [],
+      detectedButton: null,
+      lastPressedButtons: new Set()
+    };
+
+    // Loaded button mappings (physical button index -> hotspot ID)
+    this.buttonMappings = {};
+    this.loadButtonMappings();
+
     this.loadCustomBindings();
     this.init();
+    this.setupDebugKeyboardShortcut();
+  }
+
+  // Setup keyboard shortcut for debug mode (Ctrl+Shift+D)
+  setupDebugKeyboardShortcut() {
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        e.preventDefault();
+        this.toggleDebugMode();
+      }
+    });
   }
 
   // Toggle debug mode for hotspot editing
@@ -91,11 +128,17 @@ class HOTASImageVisualizer {
     const panel = document.getElementById('hotspot-debug-panel');
     if (panel) panel.remove();
 
-    // Remove resize handles from hotspots
+    // Remove resize handles from hotspots and clean up event handlers
     Object.values(this.buttonElements).forEach(hotspot => {
       const handle = hotspot.querySelector('.resize-handle');
       if (handle) handle.remove();
       hotspot.classList.remove('debug-editable', 'debug-selected');
+
+      // Remove the debug mousedown handler
+      if (hotspot._debugMouseDownHandler) {
+        hotspot.removeEventListener('mousedown', hotspot._debugMouseDownHandler, true);
+        delete hotspot._debugMouseDownHandler;
+      }
     });
 
     // Remove event listeners
@@ -232,17 +275,20 @@ class HOTASImageVisualizer {
   makeHotspotEditable(hotspot) {
     hotspot.classList.add('debug-editable');
 
-    // Add resize handle
-    const handle = document.createElement('div');
-    handle.className = 'resize-handle';
-    hotspot.appendChild(handle);
+    // Add resize handle if not already present
+    if (!hotspot.querySelector('.resize-handle')) {
+      const handle = document.createElement('div');
+      handle.className = 'resize-handle';
+      hotspot.appendChild(handle);
+    }
 
-    // Click to select
-    hotspot.addEventListener('mousedown', (e) => {
+    // Store the debug mousedown handler reference so we can prioritize it
+    const debugMouseDownHandler = (e) => {
       if (!this.debugMode) return;
 
       e.preventDefault();
       e.stopPropagation();
+      e.stopImmediatePropagation(); // Stop other handlers from firing
 
       // Check if clicking resize handle
       if (e.target.classList.contains('resize-handle')) {
@@ -266,7 +312,13 @@ class HOTASImageVisualizer {
 
       // Update debug panel
       this.updateDebugPanel(hotspot);
-    });
+    };
+
+    // Add the debug handler with capture to run before other handlers
+    hotspot.addEventListener('mousedown', debugMouseDownHandler, true);
+
+    // Store reference for cleanup
+    hotspot._debugMouseDownHandler = debugMouseDownHandler;
   }
 
   handleDebugMouseMove(e) {
@@ -486,20 +538,20 @@ class HOTASImageVisualizer {
   }
 
   updateModeSelectorUI() {
-    // Update mode buttons to show active state
-    const modeButtons = document.querySelectorAll('.mode-btn');
+    // Update mode buttons to show active state across ALL mode panels (linked)
+    const modeButtons = document.querySelectorAll('.x56-mode-panel .mode-btn');
     modeButtons.forEach(btn => {
       const btnMode = btn.dataset.mode;
       btn.classList.toggle('active', btnMode === this.currentMode);
     });
 
-    // Update mode indicator text
-    const modeIndicator = document.querySelector('.mode-current-label');
-    if (modeIndicator) {
+    // Update ALL mode indicator texts (for linked panels)
+    const modeIndicators = document.querySelectorAll('.x56-mode-panel .mode-current-label');
+    modeIndicators.forEach(modeIndicator => {
       const modifier = this.modeModifiers[this.currentMode];
       const modifierName = modifier === 'lctrl' ? 'Ctrl' : modifier === 'lalt' ? 'Alt' : 'Shift';
       modeIndicator.textContent = `${this.currentMode.toUpperCase()} (${modifierName})`;
-    }
+    });
   }
 
   getBindingKeyForCurrentMode(baseKey) {
@@ -574,6 +626,107 @@ class HOTASImageVisualizer {
     panel.querySelectorAll('.mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.setMode(btn.dataset.mode);
+      });
+    });
+
+    return panel;
+  }
+
+  // ==================== X52 MODE SWITCHING ====================
+
+  setX52Mode(mode) {
+    if (mode === this.x52CurrentMode) return;
+
+    const validModes = ['mode1', 'mode2', 'mode3'];
+    if (!validModes.includes(mode)) {
+      console.warn('Invalid X52 mode:', mode);
+      return;
+    }
+
+    console.log('Switching X52 mode from', this.x52CurrentMode, 'to', mode);
+    this.x52CurrentMode = mode;
+
+    // Update binding context menu with current X52 mode
+    if (this.bindingContextMenu) {
+      this.bindingContextMenu.x52CurrentMode = mode;
+    }
+
+    // Update mode selector UI
+    this.updateX52ModeSelectorUI();
+
+    // Update binding highlights to show current mode's bindings
+    this.updateBindingHighlights();
+    this.updateSidebarBindingsList();
+  }
+
+  updateX52ModeSelectorUI() {
+    // Update mode buttons to show active state
+    const modeButtons = document.querySelectorAll('.x52-mode-panel .mode-btn');
+    modeButtons.forEach(btn => {
+      const btnMode = btn.dataset.mode;
+      btn.classList.toggle('active', btnMode === this.x52CurrentMode);
+    });
+
+    // Update mode indicator text
+    const modeIndicator = document.querySelector('.x52-mode-panel .mode-current-label');
+    if (modeIndicator) {
+      const modifier = this.x52ModeModifiers[this.x52CurrentMode];
+      const modifierName = modifier === 'lctrl' ? 'Ctrl' : modifier === 'lalt' ? 'Alt' : 'Shift';
+      const modeNum = this.x52CurrentMode.replace('mode', '');
+      modeIndicator.textContent = `Mode ${modeNum} (${modifierName})`;
+    }
+  }
+
+  getX52BindingKeyForCurrentMode(baseKey) {
+    // Get the binding key based on current X52 mode
+    // For mode-excluded controls, always return the base key (no mode prefix)
+    const buttonId = baseKey.split('_').slice(0, -1).join('_'); // Remove direction suffix
+
+    if (!this.isModeSensitiveControl(buttonId)) {
+      return baseKey; // Use default binding for excluded controls
+    }
+
+    // Always use mode prefix for mode-sensitive controls
+    return `${this.x52CurrentMode}_${baseKey}`;
+  }
+
+  renderX52ModeSelector() {
+    const panel = document.createElement('div');
+    panel.className = 'x52-mode-panel';
+    const modeNum = this.x52CurrentMode.replace('mode', '');
+    const modifier = this.x52ModeModifiers[this.x52CurrentMode];
+    const modifierName = modifier === 'lctrl' ? 'Ctrl' : modifier === 'lalt' ? 'Alt' : 'Shift';
+
+    panel.innerHTML = `
+      <div class="mode-header">
+        <span class="mode-title">MODE SWITCH</span>
+        <span class="mode-current-label">Mode ${modeNum} (${modifierName})</span>
+      </div>
+      <div class="mode-dial">
+        <button class="mode-btn x52-mode1 ${this.x52CurrentMode === 'mode1' ? 'active' : ''}" data-mode="mode1" title="Mode 1 (Ctrl Modifier)">
+          <span class="mode-label">1</span>
+        </button>
+        <button class="mode-btn x52-mode2 ${this.x52CurrentMode === 'mode2' ? 'active' : ''}" data-mode="mode2" title="Mode 2 (Alt Modifier)">
+          <span class="mode-label">2</span>
+        </button>
+        <button class="mode-btn x52-mode3 ${this.x52CurrentMode === 'mode3' ? 'active' : ''}" data-mode="mode3" title="Mode 3 (Shift Modifier)">
+          <span class="mode-label">3</span>
+        </button>
+      </div>
+      <div class="mode-info">
+        <div class="mode-legend">
+          <span class="legend-item legend-x52-mode1"><span class="legend-dot"></span>Mode 1 = Ctrl</span>
+          <span class="legend-item legend-x52-mode2"><span class="legend-dot"></span>Mode 2 = Alt</span>
+          <span class="legend-item legend-x52-mode3"><span class="legend-dot"></span>Mode 3 = Shift</span>
+        </div>
+        <p class="mode-note">Modes allow different bindings per button. Trigger, Fire, and Rotaries are not affected by modes.</p>
+      </div>
+    `;
+
+    // Add click handlers for mode buttons
+    panel.querySelectorAll('.mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.setX52Mode(btn.dataset.mode);
       });
     });
 
@@ -669,28 +822,7 @@ class HOTASImageVisualizer {
     const wrapper = document.createElement('div');
     wrapper.className = 'hotas-image-container';
 
-    // Device selector (hidden - now using hardware selection screen)
-    // The tabs are kept in case they're needed but hidden via CSS
-    const selector = document.createElement('div');
-    selector.className = 'hotas-device-selector hidden';
-    selector.innerHTML = `
-      <button class="hotas-tab ${this.activeDevice === 'x56-throttle' ? 'active' : ''}" data-device="x56-throttle">
-        X56 Throttle
-      </button>
-      <button class="hotas-tab ${this.activeDevice === 'x56-stick' ? 'active' : ''}" data-device="x56-stick">
-        X56 Stick
-      </button>
-      <button class="hotas-tab ${this.activeDevice === 'vkb-left' ? 'active' : ''}" data-device="vkb-left">
-        VKB Left
-      </button>
-      <button class="hotas-tab ${this.activeDevice === 'vkb-right' ? 'active' : ''}" data-device="vkb-right">
-        VKB Right
-      </button>
-      <button class="hotas-tab ${this.activeDevice === 'ab9' ? 'active' : ''}" data-device="ab9">
-        MOZA AB9
-      </button>
-    `;
-    wrapper.appendChild(selector);
+    // Device selector removed - now using hardware selection screen instead
 
     // Connection status
     const status = document.createElement('div');
@@ -729,19 +861,25 @@ class HOTASImageVisualizer {
 
     wrapper.appendChild(visual);
 
-    // Axis display panel
-    wrapper.appendChild(this.renderAxisPanel());
+    // Axis display panel (only for devices without inline axis panels)
+    const devicesWithInlineAxisPanels = ['x56-hotas', 'x52-hotas', 'vkb-left', 'vkb-right', 'flight-yoke', 'flight-throttle', 'ab9'];
+    if (!devicesWithInlineAxisPanels.includes(this.activeDevice)) {
+      wrapper.appendChild(this.renderAxisPanel());
+    }
 
-    // Binding info panel
-    const infoPanel = document.createElement('div');
-    infoPanel.className = 'hotas-info-panel';
-    infoPanel.innerHTML = `
-      <div class="info-header">Control Bindings</div>
-      <div class="info-content" id="hotas-binding-info">
-        <p class="hint-text">Click on a button, hat, or axis to see its Star Citizen bindings</p>
-      </div>
-    `;
-    wrapper.appendChild(infoPanel);
+    // Binding info panel (only shown for devices with clickable hotspots: X56, X52)
+    const devicesWithInfoPanel = ['x56-hotas', 'x56-throttle', 'x56-stick', 'x52-hotas'];
+    if (devicesWithInfoPanel.includes(this.activeDevice)) {
+      const infoPanel = document.createElement('div');
+      infoPanel.className = 'hotas-info-panel';
+      infoPanel.innerHTML = `
+        <div class="info-header">Control Bindings</div>
+        <div class="info-content" id="hotas-binding-info">
+          <p class="hint-text">Click on a button, hat, or axis to see its Star Citizen bindings</p>
+        </div>
+      `;
+      wrapper.appendChild(infoPanel);
+    }
 
     this.container.appendChild(wrapper);
     this.setupEventListeners();
@@ -750,6 +888,17 @@ class HOTASImageVisualizer {
   }
 
   renderX56Throttle() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'x56-throttle-wrapper';
+
+    // Create the main content area with mode panel and device
+    const contentArea = document.createElement('div');
+    contentArea.className = 'x56-content-area';
+
+    // Add mode selector panel (linked to shared mode state)
+    const modePanel = this.renderModeSelector();
+    contentArea.appendChild(modePanel);
+
     const container = document.createElement('div');
     container.className = 'hotas-device-pair x56-throttle-single';
 
@@ -764,17 +913,62 @@ class HOTASImageVisualizer {
       </div>
     `;
     container.appendChild(throttleUnit);
+    contentArea.appendChild(container);
+
+    wrapper.appendChild(contentArea);
+
+    // Add live input panel for X56 Throttle
+    const liveInputPanel = document.createElement('div');
+    liveInputPanel.className = 'live-input-panel x56-live-input-panel compact';
+    liveInputPanel.innerHTML = `
+      <div class="live-input-header">Live Input</div>
+      <div class="live-input-content">
+        <div class="axis-displays x56-axis-displays">
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_left" title="Click to bind Throttle 1">Throttle 1</button>
+            <div class="trigger-bar throttle-lever-bar">
+              <div class="trigger-fill" id="x56-throttle1-fill"></div>
+            </div>
+            <span class="trigger-value" id="x56-throttle1-val">0%</span>
+          </div>
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_right" title="Click to bind Throttle 2">Throttle 2</button>
+            <div class="trigger-bar throttle-lever-bar">
+              <div class="trigger-fill" id="x56-throttle2-fill"></div>
+            </div>
+            <span class="trigger-value" id="x56-throttle2-val">0%</span>
+          </div>
+        </div>
+        <div class="button-input-display">
+          <div class="button-input-label">Buttons:</div>
+          <div class="button-input-list" id="x56-throttle-button-list">None</div>
+        </div>
+      </div>
+    `;
+    wrapper.appendChild(liveInputPanel);
 
     // Add hotspots and preload highlight images after base image loads
     setTimeout(() => {
       this.addX56ThrottleHotspots();
       this.preloadX56ThrottleHighlights();
+      this.setupAxisBindButtons();
     }, 100);
 
-    return container;
+    return wrapper;
   }
 
   renderX56Stick() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'x56-stick-wrapper';
+
+    // Create the main content area with mode panel and device
+    const contentArea = document.createElement('div');
+    contentArea.className = 'x56-content-area';
+
+    // Add mode selector panel (linked to shared mode state)
+    const modePanel = this.renderModeSelector();
+    contentArea.appendChild(modePanel);
+
     const container = document.createElement('div');
     container.className = 'hotas-device-pair x56-stick-single';
 
@@ -789,14 +983,57 @@ class HOTASImageVisualizer {
       </div>
     `;
     container.appendChild(stickUnit);
+    contentArea.appendChild(container);
+
+    wrapper.appendChild(contentArea);
+
+    // Add live input panel for X56 Stick
+    const liveInputPanel = document.createElement('div');
+    liveInputPanel.className = 'live-input-panel x56-live-input-panel compact';
+    liveInputPanel.innerHTML = `
+      <div class="live-input-header">Live Input</div>
+      <div class="live-input-content">
+        <div class="axis-displays x56-axis-displays">
+          <div class="axis-display-group">
+            <div class="axis-label-row">
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_js_pitch" title="Click to bind Pitch">Pitch</button>
+              <span class="axis-label-separator">/</span>
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_js_roll" title="Click to bind Roll">Roll</button>
+            </div>
+            <div class="axis-visual compact">
+              <div class="axis-crosshair"></div>
+              <div class="axis-dot" id="x56-stick-dot"></div>
+            </div>
+            <div class="axis-values">
+              <span>P: <span id="x56-pitch-val">0.00</span></span>
+              <span>R: <span id="x56-roll-val">0.00</span></span>
+            </div>
+          </div>
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_js_yaw" title="Click to bind Yaw">Yaw (Twist)</button>
+            <div class="axis-bar horizontal-axis-bar">
+              <div class="axis-bar-fill" id="x56-yaw-fill"></div>
+              <div class="axis-bar-center"></div>
+            </div>
+            <span class="axis-value" id="x56-yaw-val">0.00</span>
+          </div>
+        </div>
+        <div class="button-input-display">
+          <div class="button-input-label">Buttons:</div>
+          <div class="button-input-list" id="x56-stick-button-list">None</div>
+        </div>
+      </div>
+    `;
+    wrapper.appendChild(liveInputPanel);
 
     // Add hotspots and preload highlight images after base image loads
     setTimeout(() => {
       this.addX56StickHotspots();
       this.preloadX56StickHighlights();
+      this.setupAxisBindButtons();
     }, 100);
 
-    return container;
+    return wrapper;
   }
 
   renderX56Combined() {
@@ -841,7 +1078,85 @@ class HOTASImageVisualizer {
     container.appendChild(stickUnit);
 
     contentArea.appendChild(container);
+
+    // Add live input panel for X56 (under the entire controller area)
+    const liveInputPanel = document.createElement('div');
+    liveInputPanel.className = 'live-input-panel x56-live-input-panel';
+    liveInputPanel.innerHTML = `
+      <div class="live-input-header">Live Input</div>
+      <div class="live-input-content">
+        <div class="axis-displays x56-axis-displays">
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_left" title="Click to bind Throttle 1">Throttle 1</button>
+            <div class="trigger-bar throttle-lever-bar">
+              <div class="trigger-fill" id="x56-throttle1-fill"></div>
+            </div>
+            <span class="trigger-value" id="x56-throttle1-val">0%</span>
+          </div>
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_right" title="Click to bind Throttle 2">Throttle 2</button>
+            <div class="trigger-bar throttle-lever-bar">
+              <div class="trigger-fill" id="x56-throttle2-fill"></div>
+            </div>
+            <span class="trigger-value" id="x56-throttle2-val">0%</span>
+          </div>
+          <div class="axis-display-group">
+            <div class="axis-label-row">
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_js_pitch" title="Click to bind Pitch">Pitch</button>
+              <span class="axis-label-separator">/</span>
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_js_roll" title="Click to bind Roll">Roll</button>
+            </div>
+            <div class="axis-visual">
+              <div class="axis-crosshair"></div>
+              <div class="axis-dot" id="x56-stick-dot"></div>
+            </div>
+            <div class="axis-values">
+              <span>P: <span id="x56-pitch-val">0.00</span></span>
+              <span>R: <span id="x56-roll-val">0.00</span></span>
+            </div>
+          </div>
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_js_yaw" title="Click to bind Yaw">Yaw (Twist)</button>
+            <div class="axis-bar horizontal-axis-bar">
+              <div class="axis-bar-fill" id="x56-yaw-fill"></div>
+              <div class="axis-bar-center"></div>
+            </div>
+            <span class="axis-value" id="x56-yaw-val">0.00</span>
+          </div>
+          <div class="axis-display-group thumbstick-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_js_thumbstick_press" title="Click to bind Thumbstick Press">Thumb</button>
+            <div class="thumbstick-axes">
+              <div class="thumbstick-axis-item">
+                <button class="axis-display-label axis-bind-btn small" data-axis="x56_js_thumbstick_x" title="Click to bind Thumbstick X">X</button>
+                <div class="axis-bar horizontal-axis-bar compact">
+                  <div class="axis-bar-fill" id="x56-thumbstick-x-fill"></div>
+                  <div class="axis-bar-center"></div>
+                </div>
+                <span class="axis-value" id="x56-thumbstick-x-val">0.00</span>
+              </div>
+              <div class="thumbstick-axis-item">
+                <button class="axis-display-label axis-bind-btn small" data-axis="x56_js_thumbstick_y" title="Click to bind Thumbstick Y">Y</button>
+                <div class="axis-bar horizontal-axis-bar compact">
+                  <div class="axis-bar-fill" id="x56-thumbstick-y-fill"></div>
+                  <div class="axis-bar-center"></div>
+                </div>
+                <span class="axis-value" id="x56-thumbstick-y-val">0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="button-input-display">
+          <div class="button-input-row">
+            <div class="button-input-label">Buttons Pressed:</div>
+            <button class="button-config-btn" id="x56-config-btn" title="Configure button mappings">Configure</button>
+          </div>
+          <div class="button-input-list" id="x56-button-list">None</div>
+        </div>
+      </div>
+    `;
+
     wrapper.appendChild(contentArea);
+    wrapper.appendChild(liveInputPanel);
 
     // Add hotspots and preload highlight images for both devices
     setTimeout(() => {
@@ -849,6 +1164,10 @@ class HOTASImageVisualizer {
       this.preloadX56ThrottleHighlights();
       this.addX56StickHotspots();
       this.preloadX56StickHighlights();
+      this.setupAxisBindButtons();
+      this.setupButtonConfigButton();
+      // Check if button mapping needs to be configured
+      this.checkButtonMappingNeeded();
     }, 100);
 
     return wrapper;
@@ -857,6 +1176,18 @@ class HOTASImageVisualizer {
   // ==================== LOGITECH X52 PRO FLIGHT SYSTEM ====================
 
   renderX52() {
+    // Create wrapper to hold mode panel and device
+    const wrapper = document.createElement('div');
+    wrapper.className = 'x52-combined-wrapper';
+
+    // Create the main content area with mode panel and device
+    const contentArea = document.createElement('div');
+    contentArea.className = 'x52-content-area';
+
+    // Add mode selector panel for X52
+    const modePanel = this.renderX52ModeSelector();
+    contentArea.appendChild(modePanel);
+
     const container = document.createElement('div');
     container.className = 'hotas-device-pair x52-single';
 
@@ -872,13 +1203,64 @@ class HOTASImageVisualizer {
     `;
     container.appendChild(x52Unit);
 
+    contentArea.appendChild(container);
+
+    wrapper.appendChild(contentArea);
+
+    // Add live input panel for X52 (under the entire controller area)
+    const liveInputPanel = document.createElement('div');
+    liveInputPanel.className = 'live-input-panel x52-live-input-panel';
+    liveInputPanel.innerHTML = `
+      <div class="live-input-header">Live Input</div>
+      <div class="live-input-content">
+        <div class="axis-displays x52-axis-displays">
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x52_th_throttle" title="Click to bind Throttle">Throttle</button>
+            <div class="trigger-bar throttle-lever-bar">
+              <div class="trigger-fill" id="x52-throttle-fill"></div>
+            </div>
+            <span class="trigger-value" id="x52-throttle-val">0%</span>
+          </div>
+          <div class="axis-display-group">
+            <div class="axis-label-row">
+              <button class="axis-display-label axis-bind-btn" data-axis="x52_js_pitch" title="Click to bind Pitch">Pitch</button>
+              <span class="axis-label-separator">/</span>
+              <button class="axis-display-label axis-bind-btn" data-axis="x52_js_roll" title="Click to bind Roll">Roll</button>
+            </div>
+            <div class="axis-visual">
+              <div class="axis-crosshair"></div>
+              <div class="axis-dot" id="x52-stick-dot"></div>
+            </div>
+            <div class="axis-values">
+              <span>P: <span id="x52-pitch-val">0.00</span></span>
+              <span>R: <span id="x52-roll-val">0.00</span></span>
+            </div>
+          </div>
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x52_js_yaw" title="Click to bind Yaw">Yaw (Twist)</button>
+            <div class="axis-bar horizontal-axis-bar">
+              <div class="axis-bar-fill" id="x52-yaw-fill"></div>
+              <div class="axis-bar-center"></div>
+            </div>
+            <span class="axis-value" id="x52-yaw-val">0.00</span>
+          </div>
+        </div>
+        <div class="button-input-display">
+          <div class="button-input-label">Buttons Pressed:</div>
+          <div class="button-input-list" id="x52-button-list">None</div>
+        </div>
+      </div>
+    `;
+    wrapper.appendChild(liveInputPanel);
+
     // Add hotspots and preload highlight images after base image loads
     setTimeout(() => {
       this.addX52Hotspots();
       this.preloadX52Highlights();
+      this.setupAxisBindButtons();
     }, 100);
 
-    return container;
+    return wrapper;
   }
 
   preloadX52Highlights() {
@@ -926,29 +1308,29 @@ class HOTASImageVisualizer {
     const overlay = document.getElementById('x52-overlay');
     if (!overlay) return;
 
-    // Hotspot positions - these will need calibration using debug mode
+    // Hotspot positions - calibrated using debug mode
     // Positions are percentages relative to the image
     const hotspots = [
       // Throttle controls (left side of image)
-      { id: 'x52_th_select', label: 'Select/Scroll Wheel', x: 10, y: 25, w: 6, h: 5, type: 'button' },
-      { id: 'x52_th_dpad', label: 'Throttle D-Pad', x: 12, y: 35, w: 6, h: 6, type: 'hat' },
-      { id: 'x52_th_thumb', label: 'Thumb Button', x: 18, y: 32, w: 5, h: 5, type: 'button' },
-      { id: 'x52_th_front_dpad', label: 'Front D-Pad', x: 22, y: 42, w: 6, h: 6, type: 'hat' },
-      { id: 'x52_th_rt1', label: 'RT1 Rotary', x: 30, y: 18, w: 6, h: 4, type: 'axis' },
-      { id: 'x52_th_rt2', label: 'RT2 Rotary', x: 30, y: 24, w: 6, h: 4, type: 'axis' },
-      { id: 'x52_th_t1_t2', label: 'T1/T2 Toggles', x: 38, y: 48, w: 5, h: 8, type: 'button' },
-      { id: 'x52_th_t3_t4', label: 'T3/T4 Toggles', x: 44, y: 46, w: 5, h: 8, type: 'button' },
-      { id: 'x52_th_t5_t6', label: 'T5/T6 Toggles', x: 50, y: 44, w: 5, h: 8, type: 'button' },
+      { id: 'x52_th_select', label: 'Select/Scroll Wheel', x: 34.2, y: 47, w: 2, h: 3.6, type: 'button', highlightId: 'x52_th_select' },
+      { id: 'x52_th_dpad', label: 'Throttle D-Pad', x: 36.5, y: 42.8, w: 3, h: 4.5, type: 'hat', highlightId: 'x52_th_dpad' },
+      { id: 'x52_th_thumb', label: 'Thumb Button', x: 41, y: 31.3, w: 3.3, h: 4.8, type: 'button', highlightId: 'x52_th_thumb' },
+      { id: 'x52_th_front_dpad', label: 'Front D-Pad', x: 37.1, y: 25.6, w: 2.5, h: 4.8, type: 'hat', highlightId: 'x52_th_front_dpad' },
+      { id: 'x52_th_rt1', label: 'RT1 Rotary', x: 40.7, y: 24.9, w: 3.8, h: 4.6, type: 'axis', highlightId: 'x52_th_rt1' },
+      { id: 'x52_th_rt2', label: 'RT2 Rotary', x: 40.5, y: 42.2, w: 2.8, h: 3.9, type: 'axis', highlightId: 'x52_th_rt2' },
+      { id: 'x52_th_t1_t2', label: 'T1/T2 Toggles', x: 49.4, y: 77.3, w: 2.3, h: 8.4, type: 'button', highlightId: 'x52_th_t1_t2' },
+      { id: 'x52_th_t3_t4', label: 'T3/T4 Toggles', x: 54, y: 78, w: 2, h: 8.2, type: 'button', highlightId: 'x52_th_t3_t4' },
+      { id: 'x52_th_t5_t6', label: 'T5/T6 Toggles', x: 57.6, y: 80.9, w: 3.3, h: 7, type: 'button', highlightId: 'x52_th_t5_t6' },
       // Stick controls (right side of image)
-      { id: 'x52_js_thumb_hat', label: 'Thumb Hat (POV)', x: 62, y: 12, w: 7, h: 6, type: 'hat' },
-      { id: 'x52_js_a_btn', label: 'A Button', x: 70, y: 10, w: 5, h: 4, type: 'button' },
-      { id: 'x52_js_b_btn', label: 'B Button', x: 76, y: 10, w: 5, h: 4, type: 'button' },
-      { id: 'x52_js_c_btn', label: 'C Button', x: 73, y: 16, w: 5, h: 4, type: 'button' },
-      { id: 'x52_js_fire', label: 'Fire Button', x: 65, y: 18, w: 6, h: 5, type: 'button' },
-      { id: 'x52_js_thumb_dpad', label: 'Thumb D-Pad', x: 80, y: 16, w: 6, h: 6, type: 'hat' },
-      { id: 'x52_js_scroll', label: 'Scroll Wheel', x: 82, y: 24, w: 5, h: 5, type: 'button' },
-      { id: 'x52_js_trigger', label: 'Trigger', x: 68, y: 28, w: 6, h: 8, type: 'button' },
-      { id: 'x52_js_pinky_switch', label: 'Pinky Switch', x: 72, y: 40, w: 6, h: 6, type: 'button' }
+      { id: 'x52_js_thumb_hat', label: 'Thumb Hat (POV)', x: 63.2, y: 19.1, w: 3.6, h: 6.2, type: 'hat', highlightId: 'x52_js_thumb_hat' },
+      { id: 'x52_js_a_btn', label: 'A Button', x: 68.3, y: 12.2, w: 2, h: 3.5, type: 'button', highlightId: 'x52_js_a_btn' },
+      { id: 'x52_js_b_btn', label: 'B Button', x: 67.8, y: 19.1, w: 2, h: 3.7, type: 'button', highlightId: 'x52_js_b_btn' },
+      { id: 'x52_js_c_btn', label: 'C Button', x: 59.8, y: 17.1, w: 3.1, h: 5, type: 'button', highlightId: 'x52_js_c_btn' },
+      { id: 'x52_js_fire', label: 'Fire Button', x: 65.2, y: 9.3, w: 2.9, h: 5, type: 'button', highlightId: 'x52_js_fire' },
+      { id: 'x52_js_thumb_dpad', label: 'Thumb D-Pad', x: 60, y: 9.8, w: 4.4, h: 6.8, type: 'hat', highlightId: 'x52_js_thumb_dpad' },
+      { id: 'x52_js_scroll', label: 'Scroll Wheel', x: 71.1, y: 9.1, w: 2.4, h: 9.3, type: 'button', highlightId: 'x52_js_scroll' },
+      { id: 'x52_js_trigger', label: 'Trigger', x: 63.6, y: 29.8, w: 2.9, h: 8.8, type: 'button', highlightId: 'x52_js_trigger' },
+      { id: 'x52_js_pinky_switch', label: 'Pinky Switch', x: 67.3, y: 33.6, w: 2, h: 11.9, type: 'button', highlightId: 'x52_js_pinky_switch' }
     ];
 
     hotspots.forEach(hs => {
@@ -993,6 +1375,9 @@ class HOTASImageVisualizer {
   // ==================== VKB GLADIATOR ====================
 
   renderVKBLeft() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'vkb-wrapper';
+
     const container = document.createElement('div');
     container.className = 'hotas-device-pair vkb-left-single';
 
@@ -1001,23 +1386,73 @@ class HOTASImageVisualizer {
     leftUnit.innerHTML = `
       <div class="device-title">VKB Gladiator - Left</div>
       <div class="device-image-container vkb-left-container" id="vkb-left-container">
-        <img src="../../assets/controllers/VKB Left/vkb-left_0009_Layer-1.png" alt="VKB Left" class="device-image vkb-left-base-image" id="vkb-left-img">
+        <img src="../../assets/controllers/VKB Left/vkb-left_0012_Layer-1.png" alt="VKB Left" class="device-image vkb-left-base-image" id="vkb-left-img">
         <div class="vkb-left-highlight-layer" id="vkb-left-highlight-layer"></div>
         <div class="hotspot-overlay" id="vkb-left-overlay"></div>
       </div>
     `;
     container.appendChild(leftUnit);
+    wrapper.appendChild(container);
+
+    // Add axis display panel for VKB Left
+    const axisPanel = document.createElement('div');
+    axisPanel.className = 'axis-display-panel vkb-axis-panel';
+    axisPanel.innerHTML = `
+      <div class="axis-display-header">Live Axis Input</div>
+      <div class="axis-displays vkb-axis-displays">
+        <div class="axis-display-group">
+          <div class="axis-label-row">
+            <button class="axis-display-label axis-bind-btn" data-axis="vkb_l_pitch" title="Click to bind Pitch">Pitch</button>
+            <span class="axis-label-separator">/</span>
+            <button class="axis-display-label axis-bind-btn" data-axis="vkb_l_roll" title="Click to bind Roll">Roll</button>
+          </div>
+          <div class="axis-visual">
+            <div class="axis-crosshair"></div>
+            <div class="axis-dot" id="vkb-left-stick-dot"></div>
+          </div>
+          <div class="axis-values">
+            <span>P: <span id="vkb-left-pitch-val">0.00</span></span>
+            <span>R: <span id="vkb-left-roll-val">0.00</span></span>
+          </div>
+        </div>
+        <div class="axis-display-group">
+          <button class="axis-display-label axis-bind-btn" data-axis="vkb_l_yaw" title="Click to bind Yaw">Yaw (Twist)</button>
+          <div class="axis-bar horizontal-axis-bar">
+            <div class="axis-bar-fill" id="vkb-left-yaw-fill"></div>
+            <div class="axis-bar-center"></div>
+          </div>
+          <span class="axis-value" id="vkb-left-yaw-val">0.00</span>
+        </div>
+      </div>
+      <div class="button-input-display">
+        <div class="button-input-row">
+          <div class="button-input-label">Buttons Pressed:</div>
+          <button class="button-config-btn" id="vkb-left-calibrate-btn">Calibrate</button>
+        </div>
+        <div class="button-input-list" id="vkb-left-button-list">None</div>
+      </div>
+    `;
+    wrapper.appendChild(axisPanel);
 
     // Add hotspots and preload highlight images after base image loads
     setTimeout(() => {
       this.addVKBLeftHotspots();
       this.preloadVKBLeftHighlights();
+      this.setupAxisBindButtons();
+      // Setup calibrate button listener
+      const calibrateBtn = document.getElementById('vkb-left-calibrate-btn');
+      if (calibrateBtn) {
+        calibrateBtn.addEventListener('click', () => this.startButtonMappingWizard());
+      }
     }, 100);
 
-    return container;
+    return wrapper;
   }
 
   renderVKBRight() {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'vkb-wrapper';
+
     const container = document.createElement('div');
     container.className = 'hotas-device-pair vkb-right-single';
 
@@ -1026,23 +1461,78 @@ class HOTASImageVisualizer {
     rightUnit.innerHTML = `
       <div class="device-title">VKB Gladiator - Right</div>
       <div class="device-image-container vkb-right-container" id="vkb-right-container">
-        <img src="../../assets/controllers/VKB Right/vkb-right_0009_Layer-1.png" alt="VKB Right" class="device-image vkb-right-base-image" id="vkb-right-img">
+        <img src="../../assets/controllers/vkb Right/vkb-left_0012_Layer-1.png" alt="VKB Right" class="device-image vkb-right-base-image" id="vkb-right-img">
         <div class="vkb-right-highlight-layer" id="vkb-right-highlight-layer"></div>
         <div class="hotspot-overlay" id="vkb-right-overlay"></div>
       </div>
     `;
     container.appendChild(rightUnit);
+    wrapper.appendChild(container);
+
+    // Add axis display panel for VKB Right
+    const axisPanel = document.createElement('div');
+    axisPanel.className = 'axis-display-panel vkb-axis-panel';
+    axisPanel.innerHTML = `
+      <div class="axis-display-header">Live Axis Input</div>
+      <div class="axis-displays vkb-axis-displays">
+        <div class="axis-display-group">
+          <div class="axis-label-row">
+            <button class="axis-display-label axis-bind-btn" data-axis="vkb_r_pitch" title="Click to bind Pitch">Pitch</button>
+            <span class="axis-label-separator">/</span>
+            <button class="axis-display-label axis-bind-btn" data-axis="vkb_r_roll" title="Click to bind Roll">Roll</button>
+          </div>
+          <div class="axis-visual">
+            <div class="axis-crosshair"></div>
+            <div class="axis-dot" id="vkb-right-stick-dot"></div>
+          </div>
+          <div class="axis-values">
+            <span>P: <span id="vkb-right-pitch-val">0.00</span></span>
+            <span>R: <span id="vkb-right-roll-val">0.00</span></span>
+          </div>
+        </div>
+        <div class="axis-display-group">
+          <button class="axis-display-label axis-bind-btn" data-axis="vkb_r_yaw" title="Click to bind Yaw">Yaw (Twist)</button>
+          <div class="axis-bar horizontal-axis-bar">
+            <div class="axis-bar-fill" id="vkb-right-yaw-fill"></div>
+            <div class="axis-bar-center"></div>
+          </div>
+          <span class="axis-value" id="vkb-right-yaw-val">0.00</span>
+        </div>
+      </div>
+      <div class="button-input-display">
+        <div class="button-input-row">
+          <div class="button-input-label">Buttons Pressed:</div>
+          <button class="button-config-btn" id="vkb-right-calibrate-btn">Calibrate</button>
+        </div>
+        <div class="button-input-list" id="vkb-right-button-list">None</div>
+      </div>
+    `;
+    wrapper.appendChild(axisPanel);
 
     // Add hotspots and preload highlight images after base image loads
     setTimeout(() => {
       this.addVKBRightHotspots();
       this.preloadVKBRightHighlights();
+      this.setupAxisBindButtons();
+      // Setup calibrate button listener
+      const calibrateBtn = document.getElementById('vkb-right-calibrate-btn');
+      if (calibrateBtn) {
+        calibrateBtn.addEventListener('click', () => this.startButtonMappingWizard());
+      }
     }, 100);
 
-    return container;
+    return wrapper;
   }
 
   renderAB9() {
+    // Create wrapper for AB9 content area (image + side panel)
+    const wrapper = document.createElement('div');
+    wrapper.className = 'ab9-wrapper';
+
+    // Content area holds the image and side panel horizontally
+    const contentArea = document.createElement('div');
+    contentArea.className = 'ab9-content-area';
+
     const container = document.createElement('div');
     container.className = 'hotas-device-pair ab9-single';
 
@@ -1058,13 +1548,57 @@ class HOTASImageVisualizer {
     `;
     container.appendChild(stickUnit);
 
+    contentArea.appendChild(container);
+
+    // Add live input panel for AB9 (to the right of the controller image)
+    const liveInputPanel = document.createElement('div');
+    liveInputPanel.className = 'live-input-panel ab9-live-input-panel';
+    liveInputPanel.innerHTML = `
+      <div class="live-input-header">Live Input</div>
+      <div class="live-input-content">
+        <div class="axis-displays ab9-axis-displays">
+          <div class="axis-display-group">
+            <div class="axis-label-row">
+              <button class="axis-display-label axis-bind-btn" data-axis="ab9_pitch" title="Click to bind Pitch">Pitch</button>
+              <span class="axis-label-separator">/</span>
+              <button class="axis-display-label axis-bind-btn" data-axis="ab9_roll" title="Click to bind Roll">Roll</button>
+            </div>
+            <div class="axis-visual">
+              <div class="axis-crosshair"></div>
+              <div class="axis-dot" id="ab9-stick-dot"></div>
+            </div>
+            <div class="axis-values">
+              <span>P: <span id="ab9-pitch-val">0.00</span></span>
+              <span>R: <span id="ab9-roll-val">0.00</span></span>
+            </div>
+          </div>
+        </div>
+        <div class="button-input-display">
+          <div class="button-input-row">
+            <div class="button-input-label">Buttons Pressed:</div>
+            <button class="button-config-btn" id="ab9-calibrate-btn">Calibrate</button>
+          </div>
+          <div class="button-input-list" id="ab9-button-list">None</div>
+        </div>
+      </div>
+    `;
+    contentArea.appendChild(liveInputPanel);
+
+    wrapper.appendChild(contentArea);
+
     // Add hotspots and preload highlight images after base image loads
     setTimeout(() => {
       this.addAB9Hotspots();
       this.preloadAB9Highlights();
+      this.setupAxisBindButtons();
+      // Setup calibrate button listener
+      const calibrateBtn = document.getElementById('ab9-calibrate-btn');
+      if (calibrateBtn) {
+        calibrateBtn.addEventListener('click', () => this.startButtonMappingWizard());
+      }
     }, 100);
 
-    return container;
+    return wrapper;
   }
 
   preloadAB9Highlights() {
@@ -1214,14 +1748,18 @@ class HOTASImageVisualizer {
           <div class="axis-display-header">Live Axis Input</div>
           <div class="axis-displays">
             <div class="axis-display-group">
-              <span class="axis-display-label">Pitch / Roll</span>
+              <div class="axis-label-row">
+                <button class="axis-display-label axis-bind-btn" data-axis="yoke_x_axis" title="Click to bind Pitch">Pitch</button>
+                <span class="axis-label-separator">/</span>
+                <button class="axis-display-label axis-bind-btn" data-axis="yoke_y_axis" title="Click to bind Roll">Roll</button>
+              </div>
               <div class="axis-visual axis-visual-yoke">
                 <div class="axis-crosshair"></div>
                 <div class="axis-dot" id="yoke-axis-dot"></div>
               </div>
               <div class="axis-values">
-                <span>X: <span id="yoke-x-val">0.00</span></span>
-                <span>Y: <span id="yoke-y-val">0.00</span></span>
+                <span>P: <span id="yoke-x-val">0.00</span></span>
+                <span>R: <span id="yoke-y-val">0.00</span></span>
               </div>
             </div>
           </div>
@@ -1234,6 +1772,7 @@ class HOTASImageVisualizer {
     setTimeout(() => {
       this.addFlightYokeHotspots();
       this.preloadFlightYokeHighlights();
+      this.setupAxisBindButtons();
     }, 100);
 
     return container;
@@ -1346,21 +1885,21 @@ class HOTASImageVisualizer {
           <div class="axis-display-header">Live Throttle Input</div>
           <div class="axis-displays throttle-axis-displays">
             <div class="axis-display-group">
-              <span class="axis-display-label">Flaps</span>
+              <button class="axis-display-label axis-bind-btn" data-axis="throttle_axis1" title="Click to bind Lever 1">Lever 1</button>
               <div class="trigger-bar throttle-lever-bar">
                 <div class="trigger-fill" id="throttle-flaps-fill"></div>
               </div>
               <span class="trigger-value" id="throttle-flaps-val">0%</span>
             </div>
             <div class="axis-display-group">
-              <span class="axis-display-label">Throttle 1</span>
+              <button class="axis-display-label axis-bind-btn" data-axis="throttle_axis2" title="Click to bind Lever 2">Lever 2</button>
               <div class="trigger-bar throttle-lever-bar">
                 <div class="trigger-fill" id="throttle-1-fill"></div>
               </div>
               <span class="trigger-value" id="throttle-1-val">0%</span>
             </div>
             <div class="axis-display-group">
-              <span class="axis-display-label">Throttle 2</span>
+              <button class="axis-display-label axis-bind-btn" data-axis="throttle_axis3" title="Click to bind Lever 3">Lever 3</button>
               <div class="trigger-bar throttle-lever-bar">
                 <div class="trigger-fill" id="throttle-2-fill"></div>
               </div>
@@ -1376,6 +1915,7 @@ class HOTASImageVisualizer {
     setTimeout(() => {
       this.addFlightThrottleHotspots();
       this.preloadFlightThrottleHighlights();
+      this.setupAxisBindButtons();
     }, 100);
 
     return container;
@@ -1412,11 +1952,16 @@ class HOTASImageVisualizer {
     if (!overlay) return;
 
     // Hotspots for Flight Throttle Quadrant - positions calibrated using debug mode
-    // The throttle has 6 toggle switches (T1-T6 in pairs)
+    // The throttle has 6 toggle switches (T1-T6 in pairs) and 3 axis levers
     const hotspots = [
+      // Toggle switches
       { id: 't1_t2', label: 'T1/T2 Toggle Switches', x: 59.8, y: 76.2, w: 4.7, h: 16.3, type: 'button', highlightId: 'throttle_t1_t2' },
       { id: 't3_t4', label: 'T3/T4 Toggle Switches', x: 65.3, y: 72.5, w: 4.4, h: 17.8, type: 'button', highlightId: 'throttle_t3_t4' },
-      { id: 't5_t6', label: 'T5/T6 Toggle Switches', x: 70.6, y: 68.8, w: 4.9, h: 18.5, type: 'button', highlightId: 'throttle_t5_t6' }
+      { id: 't5_t6', label: 'T5/T6 Toggle Switches', x: 70.6, y: 68.8, w: 4.9, h: 18.5, type: 'button', highlightId: 'throttle_t5_t6' },
+      // Axis levers (3 levers from left to right)
+      { id: 'axis1', label: 'Lever 1 (Throttle)', x: 26, y: 30, w: 8, h: 50, type: 'axis', highlightId: null },
+      { id: 'axis2', label: 'Lever 2 (Mixture)', x: 36, y: 30, w: 8, h: 50, type: 'axis', highlightId: null },
+      { id: 'axis3', label: 'Lever 3 (Prop Pitch)', x: 46, y: 30, w: 8, h: 50, type: 'axis', highlightId: null }
     ];
 
     hotspots.forEach(hs => {
@@ -1593,7 +2138,6 @@ class HOTASImageVisualizer {
     // Images from X56 Stick folder
     const highlightMap = {
       'x56_js_pinky_switch': 'x56-stick_0000_Pinky-Switch.png',
-      'x56_js_thumb_funky': 'x56-stick_0001_Thumb-Funky-Stick.png',
       'x56_js_trigger': 'x56-stick_0002_Trigger.png',
       'x56_js_thumb_hat': 'x56-stick_0003_Thumb-Hat.png',
       'x56_js_thumb_dpad': 'x56-stick_0004_Thumb-Dpad.png',
@@ -1637,8 +2181,6 @@ class HOTASImageVisualizer {
       { id: 'missile_btn', label: 'Missile Button', x: 41.4, y: 2.5, w: 3, h: 3, type: 'button', highlightId: 'x56_js_missile_btn' },
       // Thumbstick (ministick)
       { id: 'thumbstick', label: 'Thumbstick', x: 37.9, y: 6.6, w: 5, h: 5, type: 'axis', highlightId: 'x56_js_thumbstick' },
-      // Thumb Funky Stick
-      { id: 'thumb_funky', label: 'Thumb Funky Stick', x: 33.8, y: 24.8, w: 7, h: 7, type: 'hat', highlightId: 'x56_js_thumb_funky' },
       // Pinky Switch
       { id: 'pinky_switch', label: 'Pinky Switch', x: 32.6, y: 34.3, w: 8, h: 12, type: 'button', highlightId: 'x56_js_pinky_switch' },
     ];
@@ -1762,7 +2304,7 @@ class HOTASImageVisualizer {
     const cacheBuster = Date.now();
     Object.entries(highlightMap).forEach(([buttonId, filename]) => {
       const img = document.createElement('img');
-      img.src = `../../assets/controllers/VKB Right/${filename}?v=${cacheBuster}`;
+      img.src = `../../assets/controllers/vkb Right/${filename}?v=${cacheBuster}`;
       img.className = 'vkb-right-highlight-img';
       img.dataset.button = buttonId;
       img.style.display = 'none';
@@ -1778,33 +2320,21 @@ class HOTASImageVisualizer {
     const overlay = document.getElementById('vkb-left-overlay');
     if (!overlay) return;
 
-    // Hotspots for VKB Left - updated with new button naming convention
+    // Hotspots for VKB Left - calibrated coordinates
     // Windows Button mapping: 1=Trigger S1, 2=Trigger S2, 3=A2 Red, 4=A3 Black, 5=A5, 6=A6, 7=D1 Pinky, 12=F2 Encoder, 13=A1 Ministick
     const hotspots = [
-      // Trigger (2-stage) - Button 1 & 2
-      { id: 'trigger', label: 'Trigger (2-stage)', x: 40, y: 45, w: 8, h: 12, type: 'button', highlightId: 'vkb_l_trigger' },
-      // B1 Side button
-      { id: 'b1_side', label: 'B1 Side Button', x: 55, y: 50, w: 6, h: 8, type: 'button', highlightId: 'vkb_l_b1_side' },
-      // D1 Pinky button - Button 7
-      { id: 'd1_pinky', label: 'D1 Pinky Button', x: 30, y: 55, w: 6, h: 8, type: 'button', highlightId: 'vkb_l_d1_pinky' },
-      // Base switch
-      { id: 'base_switch', label: 'Base Switch', x: 25, y: 72.5, w: 5, h: 10, type: 'button', highlightId: 'vkb_l_base_switch' },
-      // F2 Encoder - Button 12 (press)
+      { id: 'trigger', label: 'Trigger (2-stage)', x: 68.2, y: 21.4, w: 16.4, h: 3.1, type: 'button', highlightId: 'vkb_l_trigger' },
+      { id: 'b1_side', label: 'B1 Side Button', x: 71.8, y: 10.7, w: 7.5, h: 7, type: 'button', highlightId: 'vkb_l_b1_side' },
+      { id: 'd1_pinky', label: 'D1 Pinky Button', x: 48.9, y: 38.6, w: 6.4, h: 9.9, type: 'button', highlightId: 'vkb_l_d1_pinky' },
+      { id: 'base_switch', label: 'Base Switch', x: 26.1, y: 70.7, w: 5, h: 10, type: 'button', highlightId: 'vkb_l_base_switch' },
       { id: 'f2', label: 'F2 Encoder', x: 27.9, y: 60.4, w: 5, h: 6, type: 'button', highlightId: 'vkb_l_f2' },
-      // F1 button
       { id: 'f1', label: 'F1 Button', x: 33.6, y: 60.5, w: 5, h: 6, type: 'button', highlightId: 'vkb_l_f1' },
-      // F3 button
-      { id: 'f3', label: 'F3 Button', x: 35, y: 67, w: 7.2, h: 5.76, type: 'button', highlightId: 'vkb_l_f3' },
-      // C1 Thumb hat
-      { id: 'c1_thumb_hat', label: 'C1 Thumb Hat (4-way)', x: 61.1, y: 22.7, w: 8, h: 8, type: 'hat', highlightId: 'vkb_l_c1_thumb_hat' },
-      // A2 Top Red button - Button 3
-      { id: 'a2_red', label: 'A2 Top Red Button', x: 62.1, y: 11.8, w: 6, h: 6, type: 'button', highlightId: 'vkb_l_a2_red' },
-      // A3 Center hat (includes black button) - Button 4 for black
-      { id: 'a3_center_hat', label: 'A3 Center Hat (5-way)', x: 68, y: 18, w: 10, h: 10, type: 'hat', highlightId: 'vkb_l_a3_center_hat' },
-      // A4 Top Left hat
-      { id: 'a4_top_hat', label: 'A4 Top Left Hat (4-way)', x: 75, y: 8, w: 10, h: 10, type: 'hat', highlightId: 'vkb_l_a4_top_hat' },
-      // A1 Mini-stick - Button 13 (press)
-      { id: 'a1_ministick', label: 'A1 Mini-stick (5-way)', x: 46, y: 33.9, w: 12, h: 10, type: 'hat', highlightId: 'vkb_l_a1_ministick' },
+      { id: 'f3', label: 'F3 Button', x: 35, y: 67, w: 7.2, h: 5.8, type: 'button', highlightId: 'vkb_l_f3' },
+      { id: 'c1_thumb_hat', label: 'C1 Thumb Hat (4-way)', x: 47.2, y: 30.6, w: 8, h: 8, type: 'hat', highlightId: 'vkb_l_c1_thumb_hat' },
+      { id: 'a2_red', label: 'A2 Top Red Button', x: 61.4, y: 29.3, w: 6, h: 6, type: 'button', highlightId: 'vkb_l_a2_red' },
+      { id: 'a3_center_hat', label: 'A3 Center Hat (5-way)', x: 59.8, y: 21.2, w: 6.6, h: 7.2, type: 'hat', highlightId: 'vkb_l_a3_center_hat' },
+      { id: 'a4_top_hat', label: 'A4 Top Left Hat (4-way)', x: 64.6, y: 13, w: 7.9, h: 7.6, type: 'hat', highlightId: 'vkb_l_a4_top_hat' },
+      { id: 'a1_ministick', label: 'A1 Mini-stick (5-way)', x: 65.6, y: 24.3, w: 7.9, h: 6.7, type: 'hat', highlightId: 'vkb_l_a1_ministick' },
     ];
 
     this.createVKBLeftHotspots(overlay, hotspots);
@@ -1985,33 +2515,34 @@ class HOTASImageVisualizer {
     const overlay = document.getElementById('vkb-right-overlay');
     if (!overlay) return;
 
-    // Hotspots for VKB Right - updated with new button naming convention (mirrored from Left)
+    // Hotspots for VKB Right - mirrored from calibrated VKB Left coordinates
+    // Mirror formula: mirrored_x = 100 - original_x - original_width
     // Windows Button mapping: 1=Trigger S1, 2=Trigger S2, 3=A2 Red, 4=A3 Black, 5=A5, 6=A6, 7=D1 Pinky, 12=F2 Encoder, 13=A1 Ministick
     const hotspots = [
       // Trigger (2-stage) - Button 1 & 2
-      { id: 'trigger', label: 'Trigger (2-stage)', x: 52, y: 45, w: 8, h: 12, type: 'button', highlightId: 'vkb_r_trigger' },
+      { id: 'trigger', label: 'Trigger (2-stage)', x: 15.4, y: 21.4, w: 16.4, h: 3.1, type: 'button', highlightId: 'vkb_r_trigger' },
       // B1 Side button
-      { id: 'b1_side', label: 'B1 Side Button', x: 39, y: 50, w: 6, h: 8, type: 'button', highlightId: 'vkb_r_b1_side' },
+      { id: 'b1_side', label: 'B1 Side Button', x: 20.7, y: 10.7, w: 7.5, h: 7, type: 'button', highlightId: 'vkb_r_b1_side' },
       // D1 Pinky button - Button 7
-      { id: 'd1_pinky', label: 'D1 Pinky Button', x: 64, y: 55, w: 6, h: 8, type: 'button', highlightId: 'vkb_r_d1_pinky' },
+      { id: 'd1_pinky', label: 'D1 Pinky Button', x: 44.7, y: 38.6, w: 6.4, h: 9.9, type: 'button', highlightId: 'vkb_r_d1_pinky' },
       // Base switch
-      { id: 'base_switch', label: 'Base Switch', x: 70, y: 72.5, w: 5, h: 10, type: 'button', highlightId: 'vkb_r_base_switch' },
+      { id: 'base_switch', label: 'Base Switch', x: 68.9, y: 70.7, w: 5, h: 10, type: 'button', highlightId: 'vkb_r_base_switch' },
       // F2 Encoder - Button 12 (press)
       { id: 'f2', label: 'F2 Encoder', x: 67.1, y: 60.4, w: 5, h: 6, type: 'button', highlightId: 'vkb_r_f2' },
       // F1 button
       { id: 'f1', label: 'F1 Button', x: 61.4, y: 60.5, w: 5, h: 6, type: 'button', highlightId: 'vkb_r_f1' },
       // F3 button
-      { id: 'f3', label: 'F3 Button', x: 57.8, y: 67, w: 7.2, h: 5.76, type: 'button', highlightId: 'vkb_r_f3' },
+      { id: 'f3', label: 'F3 Button', x: 57.8, y: 67, w: 7.2, h: 5.8, type: 'button', highlightId: 'vkb_r_f3' },
       // C1 Thumb hat
-      { id: 'c1_thumb_hat', label: 'C1 Thumb Hat (4-way)', x: 30.9, y: 22.7, w: 8, h: 8, type: 'hat', highlightId: 'vkb_r_c1_thumb_hat' },
+      { id: 'c1_thumb_hat', label: 'C1 Thumb Hat (4-way)', x: 44.8, y: 30.6, w: 8, h: 8, type: 'hat', highlightId: 'vkb_r_c1_thumb_hat' },
       // A2 Top Red button - Button 3
-      { id: 'a2_red', label: 'A2 Top Red Button', x: 31.9, y: 11.8, w: 6, h: 6, type: 'button', highlightId: 'vkb_r_a2_red' },
+      { id: 'a2_red', label: 'A2 Top Red Button', x: 32.6, y: 29.3, w: 6, h: 6, type: 'button', highlightId: 'vkb_r_a2_red' },
       // A3 Center hat (includes black button) - Button 4 for black
-      { id: 'a3_center_hat', label: 'A3 Center Hat (5-way)', x: 22, y: 18, w: 10, h: 10, type: 'hat', highlightId: 'vkb_r_a3_center_hat' },
+      { id: 'a3_center_hat', label: 'A3 Center Hat (5-way)', x: 33.6, y: 21.2, w: 6.6, h: 7.2, type: 'hat', highlightId: 'vkb_r_a3_center_hat' },
       // A4 Top Right hat
-      { id: 'a4_top_hat', label: 'A4 Top Right Hat (4-way)', x: 15, y: 8, w: 10, h: 10, type: 'hat', highlightId: 'vkb_r_a4_top_hat' },
+      { id: 'a4_top_hat', label: 'A4 Top Right Hat (4-way)', x: 27.5, y: 13, w: 7.9, h: 7.6, type: 'hat', highlightId: 'vkb_r_a4_top_hat' },
       // A1 Mini-stick - Button 13 (press)
-      { id: 'a1_ministick', label: 'A1 Mini-stick (5-way)', x: 42, y: 33.9, w: 12, h: 10, type: 'hat', highlightId: 'vkb_r_a1_ministick' },
+      { id: 'a1_ministick', label: 'A1 Mini-stick (5-way)', x: 26.5, y: 24.3, w: 7.9, h: 6.7, type: 'hat', highlightId: 'vkb_r_a1_ministick' },
     ];
 
     this.createVKBRightHotspots(overlay, hotspots);
@@ -2092,6 +2623,13 @@ class HOTASImageVisualizer {
   renderAxisPanel() {
     const panel = document.createElement('div');
     panel.className = 'hotas-axis-panel';
+
+    // Devices that already have inline axis panels - return empty panel
+    const devicesWithInlineAxisPanels = ['x56-hotas', 'x52-hotas', 'vkb-left', 'vkb-right', 'flight-yoke', 'flight-throttle'];
+    if (devicesWithInlineAxisPanels.includes(this.activeDevice)) {
+      // These devices have axis panels built into their render methods
+      return panel;
+    }
 
     if (this.activeDevice === 'x56-throttle') {
       // X56 Throttle - show throttle axes and rotary knobs with clickable labels
@@ -2529,10 +3067,51 @@ class HOTASImageVisualizer {
       <span class="sidebar-binding-button">${buttonLabel}</span>
       <span class="sidebar-binding-direction">${directionLabel}</span>
       <span class="sidebar-binding-action">${actionLabel}</span>
+      <button class="sidebar-binding-clear" title="Clear binding">&times;</button>
     `;
 
-    item.addEventListener('click', () => this.navigateToButton(buttonId));
+    // Click on the item navigates to the button
+    item.addEventListener('click', (e) => {
+      // Don't navigate if clicking the clear button
+      if (!e.target.classList.contains('sidebar-binding-clear')) {
+        this.navigateToButton(buttonId);
+      }
+    });
+
+    // Clear button removes the binding
+    const clearBtn = item.querySelector('.sidebar-binding-clear');
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.clearSingleBinding(key);
+    });
+
     container.appendChild(item);
+  }
+
+  clearSingleBinding(key) {
+    console.log('clearSingleBinding called with key:', key);
+
+    // Remove from this.customBindings (used by sidebar)
+    if (key in this.customBindings) {
+      delete this.customBindings[key];
+      console.log('Deleted from this.customBindings');
+    }
+
+    // Also remove from bindingContextMenu.customBindings (used by context menu)
+    if (this.bindingContextMenu && key in this.bindingContextMenu.customBindings) {
+      delete this.bindingContextMenu.customBindings[key];
+      this.bindingContextMenu.saveCustomBindings();
+      console.log('Deleted from bindingContextMenu.customBindings');
+    }
+
+    // Save our own copy too
+    this.saveCustomBindings();
+
+    // Update the UI
+    this.updateBindingHighlights();
+    this.updateSidebarBindingsList();
+
+    console.log('Cleared binding:', key);
   }
 
   getCategoryIdForAction(action) {
@@ -2657,6 +3236,8 @@ class HOTASImageVisualizer {
       'ab9_thumb_hat': 'Thumb Hat (8-way)',
       'ab9_y_axis': 'Y Axis (Pitch)',
       'ab9_x_axis': 'X Axis (Roll)',
+      'ab9_pitch': 'Pitch Axis',
+      'ab9_roll': 'Roll Axis',
       // X56 Throttle controls
       'x56_th_sw1_sw2': 'SW1 Up / SW2 Down',
       'x56_th_sw3_sw4': 'SW3 Up / SW4 Down',
@@ -2835,58 +3416,256 @@ class HOTASImageVisualizer {
 
   updateLiveInput(data) {
     // Update axis displays based on current device
-    if (this.activeDevice === 'x56' || this.activeDevice === 'x56-hotas' || this.activeDevice === 'x56-throttle' || this.activeDevice === 'x56-stick') {
-      this.updateX56Axes(data.axes, data.buttons);
+    if (this.activeDevice === 'x56' || this.activeDevice === 'x56-hotas') {
+      // Combined view - uses combined axis mapping
+      this.updateX56CombinedAxes(data.axes, data.buttons);
+    } else if (this.activeDevice === 'x56-stick') {
+      // Stick-only view - stick has its own gamepad with different axis mapping
+      this.updateX56StickAxes(data.axes, data.buttons);
+    } else if (this.activeDevice === 'x56-throttle') {
+      // Throttle-only view - throttle has its own gamepad with different axis mapping
+      this.updateX56ThrottleAxes(data.axes, data.buttons);
+    } else if (this.activeDevice === 'x52' || this.activeDevice === 'x52-hotas') {
+      this.updateX52Axes(data.axes, data.buttons);
     } else if (this.activeDevice === 'flight-yoke') {
       this.updateFlightYokeAxes(data.axes, data.buttons);
     } else if (this.activeDevice === 'flight-throttle') {
       this.updateFlightThrottleAxes(data.axes, data.buttons);
-    } else {
+    } else if (this.activeDevice === 'vkb-left' || this.activeDevice === 'vkb-right') {
       this.updateVKBAxes(data.axes, data.buttons);
+    } else if (this.activeDevice === 'ab9') {
+      this.updateAB9Axes(data.axes, data.buttons);
     }
 
     // Highlight pressed buttons
     this.updateButtonStates(data.buttons);
   }
 
-  updateX56Axes(axes, buttons) {
-    // Throttle axes (typically axis 2 for combined or separate axes)
+  // X56 Stick standalone - when stick is its own gamepad
+  // Typical axis mapping: 0=Roll, 1=Pitch, 2=Twist/Yaw
+  updateX56StickAxes(axes, buttons) {
+    const stickDot = document.getElementById('x56-stick-dot');
+    const pitchVal = document.getElementById('x56-pitch-val');
+    const rollVal = document.getElementById('x56-roll-val');
+
+    if (stickDot) {
+      // axes[0] = Roll (X), axes[1] = Pitch (Y)
+      const rollPos = axes[0] ? ((axes[0].value + 1) / 2) * 100 : 50;
+      const pitchPos = axes[1] ? ((axes[1].value + 1) / 2) * 100 : 50;
+      stickDot.style.left = `${rollPos}%`;
+      stickDot.style.top = `${pitchPos}%`;
+    }
+
+    if (pitchVal && axes[1]) pitchVal.textContent = axes[1].value.toFixed(2);
+    if (rollVal && axes[0]) rollVal.textContent = axes[0].value.toFixed(2);
+
+    // Yaw/Twist axis - axis 2 on standalone stick
+    if (axes[2]) {
+      this.updateCenteredAxisBar('x56-yaw', axes[2].value);
+    }
+  }
+
+  // X56 Throttle standalone - when throttle is its own gamepad
+  // Typical axis mapping: 0=Left Throttle, 1=Right Throttle, 2+=Rotaries
+  updateX56ThrottleAxes(axes, buttons) {
+    // Throttle 1 (left) - axis 0 on standalone throttle
+    if (axes[0]) {
+      const throttle1Val = ((axes[0].value + 1) / 2) * 100; // Convert -1...1 to 0...100
+      const throttle1Fill = document.getElementById('x56-throttle1-fill');
+      const throttle1Display = document.getElementById('x56-throttle1-val');
+      if (throttle1Fill) throttle1Fill.style.height = `${throttle1Val}%`;
+      if (throttle1Display) throttle1Display.textContent = `${Math.round(throttle1Val)}%`;
+    }
+
+    // Throttle 2 (right) - axis 1 on standalone throttle
+    if (axes[1]) {
+      const throttle2Val = ((axes[1].value + 1) / 2) * 100;
+      const throttle2Fill = document.getElementById('x56-throttle2-fill');
+      const throttle2Display = document.getElementById('x56-throttle2-val');
+      if (throttle2Fill) throttle2Fill.style.height = `${throttle2Val}%`;
+      if (throttle2Display) throttle2Display.textContent = `${Math.round(throttle2Val)}%`;
+    }
+  }
+
+  // X56 Combined view - when viewing both stick and throttle together
+  // This assumes the data is aggregated or from first gamepad found
+  updateX56CombinedAxes(axes, buttons) {
+    // For combined view, we try to handle both stick and throttle
+    // Stick pitch/roll (X=roll, Y=pitch) - axes 0,1
+    const stickDot = document.getElementById('x56-stick-dot');
+    const pitchVal = document.getElementById('x56-pitch-val');
+    const rollVal = document.getElementById('x56-roll-val');
+
+    if (stickDot) {
+      const rollPos = axes[0] ? ((axes[0].value + 1) / 2) * 100 : 50;
+      const pitchPos = axes[1] ? ((axes[1].value + 1) / 2) * 100 : 50;
+      stickDot.style.left = `${rollPos}%`;
+      stickDot.style.top = `${pitchPos}%`;
+    }
+
+    if (pitchVal && axes[1]) pitchVal.textContent = axes[1].value.toFixed(2);
+    if (rollVal && axes[0]) rollVal.textContent = axes[0].value.toFixed(2);
+
+    // Yaw/Twist axis - axis 2 (Z rotation)
+    if (axes[2]) {
+      this.updateCenteredAxisBar('x56-yaw', axes[2].value);
+    }
+
+    // Thumbstick on the X56 stick - uses X Rotation (axis 3) and Y Rotation (axis 4)
+    const thumbstickXVal = document.getElementById('x56-thumbstick-x-val');
+    const thumbstickYVal = document.getElementById('x56-thumbstick-y-val');
+
+    // Update thumbstick X axis bar
+    if (axes[3]) {
+      this.updateCenteredAxisBar('x56-thumbstick-x', axes[3].value);
+      if (thumbstickXVal) thumbstickXVal.textContent = axes[3].value.toFixed(2);
+    }
+
+    // Update thumbstick Y axis bar
+    if (axes[4]) {
+      this.updateCenteredAxisBar('x56-thumbstick-y', axes[4].value);
+      if (thumbstickYVal) thumbstickYVal.textContent = axes[4].value.toFixed(2);
+    }
+
+    // Throttle 1 (left) - axis 6 (Slider 0)
+    if (axes[6]) {
+      const throttle1Val = ((axes[6].value + 1) / 2) * 100;
+      const throttle1Fill = document.getElementById('x56-throttle1-fill');
+      const throttle1Display = document.getElementById('x56-throttle1-val');
+      if (throttle1Fill) throttle1Fill.style.height = `${throttle1Val}%`;
+      if (throttle1Display) throttle1Display.textContent = `${Math.round(throttle1Val)}%`;
+    }
+
+    // Throttle 2 (right) - axis 7 (Slider 1)
+    if (axes[7]) {
+      const throttle2Val = ((axes[7].value + 1) / 2) * 100;
+      const throttle2Fill = document.getElementById('x56-throttle2-fill');
+      const throttle2Display = document.getElementById('x56-throttle2-val');
+      if (throttle2Fill) throttle2Fill.style.height = `${throttle2Val}%`;
+      if (throttle2Display) throttle2Display.textContent = `${Math.round(throttle2Val)}%`;
+    }
+  }
+
+  updateX52Axes(axes, buttons) {
+    // X52 has single throttle on the throttle unit
+    // Throttle - typically axis 2
     if (axes[2]) {
       const throttleVal = ((axes[2].value + 1) / 2) * 100; // Convert -1...1 to 0...100
-      const leftFill = document.getElementById('x56-throttle-left-fill');
-      const leftVal = document.getElementById('x56-throttle-left-val');
-      if (leftFill) leftFill.style.height = `${throttleVal}%`;
-      if (leftVal) leftVal.textContent = `${Math.round(throttleVal)}%`;
+      const throttleFill = document.getElementById('x52-throttle-fill');
+      const throttleDisplay = document.getElementById('x52-throttle-val');
+      if (throttleFill) throttleFill.style.height = `${throttleVal}%`;
+      if (throttleDisplay) throttleDisplay.textContent = `${Math.round(throttleVal)}%`;
     }
 
-    // Stick X axis
-    if (axes[0]) {
-      this.updateHorizontalAxis('x56-stick-x', axes[0].value);
+    // Stick pitch/roll (X=roll, Y=pitch)
+    const stickDot = document.getElementById('x52-stick-dot');
+    const pitchVal = document.getElementById('x52-pitch-val');
+    const rollVal = document.getElementById('x52-roll-val');
+
+    if (stickDot) {
+      // axes[0] = Roll (X), axes[1] = Pitch (Y)
+      const rollPos = axes[0] ? ((axes[0].value + 1) / 2) * 100 : 50;
+      const pitchPos = axes[1] ? ((axes[1].value + 1) / 2) * 100 : 50;
+      stickDot.style.left = `${rollPos}%`;
+      stickDot.style.top = `${pitchPos}%`;
     }
 
-    // Stick Y axis
-    if (axes[1]) {
-      this.updateHorizontalAxis('x56-stick-y', axes[1].value);
-    }
+    if (pitchVal && axes[1]) pitchVal.textContent = axes[1].value.toFixed(2);
+    if (rollVal && axes[0]) rollVal.textContent = axes[0].value.toFixed(2);
 
-    // Twist axis (typically axis 5)
+    // Yaw/Twist axis - typically axis 5
     if (axes[5]) {
-      this.updateHorizontalAxis('x56-twist', axes[5].value);
+      this.updateCenteredAxisBar('x52-yaw', axes[5].value);
     }
   }
 
   updateVKBAxes(axes, buttons) {
-    // Left stick X/Y (device 1)
-    if (axes[0]) this.updateHorizontalAxis('vkb-left-x', axes[0].value);
-    if (axes[1]) this.updateHorizontalAxis('vkb-left-y', axes[1].value);
+    // VKB Left stick pitch/roll
+    const leftDot = document.getElementById('vkb-left-stick-dot');
+    const leftPitchVal = document.getElementById('vkb-left-pitch-val');
+    const leftRollVal = document.getElementById('vkb-left-roll-val');
 
-    // Right stick X/Y (device 2 - would need multi-device support)
-    if (axes[2]) this.updateHorizontalAxis('vkb-right-x', axes[2].value);
-    if (axes[3]) this.updateHorizontalAxis('vkb-right-y', axes[3].value);
+    if (leftDot) {
+      const rollPos = axes[0] ? ((axes[0].value + 1) / 2) * 100 : 50;
+      const pitchPos = axes[1] ? ((axes[1].value + 1) / 2) * 100 : 50;
+      leftDot.style.left = `${rollPos}%`;
+      leftDot.style.top = `${pitchPos}%`;
+    }
 
-    // Twist axes
-    if (axes[4]) this.updateHorizontalAxis('vkb-left-twist', axes[4].value);
-    if (axes[5]) this.updateHorizontalAxis('vkb-right-twist', axes[5].value);
+    if (leftPitchVal && axes[1]) leftPitchVal.textContent = axes[1].value.toFixed(2);
+    if (leftRollVal && axes[0]) leftRollVal.textContent = axes[0].value.toFixed(2);
+
+    // VKB Left twist (yaw) - typically axis 2 or 5
+    if (axes[2]) {
+      this.updateCenteredAxisBar('vkb-left-yaw', axes[2].value);
+    }
+
+    // VKB Right stick pitch/roll (would need multi-device support for separate devices)
+    const rightDot = document.getElementById('vkb-right-stick-dot');
+    const rightPitchVal = document.getElementById('vkb-right-pitch-val');
+    const rightRollVal = document.getElementById('vkb-right-roll-val');
+
+    if (rightDot) {
+      // If multi-device, these would be different axes or from a different gamepad
+      const rollPos = axes[3] ? ((axes[3].value + 1) / 2) * 100 : 50;
+      const pitchPos = axes[4] ? ((axes[4].value + 1) / 2) * 100 : 50;
+      rightDot.style.left = `${rollPos}%`;
+      rightDot.style.top = `${pitchPos}%`;
+    }
+
+    if (rightPitchVal && axes[4]) rightPitchVal.textContent = axes[4].value.toFixed(2);
+    if (rightRollVal && axes[3]) rightRollVal.textContent = axes[3].value.toFixed(2);
+
+    // VKB Right twist (yaw)
+    if (axes[5]) {
+      this.updateCenteredAxisBar('vkb-right-yaw', axes[5].value);
+    }
+
+    // Update button lists for VKB Left and Right
+    this.updateVKBButtonList(buttons);
+  }
+
+  updateVKBButtonList(buttons) {
+    // Determine which button list to update based on active device
+    const listId = this.activeDevice === 'vkb-left' ? 'vkb-left-button-list' : 'vkb-right-button-list';
+    const buttonList = document.getElementById(listId);
+    if (!buttonList) return;
+
+    // Find pressed buttons
+    const pressedButtons = [];
+    buttons.forEach((btn, index) => {
+      if (btn.pressed || btn.value > 0.5) {
+        pressedButtons.push(`B${index + 1}`);
+      }
+    });
+
+    if (pressedButtons.length > 0) {
+      buttonList.innerHTML = pressedButtons.map(btn =>
+        `<span class="button-input-item">${btn}</span>`
+      ).join('');
+    } else {
+      buttonList.textContent = 'None';
+    }
+  }
+
+  // Update a centered axis bar (for yaw/twist display, centered at 0)
+  updateCenteredAxisBar(prefix, value) {
+    const fill = document.getElementById(`${prefix}-fill`);
+    const val = document.getElementById(`${prefix}-val`);
+
+    if (fill) {
+      // Value is -1 to 1, centered at 0
+      const width = Math.abs(value) * 50; // 50% max on each side
+      if (value < 0) {
+        fill.style.width = `${width}%`;
+        fill.style.left = `${50 - width}%`;
+      } else {
+        fill.style.width = `${width}%`;
+        fill.style.left = '50%';
+      }
+    }
+
+    if (val) val.textContent = value.toFixed(2);
   }
 
   updateFlightYokeAxes(axes, buttons) {
@@ -2950,6 +3729,25 @@ class HOTASImageVisualizer {
     }
   }
 
+  updateAB9Axes(axes, buttons) {
+    // AB9 Flight Stick has pitch and roll axes
+    // Typical axis mapping: 0=Roll (X), 1=Pitch (Y)
+    const stickDot = document.getElementById('ab9-stick-dot');
+    const pitchVal = document.getElementById('ab9-pitch-val');
+    const rollVal = document.getElementById('ab9-roll-val');
+
+    if (stickDot) {
+      // axes[0] = Roll (X), axes[1] = Pitch (Y)
+      const rollPos = axes[0] ? ((axes[0].value + 1) / 2) * 100 : 50;
+      const pitchPos = axes[1] ? ((axes[1].value + 1) / 2) * 100 : 50;
+      stickDot.style.left = `${rollPos}%`;
+      stickDot.style.top = `${pitchPos}%`;
+    }
+
+    if (pitchVal && axes[1]) pitchVal.textContent = axes[1].value.toFixed(2);
+    if (rollVal && axes[0]) rollVal.textContent = axes[0].value.toFixed(2);
+  }
+
   updateHorizontalAxis(prefix, value) {
     const fill = document.getElementById(`${prefix}-fill`);
     const val = document.getElementById(`${prefix}-val`);
@@ -2966,6 +3764,832 @@ class HOTASImageVisualizer {
   updateButtonStates(buttons) {
     // This would map gamepad buttons to hotspots and highlight them
     // Implementation depends on your specific device mapping
+
+    // Update the button input display panel
+    this.updateButtonInputDisplay(buttons);
+  }
+
+  /**
+   * Update the live button input display showing which buttons are currently pressed
+   */
+  updateButtonInputDisplay(buttons) {
+    // Determine which button list element(s) to use based on active device
+    let buttonListIds = [];
+    if (this.activeDevice === 'x56' || this.activeDevice === 'x56-hotas') {
+      buttonListIds = ['x56-button-list'];
+    } else if (this.activeDevice === 'x56-throttle') {
+      buttonListIds = ['x56-throttle-button-list'];
+    } else if (this.activeDevice === 'x56-stick') {
+      buttonListIds = ['x56-stick-button-list'];
+    } else if (this.activeDevice === 'x52' || this.activeDevice === 'x52-hotas') {
+      buttonListIds = ['x52-button-list'];
+    } else if (this.activeDevice === 'vkb-left') {
+      buttonListIds = ['vkb-left-button-list'];
+    } else if (this.activeDevice === 'vkb-right') {
+      buttonListIds = ['vkb-right-button-list'];
+    } else if (this.activeDevice === 'ab9') {
+      buttonListIds = ['ab9-button-list'];
+    }
+
+    // Find all pressed buttons and track newly pressed ones
+    const pressedButtons = [];
+    const currentPressedIndices = new Set();
+
+    if (buttons && Array.isArray(buttons)) {
+      buttons.forEach((btn, index) => {
+        if (btn && btn.pressed) {
+          pressedButtons.push(`Btn ${index + 1}`);
+          currentPressedIndices.add(index);
+
+          // Check for newly pressed button during wizard (wasn't pressed in last frame)
+          if (this.buttonMappingWizard.active && !this.buttonMappingWizard.lastPressedButtons.has(index)) {
+            this.handleWizardButtonDetection(index);
+          }
+        }
+      });
+    }
+
+    // Update last pressed buttons for wizard frame comparison
+    if (this.buttonMappingWizard.active) {
+      this.buttonMappingWizard.lastPressedButtons = currentPressedIndices;
+    }
+
+    // Highlight hotspots for pressed buttons (using saved mappings)
+    if (!this.buttonMappingWizard.active) {
+      this.updateButtonHighlightsFromMappings(currentPressedIndices);
+    }
+
+    // Update the display for all relevant button lists
+    buttonListIds.forEach(buttonListId => {
+      const buttonListEl = document.getElementById(buttonListId);
+      if (!buttonListEl) return;
+
+      if (pressedButtons.length === 0) {
+        buttonListEl.innerHTML = 'None';
+        buttonListEl.classList.remove('active');
+      } else {
+        buttonListEl.innerHTML = pressedButtons.map(btn =>
+          `<span class="button-input-item">${btn}</span>`
+        ).join('');
+        buttonListEl.classList.add('active');
+      }
+    });
+  }
+
+  /**
+   * Update hotspot highlights based on pressed buttons and saved mappings
+   */
+  updateButtonHighlightsFromMappings(pressedButtonIndices) {
+    const deviceKey = this.getDeviceMappingKey();
+    const deviceMappings = this.buttonMappings[deviceKey] || {};
+
+    // Track which hotspots should be highlighted
+    const hotspotIdsToHighlight = new Set();
+
+    // Find hotspot IDs for all pressed buttons
+    pressedButtonIndices.forEach(buttonIndex => {
+      const hotspotId = deviceMappings[buttonIndex];
+      if (hotspotId) {
+        // Get the base hotspot ID (remove directional suffixes for highlight lookup)
+        const baseHotspotId = hotspotId.replace(/_up|_down|_left|_right|_press|_stage2/, '');
+        hotspotIdsToHighlight.add(baseHotspotId);
+      }
+    });
+
+    // Update all hotspots - highlight if pressed, unhighlight if not
+    Object.entries(this.buttonElements).forEach(([hotspotId, hotspot]) => {
+      if (hotspotIdsToHighlight.has(hotspotId)) {
+        // Highlight this hotspot (same as hover)
+        this.highlightButton(hotspot, true);
+        hotspot.classList.add('button-physically-pressed');
+      } else {
+        // Only remove highlight if it was from a physical press (not mouse hover)
+        if (hotspot.classList.contains('button-physically-pressed')) {
+          this.highlightButton(hotspot, false);
+          hotspot.classList.remove('button-physically-pressed');
+        }
+      }
+    });
+  }
+
+  // ==================== BUTTON MAPPING WIZARD ====================
+
+  /**
+   * Load saved button mappings from localStorage
+   */
+  loadButtonMappings() {
+    try {
+      const saved = localStorage.getItem('flycon_button_mappings');
+      if (saved) {
+        this.buttonMappings = JSON.parse(saved);
+        console.log('Loaded button mappings:', this.buttonMappings);
+      }
+    } catch (e) {
+      console.error('Failed to load button mappings:', e);
+      this.buttonMappings = {};
+    }
+  }
+
+  /**
+   * Save button mappings to localStorage
+   */
+  saveButtonMappings() {
+    try {
+      localStorage.setItem('flycon_button_mappings', JSON.stringify(this.buttonMappings));
+      console.log('Saved button mappings:', this.buttonMappings);
+    } catch (e) {
+      console.error('Failed to save button mappings:', e);
+    }
+  }
+
+  /**
+   * Check if button mapping configuration is needed
+   */
+  checkButtonMappingNeeded() {
+    const deviceKey = this.getDeviceMappingKey();
+    const hasMappings = this.buttonMappings[deviceKey] && Object.keys(this.buttonMappings[deviceKey]).length > 0;
+
+    if (!hasMappings) {
+      // Show prompt to configure buttons
+      this.showButtonMappingPrompt();
+    }
+  }
+
+  /**
+   * Get the storage key for current device
+   */
+  getDeviceMappingKey() {
+    if (this.activeDevice === 'x56' || this.activeDevice === 'x56-hotas') {
+      return 'x56_hotas';
+    }
+    return this.activeDevice;
+  }
+
+  /**
+   * Show prompt asking user to configure buttons
+   */
+  showButtonMappingPrompt() {
+    // Create a prompt overlay
+    const existingPrompt = document.querySelector('.button-mapping-prompt');
+    if (existingPrompt) return;
+
+    const prompt = document.createElement('div');
+    prompt.className = 'button-mapping-prompt';
+    prompt.innerHTML = `
+      <div class="mapping-prompt-content">
+        <h3><strong>Configure Your Controller</strong></h3>
+        <p>Map your physical buttons to the on-screen controls for a better experience.</p>
+        <div class="mapping-prompt-actions">
+          <button class="btn-secondary mapping-prompt-skip">Skip for Now</button>
+          <button class="btn-primary mapping-prompt-start">Start Configuration</button>
+        </div>
+      </div>
+    `;
+
+    this.container.appendChild(prompt);
+
+    // Setup event handlers
+    prompt.querySelector('.mapping-prompt-skip').addEventListener('click', () => {
+      prompt.remove();
+    });
+
+    prompt.querySelector('.mapping-prompt-start').addEventListener('click', () => {
+      prompt.remove();
+      this.startButtonMappingWizard();
+    });
+  }
+
+  /**
+   * Setup click handler for the configure button
+   */
+  setupButtonConfigButton() {
+    const configBtns = this.container.querySelectorAll('.button-config-btn');
+
+    configBtns.forEach(btn => {
+      if (btn.dataset.setupDone) return;
+      btn.dataset.setupDone = 'true';
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.startButtonMappingWizard();
+      });
+    });
+  }
+
+  /**
+   * Get the list of buttons/directions to map for current device
+   */
+  getButtonMappingSteps() {
+    const steps = [];
+
+    if (this.activeDevice === 'x56' || this.activeDevice === 'x56-hotas') {
+      const stick = 'X56 Flight Stick';
+      const throttle = 'X56 Throttle';
+
+      // X56 Stick controls
+      steps.push({ hotspotId: 'x56_js_trigger', label: 'Trigger - Stage 1', description: 'Pull the trigger halfway', device: stick });
+      steps.push({ hotspotId: 'x56_js_trigger_stage2', label: 'Trigger - Stage 2', description: 'Pull the trigger fully', device: stick });
+      steps.push({ hotspotId: 'x56_js_missile_btn', label: 'Missile Button', description: 'Press the red missile button', device: stick });
+      steps.push({ hotspotId: 'x56_js_pinky_switch', label: 'Pinky Switch', description: 'Press the pinky switch', device: stick });
+
+      // Thumb Hat (8-way POV)
+      steps.push({ hotspotId: 'x56_js_thumb_hat_up', label: 'Thumb Hat - Up', description: 'Push the thumb hat UP', device: stick });
+      steps.push({ hotspotId: 'x56_js_thumb_hat_down', label: 'Thumb Hat - Down', description: 'Push the thumb hat DOWN', device: stick });
+      steps.push({ hotspotId: 'x56_js_thumb_hat_left', label: 'Thumb Hat - Left', description: 'Push the thumb hat LEFT', device: stick });
+      steps.push({ hotspotId: 'x56_js_thumb_hat_right', label: 'Thumb Hat - Right', description: 'Push the thumb hat RIGHT', device: stick });
+
+      // Thumb D-Pad (4-way)
+      steps.push({ hotspotId: 'x56_js_thumb_dpad_up', label: 'Thumb D-Pad - Up', description: 'Push the D-pad UP', device: stick });
+      steps.push({ hotspotId: 'x56_js_thumb_dpad_down', label: 'Thumb D-Pad - Down', description: 'Push the D-pad DOWN', device: stick });
+      steps.push({ hotspotId: 'x56_js_thumb_dpad_left', label: 'Thumb D-Pad - Left', description: 'Push the D-pad LEFT', device: stick });
+      steps.push({ hotspotId: 'x56_js_thumb_dpad_right', label: 'Thumb D-Pad - Right', description: 'Push the D-pad RIGHT', device: stick });
+
+      // X56 Throttle controls
+      steps.push({ hotspotId: 'x56_th_thumb_btn', label: 'Thumb Button (E)', description: 'Press the thumb button (E)', device: throttle });
+
+      // Toggles
+      steps.push({ hotspotId: 'x56_th_tgl1', label: 'Toggle 1 (TGL1)', description: 'Press Toggle 1', device: throttle });
+      steps.push({ hotspotId: 'x56_th_tgl2', label: 'Toggle 2 (TGL2)', description: 'Press Toggle 2', device: throttle });
+      steps.push({ hotspotId: 'x56_th_tgl3', label: 'Toggle 3 (TGL3)', description: 'Press Toggle 3', device: throttle });
+      steps.push({ hotspotId: 'x56_th_tgl4', label: 'Toggle 4 (TGL4)', description: 'Press Toggle 4', device: throttle });
+
+      // Switches
+      steps.push({ hotspotId: 'x56_th_sw1', label: 'Switch 1 (SW1 Up)', description: 'Flip switch pair 1-2 UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_sw2', label: 'Switch 2 (SW2 Down)', description: 'Flip switch pair 1-2 DOWN', device: throttle });
+      steps.push({ hotspotId: 'x56_th_sw3', label: 'Switch 3 (SW3 Up)', description: 'Flip switch pair 3-4 UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_sw4', label: 'Switch 4 (SW4 Down)', description: 'Flip switch pair 3-4 DOWN', device: throttle });
+      steps.push({ hotspotId: 'x56_th_sw5', label: 'Switch 5 (SW5 Up)', description: 'Flip switch pair 5-6 UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_sw6', label: 'Switch 6 (SW6 Down)', description: 'Flip switch pair 5-6 DOWN', device: throttle });
+
+      // Thumb D-Pad on throttle
+      steps.push({ hotspotId: 'x56_th_thumb_dpad_up', label: 'D-Pad - Up', description: 'Push the D-pad UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_thumb_dpad_down', label: 'D-Pad - Down', description: 'Push the D-pad DOWN', device: throttle });
+      steps.push({ hotspotId: 'x56_th_thumb_dpad_left', label: 'D-Pad - Left', description: 'Push the D-pad LEFT', device: throttle });
+      steps.push({ hotspotId: 'x56_th_thumb_dpad_right', label: 'D-Pad - Right', description: 'Push the D-pad RIGHT', device: throttle });
+
+      // Ministicks
+      steps.push({ hotspotId: 'x56_th_thumb_ministick_up', label: 'Thumb Ministick - Up', description: 'Push thumb ministick UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_thumb_ministick_down', label: 'Thumb Ministick - Down', description: 'Push thumb ministick DOWN', device: throttle });
+      steps.push({ hotspotId: 'x56_th_thumb_ministick_left', label: 'Thumb Ministick - Left', description: 'Push thumb ministick LEFT', device: throttle });
+      steps.push({ hotspotId: 'x56_th_thumb_ministick_right', label: 'Thumb Ministick - Right', description: 'Push thumb ministick RIGHT', device: throttle });
+      steps.push({ hotspotId: 'x56_th_thumb_ministick_press', label: 'Thumb Ministick - Press', description: 'Press thumb ministick IN', device: throttle });
+
+      steps.push({ hotspotId: 'x56_th_rear_ministick_up', label: 'Rear Ministick - Up', description: 'Push rear ministick UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_rear_ministick_down', label: 'Rear Ministick - Down', description: 'Push rear ministick DOWN', device: throttle });
+      steps.push({ hotspotId: 'x56_th_rear_ministick_left', label: 'Rear Ministick - Left', description: 'Push rear ministick LEFT', device: throttle });
+      steps.push({ hotspotId: 'x56_th_rear_ministick_right', label: 'Rear Ministick - Right', description: 'Push rear ministick RIGHT', device: throttle });
+      steps.push({ hotspotId: 'x56_th_rear_ministick_press', label: 'Rear Ministick - Press', description: 'Press rear ministick IN', device: throttle });
+    } else if (this.activeDevice === 'x52' || this.activeDevice === 'x52-hotas') {
+      const stick = 'X52 Flight Stick';
+      const throttle = 'X52 Throttle';
+
+      // X52 Stick controls
+      steps.push({ hotspotId: 'x52_js_trigger', label: 'Trigger', description: 'Pull the trigger', device: stick });
+      steps.push({ hotspotId: 'x52_js_fire', label: 'Fire Button', description: 'Press the fire/missile button', device: stick });
+      steps.push({ hotspotId: 'x52_js_pinky_switch', label: 'Pinky Switch', description: 'Press the pinky switch', device: stick });
+      steps.push({ hotspotId: 'x52_js_a_btn', label: 'A Button', description: 'Press the A button', device: stick });
+      steps.push({ hotspotId: 'x52_js_b_btn', label: 'B Button', description: 'Press the B button', device: stick });
+      steps.push({ hotspotId: 'x52_js_c_btn', label: 'C Button', description: 'Press the C button', device: stick });
+
+      // Scroll wheel
+      steps.push({ hotspotId: 'x52_js_scroll_up', label: 'Scroll Wheel - Up', description: 'Scroll the wheel UP', device: stick });
+      steps.push({ hotspotId: 'x52_js_scroll_down', label: 'Scroll Wheel - Down', description: 'Scroll the wheel DOWN', device: stick });
+      steps.push({ hotspotId: 'x52_js_scroll_press', label: 'Scroll Wheel - Press', description: 'Press the scroll wheel', device: stick });
+
+      // Thumb Hat (POV)
+      steps.push({ hotspotId: 'x52_js_thumb_hat_up', label: 'Thumb Hat - Up', description: 'Push the POV hat UP', device: stick });
+      steps.push({ hotspotId: 'x52_js_thumb_hat_down', label: 'Thumb Hat - Down', description: 'Push the POV hat DOWN', device: stick });
+      steps.push({ hotspotId: 'x52_js_thumb_hat_left', label: 'Thumb Hat - Left', description: 'Push the POV hat LEFT', device: stick });
+      steps.push({ hotspotId: 'x52_js_thumb_hat_right', label: 'Thumb Hat - Right', description: 'Push the POV hat RIGHT', device: stick });
+
+      // Thumb D-Pad
+      steps.push({ hotspotId: 'x52_js_thumb_dpad_up', label: 'Thumb D-Pad - Up', description: 'Push the thumb D-pad UP', device: stick });
+      steps.push({ hotspotId: 'x52_js_thumb_dpad_down', label: 'Thumb D-Pad - Down', description: 'Push the thumb D-pad DOWN', device: stick });
+      steps.push({ hotspotId: 'x52_js_thumb_dpad_left', label: 'Thumb D-Pad - Left', description: 'Push the thumb D-pad LEFT', device: stick });
+      steps.push({ hotspotId: 'x52_js_thumb_dpad_right', label: 'Thumb D-Pad - Right', description: 'Push the thumb D-pad RIGHT', device: stick });
+
+      // X52 Throttle controls
+      steps.push({ hotspotId: 'x52_th_thumb', label: 'Thumb Button', description: 'Press the thumb button', device: throttle });
+      steps.push({ hotspotId: 'x52_th_select', label: 'Select/Scroll Wheel', description: 'Press the select wheel', device: throttle });
+
+      // Throttle D-Pad
+      steps.push({ hotspotId: 'x52_th_dpad_up', label: 'D-Pad - Up', description: 'Push the D-pad UP', device: throttle });
+      steps.push({ hotspotId: 'x52_th_dpad_down', label: 'D-Pad - Down', description: 'Push the D-pad DOWN', device: throttle });
+      steps.push({ hotspotId: 'x52_th_dpad_left', label: 'D-Pad - Left', description: 'Push the D-pad LEFT', device: throttle });
+      steps.push({ hotspotId: 'x52_th_dpad_right', label: 'D-Pad - Right', description: 'Push the D-pad RIGHT', device: throttle });
+
+      // Front D-Pad
+      steps.push({ hotspotId: 'x52_th_front_dpad_up', label: 'Front D-Pad - Up', description: 'Push the front D-pad UP', device: throttle });
+      steps.push({ hotspotId: 'x52_th_front_dpad_down', label: 'Front D-Pad - Down', description: 'Push the front D-pad DOWN', device: throttle });
+      steps.push({ hotspotId: 'x52_th_front_dpad_left', label: 'Front D-Pad - Left', description: 'Push the front D-pad LEFT', device: throttle });
+      steps.push({ hotspotId: 'x52_th_front_dpad_right', label: 'Front D-Pad - Right', description: 'Push the front D-pad RIGHT', device: throttle });
+
+      // Toggle switches
+      steps.push({ hotspotId: 'x52_th_t1', label: 'Toggle T1', description: 'Flip toggle T1 UP', device: throttle });
+      steps.push({ hotspotId: 'x52_th_t2', label: 'Toggle T2', description: 'Flip toggle T2 DOWN', device: throttle });
+      steps.push({ hotspotId: 'x52_th_t3', label: 'Toggle T3', description: 'Flip toggle T3 UP', device: throttle });
+      steps.push({ hotspotId: 'x52_th_t4', label: 'Toggle T4', description: 'Flip toggle T4 DOWN', device: throttle });
+      steps.push({ hotspotId: 'x52_th_t5', label: 'Toggle T5', description: 'Flip toggle T5 UP', device: throttle });
+      steps.push({ hotspotId: 'x52_th_t6', label: 'Toggle T6', description: 'Flip toggle T6 DOWN', device: throttle });
+    } else if (this.activeDevice === 'ab9') {
+      const device = 'MOZA AB9 Flight Stick';
+
+      // Trigger
+      steps.push({ hotspotId: 'ab9_trigger_stage1', label: 'Trigger - Stage 1', description: 'Pull the trigger halfway', device });
+      steps.push({ hotspotId: 'ab9_trigger_stage2', label: 'Trigger - Stage 2', description: 'Pull the trigger fully', device });
+
+      // Thumb buttons
+      steps.push({ hotspotId: 'ab9_thumb_missile', label: 'Missile Button', description: 'Press the missile button', device });
+      steps.push({ hotspotId: 'ab9_index_btn', label: 'Index Button', description: 'Press the index finger button', device });
+
+      // Thumb Hat (8-way)
+      steps.push({ hotspotId: 'ab9_thumb_hat_up', label: 'Thumb Hat - Up', description: 'Push the thumb hat UP', device });
+      steps.push({ hotspotId: 'ab9_thumb_hat_down', label: 'Thumb Hat - Down', description: 'Push the thumb hat DOWN', device });
+      steps.push({ hotspotId: 'ab9_thumb_hat_left', label: 'Thumb Hat - Left', description: 'Push the thumb hat LEFT', device });
+      steps.push({ hotspotId: 'ab9_thumb_hat_right', label: 'Thumb Hat - Right', description: 'Push the thumb hat RIGHT', device });
+
+      // Top D-Pad (5-way)
+      steps.push({ hotspotId: 'ab9_top_dpad_up', label: 'Top D-Pad - Up', description: 'Push the top D-pad UP', device });
+      steps.push({ hotspotId: 'ab9_top_dpad_down', label: 'Top D-Pad - Down', description: 'Push the top D-pad DOWN', device });
+      steps.push({ hotspotId: 'ab9_top_dpad_left', label: 'Top D-Pad - Left', description: 'Push the top D-pad LEFT', device });
+      steps.push({ hotspotId: 'ab9_top_dpad_right', label: 'Top D-Pad - Right', description: 'Push the top D-pad RIGHT', device });
+      steps.push({ hotspotId: 'ab9_top_dpad_press', label: 'Top D-Pad - Press', description: 'Press the top D-pad IN', device });
+
+      // Bottom D-Pad (4-way)
+      steps.push({ hotspotId: 'ab9_bottom_dpad_up', label: 'Bottom D-Pad - Up', description: 'Push the bottom D-pad UP', device });
+      steps.push({ hotspotId: 'ab9_bottom_dpad_down', label: 'Bottom D-Pad - Down', description: 'Push the bottom D-pad DOWN', device });
+      steps.push({ hotspotId: 'ab9_bottom_dpad_left', label: 'Bottom D-Pad - Left', description: 'Push the bottom D-pad LEFT', device });
+      steps.push({ hotspotId: 'ab9_bottom_dpad_right', label: 'Bottom D-Pad - Right', description: 'Push the bottom D-pad RIGHT', device });
+
+      // Funky Knob (4-way)
+      steps.push({ hotspotId: 'ab9_funky_knob_up', label: 'Funky Knob - Up', description: 'Push the funky knob UP', device });
+      steps.push({ hotspotId: 'ab9_funky_knob_down', label: 'Funky Knob - Down', description: 'Push the funky knob DOWN', device });
+      steps.push({ hotspotId: 'ab9_funky_knob_left', label: 'Funky Knob - Left', description: 'Push the funky knob LEFT', device });
+      steps.push({ hotspotId: 'ab9_funky_knob_right', label: 'Funky Knob - Right', description: 'Push the funky knob RIGHT', device });
+
+      // Rockers
+      steps.push({ hotspotId: 'ab9_top_rocker_up', label: 'Thumb Switch - Up', description: 'Push the thumb switch UP', device });
+      steps.push({ hotspotId: 'ab9_top_rocker_down', label: 'Thumb Switch - Down', description: 'Push the thumb switch DOWN', device });
+      steps.push({ hotspotId: 'ab9_bottom_rocker_up', label: 'Thumb Funky - Up', description: 'Push the bottom funky UP', device });
+      steps.push({ hotspotId: 'ab9_bottom_rocker_down', label: 'Thumb Funky - Down', description: 'Push the bottom funky DOWN', device });
+      steps.push({ hotspotId: 'ab9_bottom_rocker_left', label: 'Thumb Funky - Left', description: 'Push the bottom funky LEFT', device });
+      steps.push({ hotspotId: 'ab9_bottom_rocker_right', label: 'Thumb Funky - Right', description: 'Push the bottom funky RIGHT', device });
+      steps.push({ hotspotId: 'ab9_bottom_rocker_press', label: 'Thumb Funky - Press', description: 'Press the bottom funky IN', device });
+
+      // Pinky controls
+      steps.push({ hotspotId: 'ab9_pinky_switch_up', label: 'Pinky Switch - Up', description: 'Push the pinky switch UP', device });
+      steps.push({ hotspotId: 'ab9_pinky_switch_down', label: 'Pinky Switch - Down', description: 'Push the pinky switch DOWN', device });
+      steps.push({ hotspotId: 'ab9_pinky_btn', label: 'Pinky Button', description: 'Press the pinky button', device });
+    } else if (this.activeDevice === 'vkb-left') {
+      const device = 'VKB Gladiator EVO (Left)';
+
+      // Trigger
+      steps.push({ hotspotId: 'vkb_l_trigger_stage1', label: 'Trigger - Stage 1', description: 'Pull the trigger halfway', device });
+      steps.push({ hotspotId: 'vkb_l_trigger_stage2', label: 'Trigger - Stage 2', description: 'Pull the trigger fully', device });
+
+      // Buttons
+      steps.push({ hotspotId: 'vkb_l_b1_side', label: 'B1 Side Button', description: 'Press the side button', device });
+      steps.push({ hotspotId: 'vkb_l_a2_red', label: 'A2 Red Button', description: 'Press the red button', device });
+      steps.push({ hotspotId: 'vkb_l_d1_pinky', label: 'D1 Pinky Button', description: 'Press the pinky button', device });
+
+      // Base buttons
+      steps.push({ hotspotId: 'vkb_l_base_switch_up', label: 'Base Switch - Up', description: 'Push the base switch UP', device });
+      steps.push({ hotspotId: 'vkb_l_base_switch_down', label: 'Base Switch - Down', description: 'Push the base switch DOWN', device });
+      steps.push({ hotspotId: 'vkb_l_f1', label: 'F1 Button', description: 'Press the F1 button', device });
+      steps.push({ hotspotId: 'vkb_l_f2', label: 'F2 Encoder Press', description: 'Press the F2 encoder', device });
+      steps.push({ hotspotId: 'vkb_l_f3', label: 'F3 Button', description: 'Press the F3 button', device });
+
+      // C1 Thumb Hat (4-way)
+      steps.push({ hotspotId: 'vkb_l_c1_thumb_hat_up', label: 'C1 Thumb Hat - Up', description: 'Push the thumb hat UP', device });
+      steps.push({ hotspotId: 'vkb_l_c1_thumb_hat_down', label: 'C1 Thumb Hat - Down', description: 'Push the thumb hat DOWN', device });
+      steps.push({ hotspotId: 'vkb_l_c1_thumb_hat_left', label: 'C1 Thumb Hat - Left', description: 'Push the thumb hat LEFT', device });
+      steps.push({ hotspotId: 'vkb_l_c1_thumb_hat_right', label: 'C1 Thumb Hat - Right', description: 'Push the thumb hat RIGHT', device });
+
+      // A3 Center Hat (5-way)
+      steps.push({ hotspotId: 'vkb_l_a3_center_hat_up', label: 'A3 Center Hat - Up', description: 'Push the center hat UP', device });
+      steps.push({ hotspotId: 'vkb_l_a3_center_hat_down', label: 'A3 Center Hat - Down', description: 'Push the center hat DOWN', device });
+      steps.push({ hotspotId: 'vkb_l_a3_center_hat_left', label: 'A3 Center Hat - Left', description: 'Push the center hat LEFT', device });
+      steps.push({ hotspotId: 'vkb_l_a3_center_hat_right', label: 'A3 Center Hat - Right', description: 'Push the center hat RIGHT', device });
+      steps.push({ hotspotId: 'vkb_l_a3_center_hat_press', label: 'A3 Center Hat - Press', description: 'Press the center hat IN', device });
+
+      // A4 Top Hat (4-way)
+      steps.push({ hotspotId: 'vkb_l_a4_top_hat_up', label: 'A4 Top Hat - Up', description: 'Push the top hat UP', device });
+      steps.push({ hotspotId: 'vkb_l_a4_top_hat_down', label: 'A4 Top Hat - Down', description: 'Push the top hat DOWN', device });
+      steps.push({ hotspotId: 'vkb_l_a4_top_hat_left', label: 'A4 Top Hat - Left', description: 'Push the top hat LEFT', device });
+      steps.push({ hotspotId: 'vkb_l_a4_top_hat_right', label: 'A4 Top Hat - Right', description: 'Push the top hat RIGHT', device });
+
+      // A1 Mini-stick (5-way)
+      steps.push({ hotspotId: 'vkb_l_a1_ministick_up', label: 'A1 Mini-stick - Up', description: 'Push the mini-stick UP', device });
+      steps.push({ hotspotId: 'vkb_l_a1_ministick_down', label: 'A1 Mini-stick - Down', description: 'Push the mini-stick DOWN', device });
+      steps.push({ hotspotId: 'vkb_l_a1_ministick_left', label: 'A1 Mini-stick - Left', description: 'Push the mini-stick LEFT', device });
+      steps.push({ hotspotId: 'vkb_l_a1_ministick_right', label: 'A1 Mini-stick - Right', description: 'Push the mini-stick RIGHT', device });
+      steps.push({ hotspotId: 'vkb_l_a1_ministick_press', label: 'A1 Mini-stick - Press', description: 'Press the mini-stick IN', device });
+    } else if (this.activeDevice === 'vkb-right') {
+      const device = 'VKB Gladiator EVO (Right)';
+
+      // Trigger
+      steps.push({ hotspotId: 'vkb_r_trigger_stage1', label: 'Trigger - Stage 1', description: 'Pull the trigger halfway', device });
+      steps.push({ hotspotId: 'vkb_r_trigger_stage2', label: 'Trigger - Stage 2', description: 'Pull the trigger fully', device });
+
+      // Buttons
+      steps.push({ hotspotId: 'vkb_r_b1_side', label: 'B1 Side Button', description: 'Press the side button', device });
+      steps.push({ hotspotId: 'vkb_r_a2_red', label: 'A2 Red Button', description: 'Press the red button', device });
+      steps.push({ hotspotId: 'vkb_r_d1_pinky', label: 'D1 Pinky Button', description: 'Press the pinky button', device });
+
+      // Base buttons
+      steps.push({ hotspotId: 'vkb_r_base_switch_up', label: 'Base Switch - Up', description: 'Push the base switch UP', device });
+      steps.push({ hotspotId: 'vkb_r_base_switch_down', label: 'Base Switch - Down', description: 'Push the base switch DOWN', device });
+      steps.push({ hotspotId: 'vkb_r_f1', label: 'F1 Button', description: 'Press the F1 button', device });
+      steps.push({ hotspotId: 'vkb_r_f2', label: 'F2 Encoder Press', description: 'Press the F2 encoder', device });
+      steps.push({ hotspotId: 'vkb_r_f3', label: 'F3 Button', description: 'Press the F3 button', device });
+
+      // C1 Thumb Hat (4-way)
+      steps.push({ hotspotId: 'vkb_r_c1_thumb_hat_up', label: 'C1 Thumb Hat - Up', description: 'Push the thumb hat UP', device });
+      steps.push({ hotspotId: 'vkb_r_c1_thumb_hat_down', label: 'C1 Thumb Hat - Down', description: 'Push the thumb hat DOWN', device });
+      steps.push({ hotspotId: 'vkb_r_c1_thumb_hat_left', label: 'C1 Thumb Hat - Left', description: 'Push the thumb hat LEFT', device });
+      steps.push({ hotspotId: 'vkb_r_c1_thumb_hat_right', label: 'C1 Thumb Hat - Right', description: 'Push the thumb hat RIGHT', device });
+
+      // A3 Center Hat (5-way)
+      steps.push({ hotspotId: 'vkb_r_a3_center_hat_up', label: 'A3 Center Hat - Up', description: 'Push the center hat UP', device });
+      steps.push({ hotspotId: 'vkb_r_a3_center_hat_down', label: 'A3 Center Hat - Down', description: 'Push the center hat DOWN', device });
+      steps.push({ hotspotId: 'vkb_r_a3_center_hat_left', label: 'A3 Center Hat - Left', description: 'Push the center hat LEFT', device });
+      steps.push({ hotspotId: 'vkb_r_a3_center_hat_right', label: 'A3 Center Hat - Right', description: 'Push the center hat RIGHT', device });
+      steps.push({ hotspotId: 'vkb_r_a3_center_hat_press', label: 'A3 Center Hat - Press', description: 'Press the center hat IN', device });
+
+      // A4 Top Hat (4-way)
+      steps.push({ hotspotId: 'vkb_r_a4_top_hat_up', label: 'A4 Top Hat - Up', description: 'Push the top hat UP', device });
+      steps.push({ hotspotId: 'vkb_r_a4_top_hat_down', label: 'A4 Top Hat - Down', description: 'Push the top hat DOWN', device });
+      steps.push({ hotspotId: 'vkb_r_a4_top_hat_left', label: 'A4 Top Hat - Left', description: 'Push the top hat LEFT', device });
+      steps.push({ hotspotId: 'vkb_r_a4_top_hat_right', label: 'A4 Top Hat - Right', description: 'Push the top hat RIGHT', device });
+
+      // A1 Mini-stick (5-way)
+      steps.push({ hotspotId: 'vkb_r_a1_ministick_up', label: 'A1 Mini-stick - Up', description: 'Push the mini-stick UP', device });
+      steps.push({ hotspotId: 'vkb_r_a1_ministick_down', label: 'A1 Mini-stick - Down', description: 'Push the mini-stick DOWN', device });
+      steps.push({ hotspotId: 'vkb_r_a1_ministick_left', label: 'A1 Mini-stick - Left', description: 'Push the mini-stick LEFT', device });
+      steps.push({ hotspotId: 'vkb_r_a1_ministick_right', label: 'A1 Mini-stick - Right', description: 'Push the mini-stick RIGHT', device });
+      steps.push({ hotspotId: 'vkb_r_a1_ministick_press', label: 'A1 Mini-stick - Press', description: 'Press the mini-stick IN', device });
+    } else if (this.activeDevice === 'flight-yoke') {
+      const device = 'Logitech Flight Yoke';
+
+      // Left Hat (4-way POV)
+      steps.push({ hotspotId: 'yoke_left_hat_up', label: 'Left Hat - Up', description: 'Push the left hat UP', device });
+      steps.push({ hotspotId: 'yoke_left_hat_down', label: 'Left Hat - Down', description: 'Push the left hat DOWN', device });
+      steps.push({ hotspotId: 'yoke_left_hat_left', label: 'Left Hat - Left', description: 'Push the left hat LEFT', device });
+      steps.push({ hotspotId: 'yoke_left_hat_right', label: 'Left Hat - Right', description: 'Push the left hat RIGHT', device });
+
+      // Right Funky (5-way)
+      steps.push({ hotspotId: 'yoke_right_funky_up', label: 'Right Funky - Up', description: 'Push the right funky UP', device });
+      steps.push({ hotspotId: 'yoke_right_funky_down', label: 'Right Funky - Down', description: 'Push the right funky DOWN', device });
+      steps.push({ hotspotId: 'yoke_right_funky_left', label: 'Right Funky - Left', description: 'Push the right funky LEFT', device });
+      steps.push({ hotspotId: 'yoke_right_funky_right', label: 'Right Funky - Right', description: 'Push the right funky RIGHT', device });
+      steps.push({ hotspotId: 'yoke_right_funky_press', label: 'Right Funky - Press', description: 'Press the right funky IN', device });
+
+      // Buttons
+      steps.push({ hotspotId: 'yoke_b1', label: 'B1 Button', description: 'Press the B1 button', device });
+      steps.push({ hotspotId: 'yoke_b2', label: 'B2 Button', description: 'Press the B2 button', device });
+      steps.push({ hotspotId: 'yoke_b3', label: 'B3 Button', description: 'Press the B3 button', device });
+
+      // Triggers
+      steps.push({ hotspotId: 'yoke_t1_t2_up', label: 'T1 Trigger', description: 'Pull the T1 trigger (up)', device });
+      steps.push({ hotspotId: 'yoke_t1_t2_down', label: 'T2 Trigger', description: 'Pull the T2 trigger (down)', device });
+      steps.push({ hotspotId: 'yoke_t3_t4_up', label: 'T3 Trigger', description: 'Pull the T3 trigger (up)', device });
+      steps.push({ hotspotId: 'yoke_t3_t4_down', label: 'T4 Trigger', description: 'Pull the T4 trigger (down)', device });
+      steps.push({ hotspotId: 'yoke_t5_t6_up', label: 'T5 Trigger', description: 'Pull the T5 trigger (up)', device });
+      steps.push({ hotspotId: 'yoke_t5_t6_down', label: 'T6 Trigger', description: 'Pull the T6 trigger (down)', device });
+    } else if (this.activeDevice === 'flight-throttle') {
+      const device = 'Logitech Flight Throttle Quadrant';
+
+      // Toggle switches
+      steps.push({ hotspotId: 'throttle_t1_t2_up', label: 'T1 Toggle - Up', description: 'Flip the T1 toggle UP', device });
+      steps.push({ hotspotId: 'throttle_t1_t2_down', label: 'T2 Toggle - Down', description: 'Flip the T2 toggle DOWN', device });
+      steps.push({ hotspotId: 'throttle_t3_t4_up', label: 'T3 Toggle - Up', description: 'Flip the T3 toggle UP', device });
+      steps.push({ hotspotId: 'throttle_t3_t4_down', label: 'T4 Toggle - Down', description: 'Flip the T4 toggle DOWN', device });
+      steps.push({ hotspotId: 'throttle_t5_t6_up', label: 'T5 Toggle - Up', description: 'Flip the T5 toggle UP', device });
+      steps.push({ hotspotId: 'throttle_t5_t6_down', label: 'T6 Toggle - Down', description: 'Flip the T6 toggle DOWN', device });
+    }
+
+    return steps;
+  }
+
+  /**
+   * Start the button mapping wizard
+   */
+  startButtonMappingWizard() {
+    const steps = this.getButtonMappingSteps();
+    if (steps.length === 0) {
+      console.log('No mapping steps for this device');
+      return;
+    }
+
+    this.buttonMappingWizard = {
+      active: true,
+      currentStep: 0,
+      steps: steps,
+      detectedButton: null,
+      lastPressedButtons: new Set()
+    };
+
+    this.showButtonMappingWizardUI();
+  }
+
+  /**
+   * Show the wizard UI overlay
+   */
+  showButtonMappingWizardUI() {
+    // Remove any existing wizard
+    const existing = document.querySelector('.button-mapping-wizard');
+    if (existing) existing.remove();
+
+    const wizard = document.createElement('div');
+    wizard.className = 'button-mapping-wizard';
+    wizard.innerHTML = this.getWizardStepHTML();
+
+    document.body.appendChild(wizard);
+
+    // Setup event handlers
+    this.setupWizardEventHandlers(wizard);
+
+    // Highlight the current control on the image
+    this.highlightWizardControl();
+  }
+
+  /**
+   * Get the HTML for current wizard step
+   */
+  getWizardStepHTML() {
+    const { currentStep, steps, detectedButton } = this.buttonMappingWizard;
+    const step = steps[currentStep];
+    const progress = Math.round(((currentStep + 1) / steps.length) * 100);
+
+    // Determine device badge class
+    const isStick = step.device && step.device.includes('Stick');
+    const isThrottle = step.device && step.device.includes('Throttle');
+    const deviceBadgeClass = isStick ? 'device-badge-stick' : (isThrottle ? 'device-badge-throttle' : '');
+
+    // Check if there are more steps remaining for the current device (to show skip device button)
+    const currentDevice = step.device || '';
+    const remainingStepsInDevice = this.countRemainingStepsInDevice(currentStep, steps);
+    const canSkipDevice = remainingStepsInDevice > 1; // More than just the current step
+
+    return `
+      <div class="wizard-overlay"></div>
+      <div class="wizard-panel">
+        <div class="wizard-header">
+          <h2>Button Configuration</h2>
+          <span class="wizard-progress-text">Step ${currentStep + 1} of ${steps.length}</span>
+        </div>
+        <div class="wizard-progress-bar">
+          <div class="wizard-progress-fill" style="width: ${progress}%"></div>
+        </div>
+        <div class="wizard-body">
+          ${step.device ? `<div class="wizard-device-badge ${deviceBadgeClass}">${step.device}</div>` : ''}
+          <div class="wizard-instruction">
+            <div class="wizard-control-name">${step.label}</div>
+            <div class="wizard-control-desc">${step.description}</div>
+          </div>
+          <div class="wizard-detection">
+            ${detectedButton !== null
+              ? `<div class="wizard-detected">
+                   <span class="detected-icon">✓</span>
+                   <span class="detected-text">Detected: Button ${detectedButton + 1}</span>
+                 </div>`
+              : `<div class="wizard-waiting">
+                   <div class="waiting-pulse"></div>
+                   <span>Waiting for button press...</span>
+                 </div>`
+            }
+          </div>
+        </div>
+        <div class="wizard-footer">
+          <button class="btn-secondary wizard-btn-back" ${currentStep === 0 ? 'disabled' : ''}>← Back</button>
+          <button class="btn-secondary wizard-btn-skip">Skip</button>
+          ${canSkipDevice ? `<button class="btn-secondary wizard-btn-skip-device" title="Skip all ${currentDevice} buttons">Skip ${isStick ? 'Stick' : 'Throttle'}</button>` : ''}
+          <button class="btn-primary wizard-btn-next" ${detectedButton === null ? 'disabled' : ''}>
+            ${currentStep === steps.length - 1 ? 'Finish' : 'Next →'}
+          </button>
+        </div>
+        <button class="wizard-close-btn" title="Cancel configuration">×</button>
+      </div>
+    `;
+  }
+
+  /**
+   * Get the index of the next step with a different device
+   */
+  getNextDeviceStepIndex(currentStep, steps) {
+    const currentDevice = steps[currentStep]?.device;
+    if (!currentDevice) return -1;
+
+    for (let i = currentStep + 1; i < steps.length; i++) {
+      if (steps[i].device !== currentDevice) {
+        return i;
+      }
+    }
+    return -1; // No next device found
+  }
+
+  /**
+   * Count remaining steps in the current device (including current step)
+   */
+  countRemainingStepsInDevice(currentStep, steps) {
+    const currentDevice = steps[currentStep]?.device;
+    if (!currentDevice) return 0;
+
+    let count = 0;
+    for (let i = currentStep; i < steps.length; i++) {
+      if (steps[i].device === currentDevice) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Setup event handlers for the wizard
+   */
+  setupWizardEventHandlers(wizard) {
+    wizard.querySelector('.wizard-btn-back')?.addEventListener('click', () => this.wizardGoBack());
+    wizard.querySelector('.wizard-btn-skip')?.addEventListener('click', () => this.wizardSkip());
+    wizard.querySelector('.wizard-btn-skip-device')?.addEventListener('click', () => this.wizardSkipDevice());
+    wizard.querySelector('.wizard-btn-next')?.addEventListener('click', () => this.wizardGoNext());
+    wizard.querySelector('.wizard-close-btn')?.addEventListener('click', () => this.closeButtonMappingWizard());
+    wizard.querySelector('.wizard-overlay')?.addEventListener('click', () => this.closeButtonMappingWizard());
+  }
+
+  /**
+   * Skip all remaining steps for the current device
+   */
+  wizardSkipDevice() {
+    const { currentStep, steps } = this.buttonMappingWizard;
+    const nextDeviceIndex = this.getNextDeviceStepIndex(currentStep, steps);
+
+    if (nextDeviceIndex !== -1) {
+      // Jump to the next device
+      this.buttonMappingWizard.currentStep = nextDeviceIndex;
+      this.buttonMappingWizard.detectedButton = null;
+      this.showButtonMappingWizardUI();
+    } else {
+      // No more devices, finish the wizard
+      this.closeButtonMappingWizard();
+      this.saveButtonMappings();
+    }
+  }
+
+  /**
+   * Highlight the current control in the wizard
+   */
+  highlightWizardControl() {
+    const { currentStep, steps } = this.buttonMappingWizard;
+    const step = steps[currentStep];
+
+    // Clear all wizard highlights
+    document.querySelectorAll('.hotspot.wizard-highlight').forEach(el => {
+      el.classList.remove('wizard-highlight');
+    });
+
+    // Find and highlight the hotspot (may need to find parent hotspot for directional controls)
+    const baseHotspotId = step.hotspotId.replace(/_up|_down|_left|_right|_press|_stage2/, '');
+    const hotspot = this.buttonElements[baseHotspotId];
+    if (hotspot) {
+      hotspot.classList.add('wizard-highlight');
+      // Scroll into view if needed
+      hotspot.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  /**
+   * Go back to previous step
+   */
+  wizardGoBack() {
+    if (this.buttonMappingWizard.currentStep > 0) {
+      this.buttonMappingWizard.currentStep--;
+      this.buttonMappingWizard.detectedButton = null;
+      this.updateWizardUI();
+      this.highlightWizardControl();
+    }
+  }
+
+  /**
+   * Skip current step (leave unmapped)
+   */
+  wizardSkip() {
+    this.wizardGoNext(true);
+  }
+
+  /**
+   * Go to next step or finish
+   */
+  wizardGoNext(skipped = false) {
+    const { currentStep, steps, detectedButton } = this.buttonMappingWizard;
+    const step = steps[currentStep];
+
+    // Save the mapping if not skipped and button was detected
+    if (!skipped && detectedButton !== null) {
+      const deviceKey = this.getDeviceMappingKey();
+      if (!this.buttonMappings[deviceKey]) {
+        this.buttonMappings[deviceKey] = {};
+      }
+      this.buttonMappings[deviceKey][detectedButton] = step.hotspotId;
+    }
+
+    // Move to next step or finish
+    if (currentStep < steps.length - 1) {
+      this.buttonMappingWizard.currentStep++;
+      this.buttonMappingWizard.detectedButton = null;
+      this.updateWizardUI();
+      this.highlightWizardControl();
+    } else {
+      // Finished - save and close
+      this.saveButtonMappings();
+      this.closeButtonMappingWizard();
+    }
+  }
+
+  /**
+   * Update the wizard UI without recreating it
+   */
+  updateWizardUI() {
+    const wizard = document.querySelector('.button-mapping-wizard');
+    if (wizard) {
+      wizard.innerHTML = this.getWizardStepHTML();
+      this.setupWizardEventHandlers(wizard);
+    }
+  }
+
+  /**
+   * Close the button mapping wizard
+   */
+  closeButtonMappingWizard() {
+    this.buttonMappingWizard.active = false;
+
+    // Remove wizard UI
+    const wizard = document.querySelector('.button-mapping-wizard');
+    if (wizard) wizard.remove();
+
+    // Clear highlights
+    document.querySelectorAll('.hotspot.wizard-highlight').forEach(el => {
+      el.classList.remove('wizard-highlight');
+    });
+
+    // Remove prompt if present
+    const prompt = document.querySelector('.button-mapping-prompt');
+    if (prompt) prompt.remove();
+  }
+
+  /**
+   * Handle button detection during wizard
+   */
+  handleWizardButtonDetection(buttonIndex) {
+    if (!this.buttonMappingWizard.active) return;
+
+    // Ignore if this button was already pressed (debounce)
+    if (this.buttonMappingWizard.lastPressedButtons.has(buttonIndex)) return;
+
+    this.buttonMappingWizard.detectedButton = buttonIndex;
+    this.updateWizardUI();
+  }
+
+  // Setup click handlers for axis bind buttons in the axis display panels
+  setupAxisBindButtons() {
+    const axisButtons = this.container.querySelectorAll('.axis-bind-btn');
+
+    axisButtons.forEach(btn => {
+      // Skip if already setup
+      if (btn.dataset.setupDone) return;
+      btn.dataset.setupDone = 'true';
+
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const axisId = btn.dataset.axis;
+
+        if (axisId && this.bindingContextMenu) {
+          // Create a fake hotspot element for positioning
+          const fakeHotspot = {
+            dataset: {
+              button: axisId,
+              label: btn.textContent,
+              type: 'axis'
+            },
+            getBoundingClientRect: () => btn.getBoundingClientRect(),
+            classList: {
+              add: () => {},
+              remove: () => {},
+              contains: () => false
+            }
+          };
+
+          // Show the binding context menu
+          this.bindingContextMenu.show(axisId, fakeHotspot);
+          this.bindingContextMenu.setCurrentBindings(this.customBindings);
+
+          // Add selected state to the button
+          document.querySelectorAll('.axis-bind-btn.selected').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        }
+      });
+    });
   }
 
   updateBindingHighlights() {

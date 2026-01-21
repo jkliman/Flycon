@@ -19,10 +19,12 @@ class BindingContextMenu {
     this.onBindingChanged = null; // Callback when a binding is changed
     this.onClearBindings = null; // Callback when bindings are cleared
     this.customBindings = {}; // Store bindings locally
-    this.currentMode = 'm1'; // Mode for X56 HOTAS: 'm1', 'm2', 's1' (no default mode)
+    this.currentMode = 'm1'; // Mode for X56 HOTAS: 'm1', 'm2', 's1'
+    this.x52CurrentMode = 'mode1'; // Mode for X52: 'mode1', 'mode2', 'mode3'
 
     // Controls excluded from mode switching (always use default binding)
     this.modeExcludedControls = [
+      // X56 excluded controls
       'x56_js_trigger',
       'x56_js_missile_btn',
       'x56_js_thumbstick',
@@ -31,7 +33,12 @@ class BindingContextMenu {
       'x56_th_rty3',
       'x56_th_rty4',
       'x56_th_top_knob',
-      'x56_th_bottom_knob'
+      'x56_th_bottom_knob',
+      // X52 excluded controls
+      'x52_js_trigger',
+      'x52_js_fire',
+      'x52_th_rt1',
+      'x52_th_rt2'
     ];
 
     // Define the dropdown configuration for each controller control
@@ -280,16 +287,6 @@ class BindingContextMenu {
         dropdowns: [
           { id: 'x_axis', label: 'X Axis' },
           { id: 'y_axis', label: 'Y Axis' },
-          { id: 'press', label: 'Press' }
-        ]
-      },
-      'x56_js_thumb_funky': {
-        label: 'Thumb Funky Stick',
-        dropdowns: [
-          { id: 'up', label: 'Up' },
-          { id: 'down', label: 'Down' },
-          { id: 'left', label: 'Left' },
-          { id: 'right', label: 'Right' },
           { id: 'press', label: 'Press' }
         ]
       },
@@ -656,11 +653,104 @@ class BindingContextMenu {
       'x52_js_pinky_switch': {
         label: 'Pinky Switch',
         dropdowns: [{ id: 'action', label: 'Toggle' }]
+      },
+      // X56 Stick Axis controls
+      'x56_js_pitch': {
+        label: 'Pitch Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'x56_js_roll': {
+        label: 'Roll Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'x56_js_yaw': {
+        label: 'Yaw Axis (Twist)',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'x56_js_thumbstick_x': {
+        label: 'Thumbstick X Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'x56_js_thumbstick_y': {
+        label: 'Thumbstick Y Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'x56_js_thumbstick_press': {
+        label: 'Thumbstick Press',
+        dropdowns: [{ id: 'press', label: 'Press' }]
+      },
+      // X52 Axis controls
+      'x52_js_pitch': {
+        label: 'Pitch Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'x52_js_roll': {
+        label: 'Roll Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'x52_js_yaw': {
+        label: 'Yaw Axis (Twist)',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'x52_th_throttle': {
+        label: 'Throttle Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      // VKB Gladiator Left Axis controls
+      'vkb_l_pitch': {
+        label: 'Pitch Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'vkb_l_roll': {
+        label: 'Roll Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'vkb_l_yaw': {
+        label: 'Yaw Axis (Twist)',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      // VKB Gladiator Right Axis controls
+      'vkb_r_pitch': {
+        label: 'Pitch Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'vkb_r_roll': {
+        label: 'Roll Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'vkb_r_yaw': {
+        label: 'Yaw Axis (Twist)',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      // Flight Throttle Quadrant Axis controls
+      'throttle_axis1': {
+        label: 'Lever 1 (Throttle)',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'throttle_axis2': {
+        label: 'Lever 2 (Mixture)',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'throttle_axis3': {
+        label: 'Lever 3 (Prop Pitch)',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      // AB9 Flight Stick Axis controls
+      'ab9_pitch': {
+        label: 'Pitch Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
+      },
+      'ab9_roll': {
+        label: 'Roll Axis',
+        dropdowns: [{ id: 'axis', label: 'Axis Action' }]
       }
     };
 
     // Organized action categories for Star Citizen
     this.scActionCategories = {
+      'Axis - Flight Control': [
+        'axis_flight_control'
+      ],
       'Flight - Basic': [
         'spaceship_movement',
         'spaceship_general',
@@ -898,6 +988,10 @@ class BindingContextMenu {
     if (buttonId.startsWith('x56_')) {
       return !this.modeExcludedControls.some(excluded => buttonId.startsWith(excluded));
     }
+    // Check X52 controls
+    if (buttonId.startsWith('x52_')) {
+      return !this.modeExcludedControls.some(excluded => buttonId.startsWith(excluded));
+    }
     return false;
   }
 
@@ -905,15 +999,20 @@ class BindingContextMenu {
   getBindingKey(buttonId, dropdownId) {
     const baseKey = `${buttonId}_${dropdownId}`;
 
-    // Always apply mode prefix for X56 controls that are mode-sensitive
+    // Apply mode prefix for X56 controls that are mode-sensitive
     if (buttonId.startsWith('x56_') && this.isModeSensitiveControl(buttonId)) {
       return `${this.currentMode}_${baseKey}`;
+    }
+
+    // Apply mode prefix for X52 controls that are mode-sensitive
+    if (buttonId.startsWith('x52_') && this.isModeSensitiveControl(buttonId)) {
+      return `${this.x52CurrentMode}_${baseKey}`;
     }
 
     return baseKey;
   }
 
-  // Get the mode label for display
+  // Get the mode label for display (X56)
   getModeLabel() {
     const modeLabels = {
       'm1': ' [M1/Ctrl]',
@@ -921,6 +1020,16 @@ class BindingContextMenu {
       's1': ' [S1/Shift]'
     };
     return modeLabels[this.currentMode] || '';
+  }
+
+  // Get the mode label for display (X52)
+  getX52ModeLabel() {
+    const modeLabels = {
+      'mode1': ' [Mode 1/Ctrl]',
+      'mode2': ' [Mode 2/Alt]',
+      'mode3': ' [Mode 3/Shift]'
+    };
+    return modeLabels[this.x52CurrentMode] || '';
   }
 
   createMenuElement() {
@@ -1017,18 +1126,22 @@ class BindingContextMenu {
       `;
     }).join('');
 
-    // Show mode indicator for X56 controls that support modes
+    // Show mode indicator for X56 and X52 controls that support modes
     const isX56Control = buttonId.startsWith('x56_');
-    const isModeSensitive = isX56Control && this.isModeSensitiveControl(buttonId);
+    const isX52Control = buttonId.startsWith('x52_');
+    const isModeSensitive = (isX56Control || isX52Control) && this.isModeSensitiveControl(buttonId);
 
     let modeIndicator = '';
     if (isX56Control && isModeSensitive) {
       modeIndicator = `<span class="mode-indicator mode-${this.currentMode}">${this.getModeLabel()}</span>`;
+    } else if (isX52Control && isModeSensitive) {
+      modeIndicator = `<span class="mode-indicator x52-${this.x52CurrentMode}">${this.getX52ModeLabel()}</span>`;
     }
 
-    const modeWarning = isX56Control && !isModeSensitive
-      ? '<div class="mode-warning">This control is not affected by modes</div>'
-      : '';
+    let modeWarning = '';
+    if ((isX56Control || isX52Control) && !isModeSensitive) {
+      modeWarning = '<div class="mode-warning">This control is not affected by modes</div>';
+    }
 
     this.menuElement.innerHTML = `
       <div class="binding-menu-header">
@@ -1345,6 +1458,7 @@ class BindingContextMenu {
   actionBelongsToGroup(action, group) {
     // Map group names to action prefixes/patterns
     const groupPatterns = {
+      'axis_flight_control': /^(v_(pitch|roll|yaw|strafe_lateral|strafe_longitudinal|strafe_vertical|throttle_abs|throttle_rel|view_pitch|view_yaw)|turret_(pitch|yaw))$/,
       'spaceship_movement': /^v_(strafe|roll|pitch|yaw|afterburner|space_brake|speed|accel|ifcs|lock_rotation|toggle_landing|autoland|toggle_vtol|transform)/,
       'spaceship_general': /^v_(flightready|self_destruct|toggle_all_doors|lock_all|unlock_all|close_all|open_all|eject|emergency_exit|horn)/,
       'spaceship_view': /^v_view_/,
@@ -1474,20 +1588,30 @@ class BindingContextMenu {
   clearBindings() {
     // Clear bindings for this button based on current mode
     const isX56Control = this.currentButton.startsWith('x56_');
-    const isModeSensitive = isX56Control && this.isModeSensitiveControl(this.currentButton);
+    const isX52Control = this.currentButton.startsWith('x52_');
+    const isModeSensitive = (isX56Control || isX52Control) && this.isModeSensitiveControl(this.currentButton);
 
     let keysToDelete;
     if (isModeSensitive) {
+      // Determine the mode prefix based on controller type
+      let modePrefix;
+      if (isX56Control) {
+        modePrefix = `${this.currentMode}_`;
+      } else if (isX52Control) {
+        modePrefix = `${this.x52CurrentMode}_`;
+      }
       // Only clear mode-prefixed bindings for current mode
-      const modePrefix = `${this.currentMode}_`;
       keysToDelete = Object.keys(this.customBindings).filter(
         key => key.startsWith(modePrefix + this.currentButton + '_')
       );
     } else {
       // Clear non-mode-prefixed bindings (but not mode-prefixed ones)
       keysToDelete = Object.keys(this.customBindings).filter(key => {
-        const isModeKey = /^(m1|m2|s1)_/.test(key);
-        return !isModeKey && (key === this.currentButton || key.startsWith(this.currentButton + '_'));
+        // Check for X56 mode prefixes
+        const isX56ModeKey = /^(m1|m2|s1)_/.test(key);
+        // Check for X52 mode prefixes
+        const isX52ModeKey = /^(mode1|mode2|mode3)_/.test(key);
+        return !isX56ModeKey && !isX52ModeKey && (key === this.currentButton || key.startsWith(this.currentButton + '_'));
       });
     }
 

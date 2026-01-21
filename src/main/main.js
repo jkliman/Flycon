@@ -2,8 +2,10 @@ const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const xml2js = require('xml2js');
+const licenseManager = require('./license-manager');
 
 let mainWindow;
+let isLicensed = false;
 
 function createWindow() {
   const isDev = process.argv.includes('--dev');
@@ -174,4 +176,60 @@ ipcMain.handle('save-file', async (event, filePath, content) => {
   } catch (error) {
     return { success: false, error: error.message };
   }
+});
+
+// ==================== LICENSE MANAGEMENT ====================
+
+// Validate license on app start
+ipcMain.handle('license-validate', async () => {
+  try {
+    const result = await licenseManager.validateLicense();
+    isLicensed = result.valid;
+    return result;
+  } catch (error) {
+    return { valid: false, error: error.message };
+  }
+});
+
+// Activate a license key
+ipcMain.handle('license-activate', async (event, licenseKey) => {
+  try {
+    const result = await licenseManager.activateLicense(licenseKey);
+    if (result.success) {
+      isLicensed = true;
+    }
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Reactivate license on new hardware
+ipcMain.handle('license-reactivate', async (event, licenseKey, email) => {
+  try {
+    const result = await licenseManager.reactivateLicense(licenseKey, email);
+    if (result.success) {
+      isLicensed = true;
+    }
+    return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Get current license status
+ipcMain.handle('license-status', async () => {
+  return licenseManager.getLicenseStatus();
+});
+
+// Clear license (for testing/support)
+ipcMain.handle('license-clear', async () => {
+  licenseManager.clearLicense();
+  isLicensed = false;
+  return { success: true };
+});
+
+// Check if currently licensed (for feature gating)
+ipcMain.handle('is-licensed', async () => {
+  return isLicensed;
 });

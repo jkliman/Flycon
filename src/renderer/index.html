@@ -43,6 +43,10 @@
           <button id="btn-export" class="action-btn-sm export-btn" title="Export Bindings">💾</button>
           <span class="action-label">Save Bindings</span>
         </div>
+        <div class="action-group">
+          <button id="btn-device-mapping" class="action-btn-sm device-btn" title="Configure Controllers">🎮</button>
+          <span class="action-label">Controllers</span>
+        </div>
         <div class="action-group target-group">
           <button id="btn-select-folder" class="action-btn-sm folder-btn" title="Select Export Folder">📁</button>
           <div class="target-info">
@@ -236,6 +240,216 @@
       </div>
     </div>
 
+    <!-- Device Mapping Modal -->
+    <div class="modal" id="device-mapping-modal">
+      <div class="modal-content device-mapping-modal-content">
+        <div class="modal-header">
+          <h2>Configure Controller Devices</h2>
+          <button class="modal-close" id="close-device-mapping-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="device-mapping-info">
+            Star Citizen identifies controllers by their USB order (js1, js2, etc.).
+            Connect your controllers, then assign each detected device to the correct joystick slot.
+          </p>
+
+          <div class="detected-devices-section">
+            <h4>Detected USB Controllers</h4>
+            <div class="detected-devices-list" id="detected-devices-list">
+              <p class="no-devices">No controllers detected. Connect a controller and press a button to detect it.</p>
+            </div>
+            <button class="btn-secondary" id="btn-refresh-devices">🔄 Refresh Devices</button>
+          </div>
+
+          <div class="device-slots-section">
+            <h4>Joystick Instance Assignments</h4>
+            <p class="slot-info">Assign your detected controllers to the joystick slots that Star Citizen will use.</p>
+
+            <div class="device-slot" data-slot="1">
+              <label>JS1 (Joystick 1):</label>
+              <select class="device-slot-select" id="device-slot-1">
+                <option value="">-- Not Assigned --</option>
+              </select>
+              <span class="slot-hint">Usually: Right-hand stick</span>
+            </div>
+
+            <div class="device-slot" data-slot="2">
+              <label>JS2 (Joystick 2):</label>
+              <select class="device-slot-select" id="device-slot-2">
+                <option value="">-- Not Assigned --</option>
+              </select>
+              <span class="slot-hint">Usually: Left-hand stick or throttle</span>
+            </div>
+
+            <div class="device-slot" data-slot="3">
+              <label>JS3 (Joystick 3):</label>
+              <select class="device-slot-select" id="device-slot-3">
+                <option value="">-- Not Assigned --</option>
+              </select>
+              <span class="slot-hint">Additional controller</span>
+            </div>
+
+            <div class="device-slot" data-slot="4">
+              <label>JS4 (Joystick 4):</label>
+              <select class="device-slot-select" id="device-slot-4">
+                <option value="">-- Not Assigned --</option>
+              </select>
+              <span class="slot-hint">Additional controller</span>
+            </div>
+          </div>
+
+          <div class="flycon-device-mapping">
+            <h4>Flycon Device Mapping</h4>
+            <p class="flycon-mapping-info">Map your Flycon controller types to the joystick slots above.</p>
+
+            <div class="flycon-device-row">
+              <label>X56/X52 Stick:</label>
+              <select class="flycon-device-select" id="flycon-stick-slot">
+                <option value="1">JS1</option>
+                <option value="2">JS2</option>
+                <option value="3">JS3</option>
+                <option value="4">JS4</option>
+              </select>
+            </div>
+
+            <div class="flycon-device-row">
+              <label>X56/X52 Throttle:</label>
+              <select class="flycon-device-select" id="flycon-throttle-slot">
+                <option value="1">JS1</option>
+                <option value="2" selected>JS2</option>
+                <option value="3">JS3</option>
+                <option value="4">JS4</option>
+              </select>
+            </div>
+
+            <div class="flycon-device-row">
+              <label>VKB Right Stick:</label>
+              <select class="flycon-device-select" id="flycon-vkb-r-slot">
+                <option value="1">JS1</option>
+                <option value="2">JS2</option>
+                <option value="3">JS3</option>
+                <option value="4">JS4</option>
+              </select>
+            </div>
+
+            <div class="flycon-device-row">
+              <label>VKB Left Stick:</label>
+              <select class="flycon-device-select" id="flycon-vkb-l-slot">
+                <option value="1">JS1</option>
+                <option value="2" selected>JS2</option>
+                <option value="3">JS3</option>
+                <option value="4">JS4</option>
+              </select>
+            </div>
+
+            <div class="flycon-device-row">
+              <label>MOZA AB9:</label>
+              <select class="flycon-device-select" id="flycon-ab9-slot">
+                <option value="1">JS1</option>
+                <option value="2">JS2</option>
+                <option value="3">JS3</option>
+                <option value="4">JS4</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="device-mapping-actions">
+            <button class="btn-secondary" id="btn-cancel-device-mapping">Cancel</button>
+            <button class="btn-primary" id="btn-save-device-mapping">Save Configuration</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hardware Setup Wizard Modal -->
+    <div class="modal" id="hardware-setup-modal">
+      <div class="modal-content hardware-setup-modal-content">
+        <div class="modal-header">
+          <h2>🎮 Hardware Setup</h2>
+        </div>
+        <div class="modal-body">
+          <div class="setup-wizard-step" id="setup-step-1">
+            <div class="setup-message">
+              <p class="setup-title" id="setup-title">New Hardware Detected</p>
+              <p class="setup-description" id="setup-description">
+                We've detected new or changed controllers connected to your system.
+                Let's configure them for use with Flycon.
+              </p>
+            </div>
+
+            <div class="detected-hardware-list" id="setup-detected-hardware">
+              <!-- Detected devices will be populated here -->
+            </div>
+
+            <div class="setup-instructions">
+              <p>📌 <strong>Tip:</strong> Make sure all your controllers are connected and powered on before continuing.</p>
+            </div>
+
+            <div class="setup-actions">
+              <button class="btn-secondary" id="btn-setup-skip">Skip for Now</button>
+              <button class="btn-primary" id="btn-setup-configure">Configure Controllers</button>
+            </div>
+          </div>
+
+          <div class="setup-wizard-step hidden" id="setup-step-2">
+            <div class="setup-message">
+              <p class="setup-title">Assign Your Controllers</p>
+              <p class="setup-description">
+                Drag and drop or select which joystick slot (JS1-JS4) each controller should use in Star Citizen.
+              </p>
+            </div>
+
+            <div class="setup-slot-assignments">
+              <div class="setup-slot" data-slot="1">
+                <div class="slot-header">
+                  <span class="slot-number">JS1</span>
+                  <span class="slot-label">Primary Stick</span>
+                </div>
+                <select class="setup-slot-select" id="setup-slot-1">
+                  <option value="">-- Select Controller --</option>
+                </select>
+              </div>
+
+              <div class="setup-slot" data-slot="2">
+                <div class="slot-header">
+                  <span class="slot-number">JS2</span>
+                  <span class="slot-label">Throttle / Left Stick</span>
+                </div>
+                <select class="setup-slot-select" id="setup-slot-2">
+                  <option value="">-- Select Controller --</option>
+                </select>
+              </div>
+
+              <div class="setup-slot" data-slot="3">
+                <div class="slot-header">
+                  <span class="slot-number">JS3</span>
+                  <span class="slot-label">Additional Controller</span>
+                </div>
+                <select class="setup-slot-select" id="setup-slot-3">
+                  <option value="">-- Select Controller --</option>
+                </select>
+              </div>
+
+              <div class="setup-slot" data-slot="4">
+                <div class="slot-header">
+                  <span class="slot-number">JS4</span>
+                  <span class="slot-label">Additional Controller</span>
+                </div>
+                <select class="setup-slot-select" id="setup-slot-4">
+                  <option value="">-- Select Controller --</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="setup-actions">
+              <button class="btn-secondary" id="btn-setup-back">← Back</button>
+              <button class="btn-primary" id="btn-setup-save">Save & Continue</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Game Switch Confirmation Modal -->
     <div class="modal" id="game-switch-modal">
       <div class="modal-content confirm-modal-content">
@@ -296,6 +510,7 @@
   <script src="js/gamepad-image.js"></script>
   <script src="js/binding-context-menu.js"></script>
   <script src="js/hotas-image.js"></script>
+  <script src="js/license-ui.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
