@@ -1401,7 +1401,7 @@ class HOTASImageVisualizer {
         <div class="button-input-display">
           <div class="button-input-row">
             <div class="button-input-label">Buttons Pressed:</div>
-            <!-- Configure button hidden in production -->
+            <button class="button-config-btn calibrate-btn" id="x56-config-btn" title="Calibrate button mappings">Calibrate</button>
           </div>
           <div class="button-input-list" id="x56-button-list">None</div>
         </div>
@@ -1703,7 +1703,7 @@ class HOTASImageVisualizer {
       <div class="button-input-display">
         <div class="button-input-row">
           <div class="button-input-label">Buttons Pressed:</div>
-          <!-- Calibrate button hidden in production -->
+          <button class="button-config-btn calibrate-btn" id="vkb-left-calibrate-btn" title="Calibrate button mappings">Calibrate</button>
         </div>
         <div class="button-input-list" id="vkb-left-button-list">None</div>
       </div>
@@ -1796,7 +1796,7 @@ class HOTASImageVisualizer {
       <div class="button-input-display">
         <div class="button-input-row">
           <div class="button-input-label">Buttons Pressed:</div>
-          <!-- Calibrate button hidden in production -->
+          <button class="button-config-btn calibrate-btn" id="vkb-right-calibrate-btn" title="Calibrate button mappings">Calibrate</button>
         </div>
         <div class="button-input-list" id="vkb-right-button-list">None</div>
       </div>
@@ -1879,7 +1879,7 @@ class HOTASImageVisualizer {
         <div class="button-input-display">
           <div class="button-input-row">
             <div class="button-input-label">Buttons Pressed:</div>
-            <!-- Calibrate button hidden in production -->
+            <button class="button-config-btn calibrate-btn" id="ab9-calibrate-btn" title="Calibrate button mappings">Calibrate</button>
           </div>
           <div class="button-input-list" id="ab9-button-list">None</div>
         </div>

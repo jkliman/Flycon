@@ -2816,6 +2816,18 @@
   color: var(--text-primary);
 }
 
+.calibrate-btn {
+  background: rgba(255, 140, 0, 0.2);
+  border-color: #ff8c00;
+  color: #ff8c00;
+}
+
+.calibrate-btn:hover {
+  background: rgba(255, 140, 0, 0.4);
+  border-color: #ffa500;
+  color: #ffa500;
+}
+
 /* ===== BUTTON MAPPING PROMPT ===== */
 .button-mapping-prompt {
   position: absolute;
