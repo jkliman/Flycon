@@ -1,7 +1,7 @@
 {
   "name": "flycon",
   "productName": "Flycon",
-  "version": "1.0.0",
+  "version": "1.0.9",
   "description": "Flight Control Mapping Software - Visualize and manage keybindings for flight simulators and space games",
   "main": "src/main/main.js",
   "scripts": {

@@ -1222,16 +1222,6 @@ class FlyconApp {
 
     xml += ' <modifiers />\n';
 
-    // Mode modifier mapping for X56 and X52
-    const modeModifiers = {
-      'm1': 'kb1_lctrl',      // X56 M1 = Ctrl
-      'm2': 'kb1_lalt',       // X56 M2 = Alt
-      's1': 'kb1_lshift',     // X56 S1 = Shift
-      'mode1': 'kb1_lctrl',   // X52 Mode 1 = Ctrl
-      'mode2': 'kb1_lalt',    // X52 Mode 2 = Alt
-      'mode3': 'kb1_lshift'   // X52 Mode 3 = Shift
-    };
-
     // SC action maps - organize bindings by their proper category
     const actionMaps = {
       'spaceship_general': [],
@@ -1258,8 +1248,7 @@ class FlyconApp {
     for (const [key, action] of Object.entries(customBindings)) {
       if (!action) continue;
 
-      // Check if this is a mode-prefixed binding
-      let modifier = null;
+      // Strip mode prefixes if present - we don't add keyboard modifiers to XML output
       let actualKey = key;
 
       // Check for X56 mode prefix (m1_, m2_, s1_)
@@ -1268,10 +1257,8 @@ class FlyconApp {
       const x52ModeMatch = key.match(/^(mode1|mode2|mode3)_(.+)$/);
 
       if (x56ModeMatch) {
-        modifier = modeModifiers[x56ModeMatch[1]];
         actualKey = x56ModeMatch[2];
       } else if (x52ModeMatch) {
-        modifier = modeModifiers[x52ModeMatch[1]];
         actualKey = x52ModeMatch[2];
       }
 
@@ -1279,11 +1266,8 @@ class FlyconApp {
       const bindingInfo = this.parseBindingKey(actualKey, deviceConfig);
       if (!bindingInfo) continue;
 
-      // Build the input string
+      // Build the input string - no keyboard modifiers, just the joystick input
       let inputStr = bindingInfo.input;
-      if (modifier) {
-        inputStr = `${modifier}+${inputStr}`;
-      }
 
       // Determine which actionmap this action belongs to
       const actionMap = this.getActionMapForAction(action);
@@ -1299,16 +1283,29 @@ class FlyconApp {
     }
 
     // Generate XML for each actionmap that has bindings
+    // Group bindings by action to allow multiple inputs per action (e.g., same axis from multiple devices)
     for (const [mapName, bindings] of Object.entries(actionMaps)) {
       if (bindings.length === 0) continue;
 
-      xml += ` <actionmap name="${mapName}">\n`;
+      // Group bindings by action name
+      const actionGroups = {};
       for (const binding of bindings) {
-        xml += `  <action name="${binding.action}">\n`;
-        if (binding.activationMode) {
-          xml += `   <rebind input="${binding.input}" activationMode="${binding.activationMode}"/>\n`;
-        } else {
-          xml += `   <rebind input="${binding.input}"/>\n`;
+        if (!actionGroups[binding.action]) {
+          actionGroups[binding.action] = [];
+        }
+        actionGroups[binding.action].push(binding);
+      }
+
+      xml += ` <actionmap name="${mapName}">\n`;
+      for (const [actionName, actionBindings] of Object.entries(actionGroups)) {
+        xml += `  <action name="${actionName}">\n`;
+        // Output all rebinds for this action (supports multiple inputs from different devices)
+        for (const binding of actionBindings) {
+          if (binding.activationMode) {
+            xml += `   <rebind input="${binding.input}" activationMode="${binding.activationMode}"/>\n`;
+          } else {
+            xml += `   <rebind input="${binding.input}"/>\n`;
+          }
         }
         xml += `  </action>\n`;
       }
@@ -1587,7 +1584,18 @@ class FlyconApp {
     const parts = bindingKey.split('_');
     if (parts.length < 2) return null;
 
-    const direction = parts.pop(); // Last part is usually the action type (action, up, down, press, etc.)
+    // Handle compound directions like "sw3_up", "sw1_up", etc.
+    // Check if second-to-last part is a switch indicator (sw1, sw2, etc.)
+    let direction;
+    if (parts.length >= 2 && /^sw\d$/.test(parts[parts.length - 2]) && ['up', 'down'].includes(parts[parts.length - 1])) {
+      // Compound direction: sw3_up, sw1_up, etc.
+      direction = parts.slice(-2).join('_');
+      parts.splice(-2);
+    } else {
+      // Simple direction: up, down, action, press, etc.
+      direction = parts.pop();
+    }
+
     let devicePrefix;
     let buttonName;
 
@@ -1749,10 +1757,13 @@ class FlyconApp {
         'base_switch': 'js2_button8',
         'f1': 'js2_button9',
         'f3': 'js2_button10',
-        // Axes
+        // Axes - use x/y/rotz format (not pitch/roll/yaw)
         'x_axis': 'js2_x',
         'y_axis': 'js2_y',
-        'twist': 'js2_rotz'
+        'twist': 'js2_rotz',
+        'pitch': 'js2_y',
+        'roll': 'js2_x',
+        'yaw': 'js2_rotz'
       };
       return vkbLeftMap[buttonName] || `js2_${buttonName}`;
     }
@@ -1780,10 +1791,13 @@ class FlyconApp {
         'base_switch': 'js1_button8',
         'f1': 'js1_button9',
         'f3': 'js1_button10',
-        // Axes
+        // Axes - use x/y/rotz format (not pitch/roll/yaw)
         'x_axis': 'js1_x',
         'y_axis': 'js1_y',
-        'twist': 'js1_rotz'
+        'twist': 'js1_rotz',
+        'pitch': 'js1_y',
+        'roll': 'js1_x',
+        'yaw': 'js1_rotz'
       };
       return vkbRightMap[buttonName] || `js1_${buttonName}`;
     }
@@ -1862,6 +1876,30 @@ class FlyconApp {
         'pinky_switch': 'js1_button9'
       };
       return x52StickMap[buttonName] || `js1_${buttonName}`;
+    }
+
+    // AB9 Flight Stick mappings
+    if (devicePrefix === 'ab9') {
+      const ab9Map = {
+        'trigger': 'js1_button1',
+        'index_btn': 'js1_button2',
+        'thumb_missile': 'js1_button3',
+        'pinky_btn': 'js1_button4',
+        'pinky_switch': 'js1_button5',
+        'top_rocker': direction === 'forward' ? 'js1_button6' : 'js1_button7',
+        'bottom_rocker': direction === 'forward' ? 'js1_button8' : 'js1_button9',
+        'thumb_hat': this.mapHatDirection('js1_hat1', direction),
+        'top_dpad': this.mapHatDirection('js1_hat2', direction),
+        'bottom_dpad': this.mapHatDirection('js1_hat3', direction),
+        'funky_knob': 'js1_rotz',
+        // Axes - use x/y/rotz format (not pitch/roll/yaw)
+        'x_axis': 'js1_x',
+        'y_axis': 'js1_y',
+        'pitch': 'js1_y',
+        'roll': 'js1_x',
+        'yaw': 'js1_rotz'
+      };
+      return ab9Map[buttonName] || `js1_${buttonName}`;
     }
 
     // Default/legacy mappings (for backwards compatibility)
