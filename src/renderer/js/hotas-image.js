@@ -1715,6 +1715,11 @@ class HOTASImageVisualizer {
       this.addVKBLeftHotspots();
       this.preloadVKBLeftHighlights();
       this.setupAxisBindButtons();
+      // Setup calibrate button listener
+      const calibrateBtn = document.getElementById('vkb-left-calibrate-btn');
+      if (calibrateBtn) {
+        calibrateBtn.addEventListener('click', () => this.startButtonMappingWizard());
+      }
     }, 100);
 
     return wrapper;
@@ -1808,6 +1813,11 @@ class HOTASImageVisualizer {
       this.addVKBRightHotspots();
       this.preloadVKBRightHighlights();
       this.setupAxisBindButtons();
+      // Setup calibrate button listener
+      const calibrateBtn = document.getElementById('vkb-right-calibrate-btn');
+      if (calibrateBtn) {
+        calibrateBtn.addEventListener('click', () => this.startButtonMappingWizard());
+      }
     }, 100);
 
     return wrapper;
@@ -4543,7 +4553,20 @@ class HOTASImageVisualizer {
         }
 
         if (btn && btn.pressed) {
-          pressedButtons.push(`Btn ${index + 1}`);
+          // For X56 combined view, show device-specific button labels
+          // Stick buttons are indices 0-16, throttle buttons are 17+ (offset by 17)
+          let buttonLabel;
+          if (this.activeDevice === 'x56-hotas') {
+            const THROTTLE_OFFSET = 17; // X56 stick has 17 buttons (0-16)
+            if (index < THROTTLE_OFFSET) {
+              buttonLabel = `Js Btn ${index + 1}`;
+            } else {
+              buttonLabel = `Th Btn ${index - THROTTLE_OFFSET + 1}`;
+            }
+          } else {
+            buttonLabel = `Btn ${index + 1}`;
+          }
+          pressedButtons.push(buttonLabel);
           currentPressedIndices.add(index);
 
           // Check for newly pressed button during wizard (wasn't pressed in last frame)
