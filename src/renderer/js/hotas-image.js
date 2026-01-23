@@ -1401,7 +1401,7 @@ class HOTASImageVisualizer {
         <div class="button-input-display">
           <div class="button-input-row">
             <div class="button-input-label">Buttons Pressed:</div>
-            <button class="button-config-btn" id="x56-config-btn" title="Configure button mappings">Configure</button>
+            <!-- Configure button hidden in production -->
           </div>
           <div class="button-input-list" id="x56-button-list">None</div>
         </div>
@@ -1703,7 +1703,7 @@ class HOTASImageVisualizer {
       <div class="button-input-display">
         <div class="button-input-row">
           <div class="button-input-label">Buttons Pressed:</div>
-          <button class="button-config-btn" id="vkb-left-calibrate-btn">Calibrate</button>
+          <!-- Calibrate button hidden in production -->
         </div>
         <div class="button-input-list" id="vkb-left-button-list">None</div>
       </div>
@@ -1715,11 +1715,6 @@ class HOTASImageVisualizer {
       this.addVKBLeftHotspots();
       this.preloadVKBLeftHighlights();
       this.setupAxisBindButtons();
-      // Setup calibrate button listener
-      const calibrateBtn = document.getElementById('vkb-left-calibrate-btn');
-      if (calibrateBtn) {
-        calibrateBtn.addEventListener('click', () => this.startButtonMappingWizard());
-      }
     }, 100);
 
     return wrapper;
@@ -1801,7 +1796,7 @@ class HOTASImageVisualizer {
       <div class="button-input-display">
         <div class="button-input-row">
           <div class="button-input-label">Buttons Pressed:</div>
-          <button class="button-config-btn" id="vkb-right-calibrate-btn">Calibrate</button>
+          <!-- Calibrate button hidden in production -->
         </div>
         <div class="button-input-list" id="vkb-right-button-list">None</div>
       </div>
@@ -1813,11 +1808,6 @@ class HOTASImageVisualizer {
       this.addVKBRightHotspots();
       this.preloadVKBRightHighlights();
       this.setupAxisBindButtons();
-      // Setup calibrate button listener
-      const calibrateBtn = document.getElementById('vkb-right-calibrate-btn');
-      if (calibrateBtn) {
-        calibrateBtn.addEventListener('click', () => this.startButtonMappingWizard());
-      }
     }, 100);
 
     return wrapper;
@@ -1889,7 +1879,7 @@ class HOTASImageVisualizer {
         <div class="button-input-display">
           <div class="button-input-row">
             <div class="button-input-label">Buttons Pressed:</div>
-            <button class="button-config-btn" id="ab9-calibrate-btn">Calibrate</button>
+            <!-- Calibrate button hidden in production -->
           </div>
           <div class="button-input-list" id="ab9-button-list">None</div>
         </div>
@@ -1919,7 +1909,6 @@ class HOTASImageVisualizer {
     // Note: X and Y axes are now in the axis panel as buttons, no longer using overlays
     const highlightMap = {
       'ab9_index_btn': 'AB9-flight-stick_0000_index-button.png',
-      'ab9_thumb_hat': 'AB9-flight-stick_0001_Thumb-Hat.png',
       'ab9_thumb_missile': 'AB9-flight-stick_0002_Thumb-Missle.png',
       'ab9_funky_knob': 'AB9-flight-stick_0003_Thumb-Funkly-Knob.png',
       'ab9_bottom_dpad': 'AB9-flight-stick_0004_Bottom-Thumb-D-pad.png',
@@ -1963,23 +1952,21 @@ class HOTASImageVisualizer {
     const hotspots = [
       // Top D-pad (0007) - 5 inputs: up/down/left/right + press (btn 20-24)
       { id: 'top_dpad', label: 'Top D-Pad (5-way)', x: 16, y: 3, w: 12, h: 6, type: 'hat', highlightId: 'ab9_top_dpad' },
-      // Thumb Hat (0003) - 8-way analog hat
-      { id: 'thumb_hat', label: 'Thumb Hat (8-way)', x: 33, y: 2, w: 12, h: 5, type: 'hat', highlightId: 'ab9_thumb_hat' },
       // Thumb Missile (0004) - btn 2
       { id: 'thumb_missile', label: 'Missile Button', x: 26, y: 2, w: 8, h: 5, type: 'button', highlightId: 'ab9_thumb_missile' },
       // Funky Knob (0005) - 4-way (btn 7-10)
       { id: 'funky_knob', label: 'Funky Knob (4-way)', x: 28, y: 6, w: 12, h: 6, type: 'hat', highlightId: 'ab9_funky_knob' },
       // Bottom D-Pad (0006) - 4-way (btn 11-14)
       { id: 'bottom_dpad', label: 'Bottom D-Pad (4-way)', x: 40, y: 6, w: 10, h: 5, type: 'hat', highlightId: 'ab9_bottom_dpad' },
-      // Thumb Switch (0008) - 2-way up/down (btn 25-26) - renamed from "Top Rocker"
+      // Thumb Switch (0008) - 2-way up/down (btn 25-26)
       { id: 'thumb_switch', label: 'Thumb Switch', x: 21, y: 7, w: 10, h: 6, type: 'button', highlightId: 'ab9_top_rocker' },
       // Index Button (0002) - btn 5
       { id: 'index_btn', label: 'Index Button', x: 40, y: 12, w: 6, h: 4, type: 'button', highlightId: 'ab9_index_btn' },
       // Trigger (0009) - short pull (btn 1) + long pull (btn 6)
       { id: 'trigger', label: 'Trigger (2-stage)', x: 27, y: 14, w: 7, h: 7, type: 'button', highlightId: 'ab9_trigger' },
-      // Thumb Funky Knob (0010) - 5-way mini-stick: fwd/up/back/down/press (btn 15-19)
-      { id: 'thumb_fakey', label: 'Thumb Funky Knob (5-way)', x: 30, y: 18, w: 8, h: 6, type: 'hat', highlightId: 'ab9_bottom_rocker' },
-      // Pinky Switch (0012) - btn 4
+      // Thumb Funky Knob (0010) - 4-way: forward/right/back/left (btn 15, 16, 17, 18)
+      { id: 'thumb_fakey', label: 'Thumb Funky Knob (4-way)', x: 30, y: 18, w: 8, h: 6, type: 'hat', highlightId: 'ab9_bottom_rocker' },
+      // Pinky Switch (0012) - btn 4 (down only)
       { id: 'pinky_switch', label: 'Pinky Switch', x: 26, y: 29, w: 8, h: 12, type: 'button', highlightId: 'ab9_pinky_switch' },
       // Pinky Button (0011) - btn 3
       { id: 'pinky_btn', label: 'Pinky Button', x: 37, y: 32, w: 5, h: 4, type: 'button', highlightId: 'ab9_pinky_btn' },
@@ -2335,7 +2322,7 @@ class HOTASImageVisualizer {
       // Thumb controls
       'x56_th_thumb_btn': 'x56-Throttle_0008_Thumb-button.png',
       'x56_th_thumb_dpad': 'x56-Throttle_0009_thumb-dpad-switch.png',
-      'x56_th_rear_ministick': 'x56-Throttle_0010_Rear-Thumb-Funky.png',
+      // Rear ministick removed - it's an axis, not buttons
       'x56_th_thumb_ministick': 'x56-Throttle_0011_Thumb-funky.png',
       // New buttons - index, middle, pinky
       'x56_th_index_btn': 'x56-Throttle_0000_index-button.png',
@@ -2413,8 +2400,7 @@ class HOTASImageVisualizer {
       // Thumb D-Pad Switch - separate entity
       { id: 'thumb_dpad', label: 'Thumb D-Pad Switch', x: 62, y: 38.5, w: 8, h: 8, type: 'hat', highlightId: 'x56_th_thumb_dpad', actions: ['thumb_dpad_up', 'thumb_dpad_down', 'thumb_dpad_left', 'thumb_dpad_right'] },
 
-      // Ministicks
-      { id: 'rear_ministick', label: 'Rear Stick', x: 52, y: 38, w: 8, h: 10, type: 'hat', highlightId: 'x56_th_rear_ministick', actions: ['rear_ministick_up', 'rear_ministick_down', 'rear_ministick_left', 'rear_ministick_right', 'rear_ministick_press'] },
+      // Ministicks (rear ministick removed - it's an axis, not buttons)
       { id: 'thumb_ministick', label: 'Thumb Ministick', x: 67, y: 31, w: 8, h: 7, type: 'hat', highlightId: 'x56_th_thumb_ministick', actions: ['thumb_ministick_up', 'thumb_ministick_down', 'thumb_ministick_left', 'thumb_ministick_right', 'thumb_ministick_press'] },
     ];
 
@@ -3787,6 +3773,10 @@ class HOTASImageVisualizer {
     if (this.activeDevice === 'x56' || this.activeDevice === 'x56-hotas') {
       // Combined view - uses combined axis mapping
       this.updateX56CombinedAxes(data.axes, data.buttons);
+      // For X56 combined, we need to read buttons from BOTH gamepads
+      const combinedButtons = this.getX56CombinedButtons();
+      this.updateButtonStates(combinedButtons);
+      return; // Exit early since we handled buttons specially
     } else if (this.activeDevice === 'x56-stick') {
       // Stick-only view - stick has its own gamepad with different axis mapping
       this.updateX56StickAxes(data.axes, data.buttons);
@@ -3807,6 +3797,65 @@ class HOTASImageVisualizer {
 
     // Highlight pressed buttons
     this.updateButtonStates(data.buttons);
+  }
+
+  /**
+   * Get combined buttons from both X56 stick and throttle gamepads
+   * Stick buttons are indexed 0-16, throttle buttons are indexed 17+ (offset by 17)
+   */
+  getX56CombinedButtons() {
+    const gamepads = navigator.getGamepads();
+    let stickGamepad = null;
+    let throttleGamepad = null;
+
+    for (const gp of gamepads) {
+      if (!gp) continue;
+      const gpIdLower = gp.id.toLowerCase();
+      const isX56 = gpIdLower.includes('x-56') || gpIdLower.includes('x56') || gpIdLower.includes('saitek');
+      if (isX56) {
+        if (gpIdLower.includes('throttle')) {
+          throttleGamepad = gp;
+        } else if (gpIdLower.includes('stick') || gpIdLower.includes('rhino')) {
+          stickGamepad = gp;
+        }
+      }
+    }
+
+    // Fallback detection by axis count
+    if (!stickGamepad || !throttleGamepad) {
+      for (const gp of gamepads) {
+        if (!gp) continue;
+        const gpIdLower = gp.id.toLowerCase();
+        const isX56 = gpIdLower.includes('x-56') || gpIdLower.includes('x56') || gpIdLower.includes('saitek');
+        if (isX56) {
+          if (!stickGamepad && gp.axes.length >= 10) {
+            stickGamepad = gp;
+          } else if (!throttleGamepad && gp.axes.length === 8) {
+            throttleGamepad = gp;
+          }
+        }
+      }
+    }
+
+    // Build combined button array: stick buttons (0-16), then throttle buttons (17+)
+    const combinedButtons = [];
+
+    // Add stick buttons (indices 0-16)
+    if (stickGamepad && stickGamepad.buttons) {
+      for (let i = 0; i < stickGamepad.buttons.length; i++) {
+        combinedButtons[i] = stickGamepad.buttons[i];
+      }
+    }
+
+    // Add throttle buttons (indices 17+, offset by 17)
+    if (throttleGamepad && throttleGamepad.buttons) {
+      const throttleOffset = 17; // X56 stick has 17 buttons (0-16)
+      for (let i = 0; i < throttleGamepad.buttons.length; i++) {
+        combinedButtons[throttleOffset + i] = throttleGamepad.buttons[i];
+      }
+    }
+
+    return combinedButtons;
   }
 
   // X56 Stick standalone - when stick is its own gamepad
@@ -4539,16 +4588,42 @@ class HOTASImageVisualizer {
     const deviceKey = this.getDeviceMappingKey();
     const deviceMappings = this.buttonMappings[deviceKey] || {};
 
-    // Track which hotspots should be highlighted
+    // Map individual switch wizard IDs to combined hotspot IDs for X56 throttle
+    const switchToCombinedHotspot = {
+      'x56_th_sw1': 'x56_th_sw1_sw2',
+      'x56_th_sw2': 'x56_th_sw1_sw2',
+      'x56_th_sw3': 'x56_th_sw3_sw4',
+      'x56_th_sw4': 'x56_th_sw3_sw4',
+      'x56_th_sw5': 'x56_th_sw5_sw6',
+      'x56_th_sw6': 'x56_th_sw5_sw6'
+    };
+
+    // Track which hotspots should be highlighted and their directions
     const hotspotIdsToHighlight = new Set();
+    const hotspotDirections = {}; // Map of baseHotspotId -> Set of directions
 
     // Find hotspot IDs for all pressed buttons
     pressedButtonIndices.forEach(buttonIndex => {
       const hotspotId = deviceMappings[buttonIndex];
       if (hotspotId) {
         // Get the base hotspot ID (remove directional suffixes for highlight lookup)
-        const baseHotspotId = hotspotId.replace(/_up|_down|_left|_right|_press|_stage2/, '');
+        let baseHotspotId = hotspotId.replace(/_up|_down|_left|_right|_forward|_back|_press|_stage1|_stage2/, '');
+
+        // Map individual switch IDs to combined hotspot IDs
+        if (switchToCombinedHotspot[baseHotspotId]) {
+          baseHotspotId = switchToCombinedHotspot[baseHotspotId];
+        }
+
         hotspotIdsToHighlight.add(baseHotspotId);
+
+        // Extract the direction from the hotspot ID
+        const directionMatch = hotspotId.match(/_(up|down|left|right|forward|back|press|stage1|stage2)$/);
+        if (directionMatch) {
+          if (!hotspotDirections[baseHotspotId]) {
+            hotspotDirections[baseHotspotId] = new Set();
+          }
+          hotspotDirections[baseHotspotId].add(directionMatch[1]);
+        }
       }
     });
 
@@ -4558,14 +4633,63 @@ class HOTASImageVisualizer {
         // Highlight this hotspot (same as hover)
         this.highlightButton(hotspot, true);
         hotspot.classList.add('button-physically-pressed');
+
+        // Show direction indicator if this is a directional control
+        const directions = hotspotDirections[hotspotId];
+        if (directions && directions.size > 0) {
+          this.showDirectionIndicator(hotspot, directions);
+        }
       } else {
         // Only remove highlight if it was from a physical press (not mouse hover)
         if (hotspot.classList.contains('button-physically-pressed')) {
           this.highlightButton(hotspot, false);
           hotspot.classList.remove('button-physically-pressed');
+          // Hide direction indicator
+          this.hideDirectionIndicator(hotspot);
         }
       }
     });
+  }
+
+  /**
+   * Show direction indicator on a hotspot
+   */
+  showDirectionIndicator(hotspot, directions) {
+    // Get or create direction indicator element
+    let indicator = hotspot.querySelector('.direction-indicator');
+    if (!indicator) {
+      indicator = document.createElement('div');
+      indicator.className = 'direction-indicator';
+      hotspot.appendChild(indicator);
+    }
+
+    // Map directions to arrow symbols
+    const arrows = {
+      'up': '↑',
+      'down': '↓',
+      'left': '←',
+      'right': '→',
+      'forward': '↑',
+      'back': '↓',
+      'press': '●',
+      'stage1': '①',
+      'stage2': '②'
+    };
+
+    // Combine multiple directions if pressed
+    const arrowText = Array.from(directions).map(dir => arrows[dir] || dir).join(' ');
+    indicator.textContent = arrowText;
+    indicator.style.display = 'flex';
+  }
+
+  /**
+   * Hide direction indicator on a hotspot
+   */
+  hideDirectionIndicator(hotspot) {
+    const indicator = hotspot.querySelector('.direction-indicator');
+    if (indicator) {
+      indicator.style.display = 'none';
+    }
   }
 
   // ==================== BUTTON MAPPING WIZARD ====================
@@ -4743,11 +4867,7 @@ class HOTASImageVisualizer {
       steps.push({ hotspotId: 'x56_th_thumb_ministick_right', label: 'Thumb Ministick - Right', description: 'Push thumb ministick RIGHT', device: throttle });
       steps.push({ hotspotId: 'x56_th_thumb_ministick_press', label: 'Thumb Ministick - Press', description: 'Press thumb ministick IN', device: throttle });
 
-      steps.push({ hotspotId: 'x56_th_rear_ministick_up', label: 'Rear Ministick - Up', description: 'Push rear ministick UP', device: throttle });
-      steps.push({ hotspotId: 'x56_th_rear_ministick_down', label: 'Rear Ministick - Down', description: 'Push rear ministick DOWN', device: throttle });
-      steps.push({ hotspotId: 'x56_th_rear_ministick_left', label: 'Rear Ministick - Left', description: 'Push rear ministick LEFT', device: throttle });
-      steps.push({ hotspotId: 'x56_th_rear_ministick_right', label: 'Rear Ministick - Right', description: 'Push rear ministick RIGHT', device: throttle });
-      steps.push({ hotspotId: 'x56_th_rear_ministick_press', label: 'Rear Ministick - Press', description: 'Press rear ministick IN', device: throttle });
+      // Rear ministick removed from wizard - it's an axis, not buttons
     } else if (this.activeDevice === 'x52' || this.activeDevice === 'x52-hotas') {
       const stick = 'X52 Flight Stick';
       const throttle = 'X52 Throttle';
@@ -4836,14 +4956,14 @@ class HOTASImageVisualizer {
       steps.push({ hotspotId: 'ab9_funky_knob_left', label: 'Funky Knob - Left', description: 'Push the funky knob LEFT', device });
       steps.push({ hotspotId: 'ab9_funky_knob_right', label: 'Funky Knob - Right', description: 'Push the funky knob RIGHT', device });
 
-      // Rockers
-      steps.push({ hotspotId: 'ab9_top_rocker_up', label: 'Thumb Switch - Up', description: 'Push the thumb switch UP', device });
-      steps.push({ hotspotId: 'ab9_top_rocker_down', label: 'Thumb Switch - Down', description: 'Push the thumb switch DOWN', device });
-      steps.push({ hotspotId: 'ab9_bottom_rocker_up', label: 'Thumb Funky - Up', description: 'Push the bottom funky UP', device });
-      steps.push({ hotspotId: 'ab9_bottom_rocker_down', label: 'Thumb Funky - Down', description: 'Push the bottom funky DOWN', device });
-      steps.push({ hotspotId: 'ab9_bottom_rocker_left', label: 'Thumb Funky - Left', description: 'Push the bottom funky LEFT', device });
-      steps.push({ hotspotId: 'ab9_bottom_rocker_right', label: 'Thumb Funky - Right', description: 'Push the bottom funky RIGHT', device });
-      steps.push({ hotspotId: 'ab9_bottom_rocker_press', label: 'Thumb Funky - Press', description: 'Press the bottom funky IN', device });
+      // Thumb Switch (Rockers)
+      steps.push({ hotspotId: 'ab9_thumb_switch_up', label: 'Thumb Switch - Up', description: 'Push the thumb switch UP', device });
+      steps.push({ hotspotId: 'ab9_thumb_switch_down', label: 'Thumb Switch - Down', description: 'Push the thumb switch DOWN', device });
+      // Thumb Funky - 4-way (btn 15=forward, 16=right, 17=back, 18=left)
+      steps.push({ hotspotId: 'ab9_thumb_fakey_forward', label: 'Thumb Funky - Forward', description: 'Push the thumb funky FORWARD (btn 15)', device });
+      steps.push({ hotspotId: 'ab9_thumb_fakey_right', label: 'Thumb Funky - Right', description: 'Push the thumb funky RIGHT (btn 16)', device });
+      steps.push({ hotspotId: 'ab9_thumb_fakey_back', label: 'Thumb Funky - Back', description: 'Push the thumb funky BACK (btn 17)', device });
+      steps.push({ hotspotId: 'ab9_thumb_fakey_left', label: 'Thumb Funky - Left', description: 'Push the thumb funky LEFT (btn 18)', device });
 
       // Pinky controls
       steps.push({ hotspotId: 'ab9_pinky_switch_up', label: 'Pinky Switch - Up', description: 'Push the pinky switch UP', device });

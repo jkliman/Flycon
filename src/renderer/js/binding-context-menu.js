@@ -67,7 +67,7 @@ class BindingContextMenu {
       },
       'ab9_pinky_switch': {
         label: 'Pinky Switch',
-        dropdowns: [{ id: 'action', label: 'Toggle (btn 4)' }]
+        dropdowns: [{ id: 'down', label: 'Down (btn 4)' }]
       },
       'ab9_index_btn': {
         label: 'Index Button',
@@ -95,10 +95,9 @@ class BindingContextMenu {
         label: 'Thumb Funky Knob',
         dropdowns: [
           { id: 'forward', label: 'Forward (btn 15)' },
-          { id: 'up', label: 'Up (btn 16)' },
+          { id: 'right', label: 'Right (btn 16)' },
           { id: 'back', label: 'Back (btn 17)' },
-          { id: 'down', label: 'Down (btn 18)' },
-          { id: 'press', label: 'Press (btn 19)' }
+          { id: 'left', label: 'Left (btn 18)' }
         ]
       },
       'ab9_top_dpad': {
@@ -116,19 +115,6 @@ class BindingContextMenu {
         dropdowns: [
           { id: 'up', label: 'Up (btn 25)' },
           { id: 'down', label: 'Down (btn 26)' }
-        ]
-      },
-      'ab9_thumb_hat': {
-        label: 'Thumb Hat',
-        dropdowns: [
-          { id: 'up', label: 'Up' },
-          { id: 'down', label: 'Down' },
-          { id: 'left', label: 'Left' },
-          { id: 'right', label: 'Right' },
-          { id: 'diag_up_left', label: 'Diagonal Up-Left' },
-          { id: 'diag_up_right', label: 'Diagonal Up-Right' },
-          { id: 'diag_down_left', label: 'Diagonal Down-Left' },
-          { id: 'diag_down_right', label: 'Diagonal Down-Right' }
         ]
       },
       'ab9_y_axis': {
@@ -491,6 +477,14 @@ class BindingContextMenu {
           { id: 'press', label: 'Press' }
         ]
       },
+      'vkb_l_index_fwd': {
+        label: 'Index Finger Forward',
+        dropdowns: [{ id: 'action', label: 'Press (btn 21)' }]
+      },
+      'vkb_l_index_back': {
+        label: 'Index Finger Back',
+        dropdowns: [{ id: 'action', label: 'Press (btn 22)' }]
+      },
       // VKB Gladiator Right controls - Updated naming convention
       'vkb_r_trigger': {
         label: 'Trigger (2-stage)',
@@ -568,6 +562,14 @@ class BindingContextMenu {
           { id: 'right', label: 'Right' },
           { id: 'press', label: 'Press' }
         ]
+      },
+      'vkb_r_index_fwd': {
+        label: 'Index Finger Forward',
+        dropdowns: [{ id: 'action', label: 'Press (btn 21)' }]
+      },
+      'vkb_r_index_back': {
+        label: 'Index Finger Back',
+        dropdowns: [{ id: 'action', label: 'Press (btn 22)' }]
       },
       // X52 Pro Throttle controls
       'x52_th_select': {
