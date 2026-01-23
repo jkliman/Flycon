@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu, session } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const xml2js = require('xml2js');
@@ -6,6 +6,15 @@ const licenseManager = require('./license-manager');
 
 let mainWindow;
 let isLicensed = false;
+
+// X56 HOTAS HID device identifiers
+const X56_DEVICES = {
+  THROTTLE: { vendorId: 0x0738, productId: 0xA221 },  // X56 Throttle
+  STICK: { vendorId: 0x0738, productId: 0x2221 }       // X56 Stick
+};
+
+// Store granted HID devices for persistence
+let grantedHIDDevices = [];
 
 function createWindow() {
   const isDev = process.argv.includes('--dev');
@@ -76,7 +85,75 @@ function createWindow() {
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  // Set up WebHID permissions for X56 HOTAS
+  setupWebHIDPermissions();
+  createWindow();
+});
+
+// Configure WebHID permissions to allow X56 HOTAS access
+function setupWebHIDPermissions() {
+  // Handle HID device permission requests
+  session.defaultSession.setPermissionCheckHandler((webContents, permission, requestingOrigin, details) => {
+    if (permission === 'hid') {
+      // Allow HID access for our app
+      return true;
+    }
+    return true;
+  });
+
+  // Auto-grant permission for X56 devices
+  session.defaultSession.setDevicePermissionHandler((details) => {
+    if (details.deviceType === 'hid') {
+      const device = details.device;
+      // Check if it's an X56 device
+      if (device.vendorId === X56_DEVICES.THROTTLE.vendorId) {
+        if (device.productId === X56_DEVICES.THROTTLE.productId ||
+            device.productId === X56_DEVICES.STICK.productId) {
+          console.log('Auto-granting HID permission for X56 device:', device.productName);
+          grantedHIDDevices.push(device);
+          return true;
+        }
+      }
+    }
+    return false;
+  });
+
+  // Handle device selection (when user needs to pick a device)
+  session.defaultSession.on('select-hid-device', (event, details, callback) => {
+    event.preventDefault();
+
+    // Look for X56 throttle (mode switch is on throttle)
+    const x56Throttle = details.deviceList.find(device =>
+      device.vendorId === X56_DEVICES.THROTTLE.vendorId &&
+      device.productId === X56_DEVICES.THROTTLE.productId
+    );
+
+    if (x56Throttle) {
+      console.log('Auto-selecting X56 Throttle for HID access');
+      callback(x56Throttle.deviceId);
+    } else {
+      // No X56 throttle found
+      callback();
+    }
+  });
+
+  // Track when HID devices are added
+  session.defaultSession.on('hid-device-added', (event, device) => {
+    if (device.vendorId === X56_DEVICES.THROTTLE.vendorId) {
+      console.log('X56 HID device connected:', device.productName);
+    }
+  });
+
+  // Track when HID devices are removed
+  session.defaultSession.on('hid-device-removed', (event, device) => {
+    if (device.vendorId === X56_DEVICES.THROTTLE.vendorId) {
+      console.log('X56 HID device disconnected:', device.productName);
+      // Remove from granted list
+      grantedHIDDevices = grantedHIDDevices.filter(d => d.deviceId !== device.deviceId);
+    }
+  });
+}
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {

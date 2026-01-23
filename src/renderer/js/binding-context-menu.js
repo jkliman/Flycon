@@ -162,20 +162,55 @@ class BindingContextMenu {
         ]
       },
       'x56_th_tgl1': {
-        label: 'Toggle 1 (TGL1)',
-        dropdowns: [{ id: 'action', label: 'Action' }]
+        label: 'TGL1 Up / Down',
+        dropdowns: [
+          { id: 'up', label: 'Up' },
+          { id: 'down', label: 'Down' }
+        ]
       },
       'x56_th_tgl2': {
-        label: 'Toggle 2 (TGL2)',
-        dropdowns: [{ id: 'action', label: 'Action' }]
+        label: 'TGL2 Up / Down',
+        dropdowns: [
+          { id: 'up', label: 'Up' },
+          { id: 'down', label: 'Down' }
+        ]
       },
       'x56_th_tgl3': {
-        label: 'Toggle 3 (TGL3)',
-        dropdowns: [{ id: 'action', label: 'Action' }]
+        label: 'TGL3 Up / Down',
+        dropdowns: [
+          { id: 'up', label: 'Up' },
+          { id: 'down', label: 'Down' }
+        ]
       },
       'x56_th_tgl4': {
-        label: 'Toggle 4 (TGL4)',
-        dropdowns: [{ id: 'action', label: 'Action' }]
+        label: 'TGL4 Up / Down',
+        dropdowns: [
+          { id: 'up', label: 'Up' },
+          { id: 'down', label: 'Down' }
+        ]
+      },
+      'x56_th_index_btn': {
+        label: 'Index Button (H)',
+        dropdowns: [{ id: 'press', label: 'Press' }]
+      },
+      'x56_th_middle_btn': {
+        label: 'Middle Button (I)',
+        dropdowns: [{ id: 'press', label: 'Press' }]
+      },
+      'x56_th_pinky_up': {
+        label: 'Pinky Up',
+        dropdowns: [{ id: 'press', label: 'Press' }]
+      },
+      'x56_th_pinky_down': {
+        label: 'Pinky Down',
+        dropdowns: [{ id: 'press', label: 'Press' }]
+      },
+      'x56_th_pinky_encoder': {
+        label: 'Pinky Encoder Up / Down',
+        dropdowns: [
+          { id: 'up', label: 'Scroll Up' },
+          { id: 'down', label: 'Scroll Down' }
+        ]
       },
       'x56_th_thumb_btn': {
         label: 'Thumb Button',
@@ -250,11 +285,8 @@ class BindingContextMenu {
       },
       // X56 Stick controls
       'x56_js_trigger': {
-        label: 'Trigger (2-stage)',
-        dropdowns: [
-          { id: 'stage1', label: 'Stage 1 (Half)' },
-          { id: 'stage2', label: 'Stage 2 (Full)' }
-        ]
+        label: 'Trigger',
+        dropdowns: [{ id: 'press', label: 'Press' }]
       },
       'x56_js_thumb_hat': {
         label: 'Thumb Hat (8-way)',

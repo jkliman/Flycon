@@ -16,9 +16,10 @@ class FlyconApp {
     this.loadedFileName = '';
 
     // Game-specific configuration
-    this.currentGame = 'star-citizen';
+    this.currentGame = null; // No game selected by default
     this.gameConfig = null;
     this.pendingGameSwitch = null; // Holds the game to switch to during confirmation
+    this.joystickMappings = {}; // Maps JS1-8 to actual hardware devices
 
     // Default paths per game
     this.defaultMappingPaths = {
@@ -58,11 +59,6 @@ class FlyconApp {
       gamepad: null,
       hotas: null
     };
-
-    // Hardware setup wizard state
-    this.detectedHardwareChanges = [];
-    this.setupWizardCurrentStep = 1;
-    this.pendingHardwareSelection = null;
 
     this.init();
   }
@@ -105,11 +101,8 @@ class FlyconApp {
     // Setup device connection monitoring
     this.setupDeviceMonitoring();
 
-    // Setup hardware setup wizard event listeners
-    this.setupHardwareSetupWizard();
-
-    // Check for hardware changes on startup
-    await this.checkHardwareChangesOnStartup();
+    // Setup Star Citizen joystick mapping modal
+    this.setupStarCitizenJoystickModal();
 
     // Load saved mapping folder path
     this.loadMappingFolderPath();
@@ -142,14 +135,16 @@ class FlyconApp {
       const savedGame = localStorage.getItem('flycon_current_game');
       if (savedGame && this.gameConfig.games[savedGame]) {
         this.currentGame = savedGame;
+        // Update the dropdown to match
+        const gameSelect = document.getElementById('game-select');
+        if (gameSelect) {
+          gameSelect.value = savedGame;
+        }
+        // Update default mapping path
+        this.defaultMappingPath = this.defaultMappingPaths[savedGame] || '';
+        // Show SC joystick settings icon if Star Citizen is selected
+        this.updateScJoystickSettingsIcon();
       }
-      // Update the dropdown to match
-      const gameSelect = document.getElementById('game-select');
-      if (gameSelect) {
-        gameSelect.value = this.currentGame;
-      }
-      // Update default mapping path
-      this.defaultMappingPath = this.defaultMappingPaths[this.currentGame] || '';
     } catch (e) {
       console.error('Failed to load current game:', e);
     }
@@ -167,22 +162,25 @@ class FlyconApp {
     const gameSelect = document.getElementById('game-select');
     if (!gameSelect) return;
 
+    // Note: loadCurrentGame() already handles loading the saved game
+    // We just need to set up the event listener here
+
     gameSelect.addEventListener('change', (e) => {
       const newGame = e.target.value;
-      if (newGame === this.currentGame) return;
+      if (!newGame || newGame === this.currentGame) return;
 
       // Check if there are existing bindings
       const hasBindings = this.hasExistingBindings();
 
-      if (hasBindings) {
+      if (hasBindings && this.currentGame) {
         // Store the pending game and show confirmation modal
         this.pendingGameSwitch = newGame;
         this.showGameSwitchModal();
         // Reset dropdown to current game until confirmed
-        gameSelect.value = this.currentGame;
+        gameSelect.value = this.currentGame || '';
       } else {
-        // No bindings, switch immediately
-        this.switchGame(newGame);
+        // No bindings or first time selection, handle game-specific setup
+        this.handleGameSelection(newGame);
       }
     });
 
@@ -190,8 +188,12 @@ class FlyconApp {
     document.getElementById('btn-confirm-switch')?.addEventListener('click', () => {
       this.hideGameSwitchModal();
       if (this.pendingGameSwitch) {
-        this.switchGame(this.pendingGameSwitch, true); // true = clear bindings
+        const newGame = this.pendingGameSwitch;
         this.pendingGameSwitch = null;
+        // Clear existing bindings first
+        this.clearAllBindings();
+        // Then handle the game selection (may show SC joystick modal)
+        this.handleGameSelection(newGame);
       }
     });
 
@@ -272,6 +274,9 @@ class FlyconApp {
     // Update status
     const gameName = this.gameConfig.games[gameId].name;
     this.updateStatus(`Switched to ${gameName}`);
+
+    // Show/hide SC joystick settings icon
+    this.updateScJoystickSettingsIcon();
 
     console.log('Switched to game:', gameId);
   }
@@ -638,21 +643,6 @@ class FlyconApp {
       }
     }
 
-    // Check if we need to prompt for hardware setup
-    // This happens if the user hasn't configured controllers yet
-    const savedConfig = this.loadSavedHardwareConfig();
-    const currentHardware = this.detectCurrentHardware();
-    const needsSetup = currentHardware.length > 0 &&
-      (!savedConfig || Object.keys(savedConfig.devices || {}).length === 0) &&
-      !savedConfig?.skipped;
-
-    if (needsSetup) {
-      // Show setup wizard before continuing
-      this.pendingHardwareSelection = deviceId;
-      this.showHardwareSetupWizard(true);
-      return;
-    }
-
     // Tell HOTAS visualizer which device to show
     if (this.hotasViz && this.hotasViz.setActiveDevice) {
       this.hotasViz.setActiveDevice(deviceId);
@@ -684,11 +674,66 @@ class FlyconApp {
   onDeviceConnected(type, deviceName) {
     this.connectedDevices[type] = deviceName;
     this.updateDeviceIndicators();
+
+    // Update SC joystick modal if it's open
+    this.refreshScJoystickModalDevices();
   }
 
   onDeviceDisconnected(type) {
     this.connectedDevices[type] = null;
     this.updateDeviceIndicators();
+
+    // Update SC joystick modal if it's open
+    this.refreshScJoystickModalDevices();
+  }
+
+  /**
+   * Refresh the device list in the SC joystick modal if it's currently open
+   */
+  refreshScJoystickModalDevices() {
+    const modal = document.getElementById('sc-joystick-modal');
+    if (!modal || !modal.classList.contains('active')) {
+      return; // Modal not open, nothing to update
+    }
+
+    // Get current hardware list
+    const currentHardware = this.detectCurrentHardware();
+    this.currentHardwareList = currentHardware;
+
+    // Save current selections before updating
+    const currentSelections = [];
+    const rows = document.querySelectorAll('.sc-mapping-row');
+    rows.forEach((row, index) => {
+      const jsSelect = row.querySelector('.sc-js-select');
+      const deviceSelect = row.querySelector('.sc-device-select');
+      currentSelections.push({
+        jsValue: jsSelect?.value || '',
+        deviceId: deviceSelect?.options[deviceSelect.selectedIndex]?.dataset?.deviceId || ''
+      });
+    });
+
+    // Update each device dropdown with new hardware list
+    rows.forEach((row, rowIndex) => {
+      const deviceSelect = row.querySelector('.sc-device-select');
+      if (!deviceSelect) return;
+
+      const savedSelection = currentSelections[rowIndex];
+
+      // Rebuild options
+      let optionsHtml = '<option value="">-- Select Device --</option>';
+      currentHardware.forEach(device => {
+        const isSelected = savedSelection.deviceId === device.id;
+        optionsHtml += `<option value="${device.index}" data-device-id="${device.id}" ${isSelected ? 'selected' : ''}>${device.name}</option>`;
+      });
+
+      deviceSelect.innerHTML = optionsHtml;
+    });
+
+    // Re-apply disabled states
+    this.updateScDeviceSelects();
+
+    // Show a status message
+    this.updateStatus('Device list updated');
   }
 
   updateDeviceIndicators() {
@@ -1841,56 +1886,463 @@ class FlyconApp {
     return hatBase + (dirMap[direction] || '');
   }
 
-  // ===== Hardware Setup Wizard Methods =====
+  // ===== Star Citizen Joystick Mapping Modal Methods =====
 
   /**
-   * Setup event listeners for the hardware setup wizard
+   * Handle game selection - show appropriate setup modal
    */
-  setupHardwareSetupWizard() {
-    // Step 1 buttons
-    document.getElementById('btn-setup-skip')?.addEventListener('click', () => {
-      this.handleSetupSkip();
+  handleGameSelection(newGame) {
+    if (newGame === 'star-citizen') {
+      // Check if joystick mappings are already configured
+      const savedMappings = this.loadJoystickMappings();
+      if (!savedMappings || Object.keys(savedMappings).length === 0) {
+        // Show the Star Citizen joystick mapping modal
+        this.pendingGameSwitch = newGame;
+        this.showStarCitizenJoystickModal();
+      } else {
+        // Already configured, just switch
+        this.switchGame(newGame);
+      }
+    } else {
+      // For other games, just switch directly
+      this.switchGame(newGame);
+    }
+  }
+
+  /**
+   * Setup Star Citizen joystick mapping modal event listeners
+   */
+  setupStarCitizenJoystickModal() {
+    // Copy command button
+    document.getElementById('btn-copy-sc-command')?.addEventListener('click', () => {
+      this.copyScCommand();
     });
 
-    document.getElementById('btn-setup-configure')?.addEventListener('click', () => {
-      this.showSetupWizardStep(2);
+    // Close button
+    document.getElementById('close-sc-joystick-modal')?.addEventListener('click', () => {
+      this.hideStarCitizenJoystickModal();
     });
 
-    // Step 2 buttons
-    document.getElementById('btn-setup-back')?.addEventListener('click', () => {
-      this.showSetupWizardStep(1);
+    // Skip button
+    document.getElementById('btn-sc-skip')?.addEventListener('click', () => {
+      this.hideStarCitizenJoystickModal();
+      if (this.pendingGameSwitch) {
+        this.switchGame(this.pendingGameSwitch);
+        this.pendingGameSwitch = null;
+      }
     });
 
-    document.getElementById('btn-setup-save')?.addEventListener('click', () => {
-      this.saveSetupWizardConfig();
+    // Save button
+    document.getElementById('btn-sc-save')?.addEventListener('click', () => {
+      this.saveStarCitizenJoystickMappings();
+    });
+
+    // Settings icon button (to reopen modal for adjustments)
+    document.getElementById('sc-joystick-settings-btn')?.addEventListener('click', () => {
+      this.showStarCitizenJoystickModal();
     });
   }
 
   /**
-   * Check for hardware changes on app startup
-   * Shows the setup wizard if new or changed hardware is detected
+   * Copy the i_DumpDeviceInformation command to clipboard
    */
-  async checkHardwareChangesOnStartup() {
-    // Wait a short delay to allow gamepad API to detect controllers
-    await new Promise(resolve => setTimeout(resolve, 500));
+  copyScCommand() {
+    const command = 'i_DumpDeviceInformation';
+    navigator.clipboard.writeText(command).then(() => {
+      const btn = document.getElementById('btn-copy-sc-command');
+      if (btn) {
+        btn.classList.add('copied');
+        btn.querySelector('.copy-text').textContent = 'Copied!';
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          btn.querySelector('.copy-text').textContent = 'Copy';
+        }, 2000);
+      }
+    }).catch(err => {
+      console.error('Failed to copy:', err);
+    });
+  }
+
+  /**
+   * Show the Star Citizen joystick mapping modal
+   */
+  showStarCitizenJoystickModal() {
+    const modal = document.getElementById('sc-joystick-modal');
+    if (!modal) return;
+
+    // Populate the mapping list with connected devices
+    this.populateScJoystickMappings();
+
+    modal.classList.add('active');
+  }
+
+  /**
+   * Hide the Star Citizen joystick mapping modal
+   */
+  hideStarCitizenJoystickModal() {
+    document.getElementById('sc-joystick-modal')?.classList.remove('active');
+  }
+
+  /**
+   * Populate the joystick mapping dropdowns
+   */
+  populateScJoystickMappings() {
+    const listContainer = document.getElementById('sc-mapping-list');
+    if (!listContainer) return;
 
     const currentHardware = this.detectCurrentHardware();
-    const savedHardware = this.loadSavedHardwareConfig();
+    const savedMappings = this.loadJoystickMappings();
 
-    // Check if this is a first-time setup (no saved config)
-    const isFirstTime = !savedHardware || Object.keys(savedHardware.devices || {}).length === 0;
+    // Store current hardware for later use
+    this.currentHardwareList = currentHardware;
 
-    // Detect changes between current and saved hardware
-    this.detectedHardwareChanges = this.compareHardwareConfigs(currentHardware, savedHardware);
+    // Determine how many rows to show based on saved mappings
+    const savedKeys = Object.keys(savedMappings);
+    const initialRowCount = Math.max(savedKeys.length, 1); // At least 1 row
+    this.scMappingRowCount = Math.min(initialRowCount, 3); // Max 3 rows
 
-    // Show setup wizard if there are new devices, changed devices, or first-time setup
-    const hasNewDevices = currentHardware.length > 0 && (
-      isFirstTime ||
-      this.detectedHardwareChanges.some(d => d.status === 'new' || d.status === 'changed')
+    // Build the HTML
+    let html = '';
+
+    // Add existing rows
+    for (let i = 0; i < this.scMappingRowCount; i++) {
+      html += this.createScMappingRowHtml(i, currentHardware, savedMappings);
+    }
+
+    listContainer.innerHTML = html;
+
+    // Add the "Add Device" button if we have less than 3 rows
+    this.updateScAddDeviceButton();
+
+    // Add change listeners
+    this.attachScMappingListeners();
+
+    // Update selects to show which are already used
+    this.updateScDeviceSelects();
+  }
+
+  /**
+   * Create HTML for a single mapping row
+   */
+  createScMappingRowHtml(rowIndex, currentHardware, savedMappings) {
+    const savedKeys = Object.keys(savedMappings);
+    const savedKey = savedKeys[rowIndex]; // e.g., 'js1', 'js2'
+    const savedJsNum = savedKey ? parseInt(savedKey.replace('js', '')) : '';
+    const savedDeviceId = savedKey ? savedMappings[savedKey] : '';
+
+    // Find the device index for the saved device ID
+    const savedDeviceIndex = currentHardware.find(d => d.id === savedDeviceId)?.index;
+
+    return `
+      <div class="sc-mapping-row" data-row="${rowIndex}">
+        <select class="sc-js-select" id="sc-js-select-${rowIndex}" data-row="${rowIndex}">
+          <option value="">-- Joystick # --</option>
+          ${[1,2,3,4,5,6,7,8].map(num => `
+            <option value="${num}" ${savedJsNum === num ? 'selected' : ''}>Joystick ${num}</option>
+          `).join('')}
+        </select>
+        <span class="sc-mapping-arrow">→</span>
+        <select class="sc-device-select" id="sc-device-select-${rowIndex}" data-row="${rowIndex}">
+          <option value="">-- Select Device --</option>
+          ${currentHardware.map(device => `
+            <option value="${device.index}" data-device-id="${device.id}" ${savedDeviceIndex === device.index ? 'selected' : ''}>${device.name}</option>
+          `).join('')}
+        </select>
+        <button class="sc-remove-row-btn" data-row="${rowIndex}" title="Remove this mapping">✕</button>
+      </div>
+    `;
+  }
+
+  /**
+   * Update the Add Device button visibility
+   */
+  updateScAddDeviceButton() {
+    const listContainer = document.getElementById('sc-mapping-list');
+    if (!listContainer) return;
+
+    // Remove existing add button if present
+    const existingBtn = document.getElementById('sc-add-device-btn');
+    if (existingBtn) {
+      existingBtn.remove();
+    }
+
+    // Add button if we have less than 3 rows
+    if (this.scMappingRowCount < 3) {
+      const addBtn = document.createElement('button');
+      addBtn.id = 'sc-add-device-btn';
+      addBtn.className = 'sc-add-device-btn';
+      addBtn.innerHTML = '+ Add Device';
+      addBtn.addEventListener('click', () => this.addScMappingRow());
+      listContainer.after(addBtn);
+    }
+  }
+
+  /**
+   * Add a new mapping row
+   */
+  addScMappingRow() {
+    if (this.scMappingRowCount >= 3) return;
+
+    const listContainer = document.getElementById('sc-mapping-list');
+    if (!listContainer) return;
+
+    const newRowHtml = this.createScMappingRowHtml(
+      this.scMappingRowCount,
+      this.currentHardwareList || [],
+      {}
     );
 
-    if (hasNewDevices) {
-      this.showHardwareSetupWizard(isFirstTime);
+    listContainer.insertAdjacentHTML('beforeend', newRowHtml);
+    this.scMappingRowCount++;
+
+    // Attach listeners to the new row
+    this.attachScMappingListeners();
+
+    // Update button visibility
+    this.updateScAddDeviceButton();
+
+    // Update selects
+    this.updateScDeviceSelects();
+  }
+
+  /**
+   * Remove a mapping row
+   */
+  removeScMappingRow(rowIndex) {
+    const row = document.querySelector(`.sc-mapping-row[data-row="${rowIndex}"]`);
+    if (row) {
+      row.remove();
+      this.scMappingRowCount--;
+
+      // Re-index remaining rows
+      const rows = document.querySelectorAll('.sc-mapping-row');
+      rows.forEach((r, i) => {
+        r.dataset.row = i;
+        const jsSelect = r.querySelector('.sc-js-select');
+        const deviceSelect = r.querySelector('.sc-device-select');
+        const removeBtn = r.querySelector('.sc-remove-row-btn');
+
+        if (jsSelect) {
+          jsSelect.id = `sc-js-select-${i}`;
+          jsSelect.dataset.row = i;
+        }
+        if (deviceSelect) {
+          deviceSelect.id = `sc-device-select-${i}`;
+          deviceSelect.dataset.row = i;
+        }
+        if (removeBtn) {
+          removeBtn.dataset.row = i;
+        }
+      });
+
+      // Update button visibility
+      this.updateScAddDeviceButton();
+
+      // Update selects
+      this.updateScDeviceSelects();
+    }
+  }
+
+  /**
+   * Attach event listeners to mapping rows
+   */
+  attachScMappingListeners() {
+    // JS select listeners
+    document.querySelectorAll('.sc-js-select').forEach(select => {
+      select.removeEventListener('change', this.handleScJsSelectChange);
+      select.addEventListener('change', () => this.updateScDeviceSelects());
+    });
+
+    // Device select listeners
+    document.querySelectorAll('.sc-device-select').forEach(select => {
+      select.removeEventListener('change', this.handleScDeviceSelectChange);
+      select.addEventListener('change', () => this.updateScDeviceSelects());
+    });
+
+    // Remove button listeners
+    document.querySelectorAll('.sc-remove-row-btn').forEach(btn => {
+      btn.onclick = (e) => {
+        e.preventDefault();
+        this.removeScMappingRow(parseInt(btn.dataset.row));
+      };
+    });
+  }
+
+  /**
+   * Update device selects to disable already-used devices and joystick numbers
+   */
+  updateScDeviceSelects() {
+    const rows = document.querySelectorAll('.sc-mapping-row');
+
+    // Collect all selected values
+    const selectedJoysticks = [];
+    const selectedDevices = [];
+
+    rows.forEach((row, rowIndex) => {
+      const jsSelect = row.querySelector('.sc-js-select');
+      const deviceSelect = row.querySelector('.sc-device-select');
+
+      if (jsSelect && jsSelect.value) {
+        selectedJoysticks.push({ row: rowIndex, jsNum: jsSelect.value });
+      }
+      if (deviceSelect && deviceSelect.value) {
+        selectedDevices.push({ row: rowIndex, deviceIndex: deviceSelect.value });
+      }
+    });
+
+    // Update each row's selects
+    rows.forEach((row, rowIndex) => {
+      const jsSelect = row.querySelector('.sc-js-select');
+      const deviceSelect = row.querySelector('.sc-device-select');
+
+      // Update joystick number options
+      if (jsSelect) {
+        const options = jsSelect.options;
+        for (let j = 0; j < options.length; j++) {
+          const option = options[j];
+          if (!option.value) continue; // Skip placeholder
+
+          const usedBy = selectedJoysticks.find(
+            s => s.jsNum === option.value && s.row !== rowIndex
+          );
+
+          if (usedBy) {
+            option.disabled = true;
+            option.classList.add('used');
+          } else {
+            option.disabled = false;
+            option.classList.remove('used');
+          }
+        }
+      }
+
+      // Update device options
+      if (deviceSelect) {
+        const options = deviceSelect.options;
+        for (let j = 0; j < options.length; j++) {
+          const option = options[j];
+          if (!option.value) continue; // Skip placeholder
+
+          const usedBy = selectedDevices.find(
+            s => s.deviceIndex === option.value && s.row !== rowIndex
+          );
+
+          if (usedBy) {
+            option.disabled = true;
+            option.classList.add('used');
+          } else {
+            option.disabled = false;
+            option.classList.remove('used');
+          }
+        }
+      }
+    });
+  }
+
+  /**
+   * Save Star Citizen joystick mappings
+   */
+  saveStarCitizenJoystickMappings() {
+    const mappings = {};
+    const rows = document.querySelectorAll('.sc-mapping-row');
+
+    rows.forEach(row => {
+      const jsSelect = row.querySelector('.sc-js-select');
+      const deviceSelect = row.querySelector('.sc-device-select');
+
+      if (jsSelect && jsSelect.value && deviceSelect && deviceSelect.value) {
+        const jsNum = jsSelect.value;
+        const selectedOption = deviceSelect.options[deviceSelect.selectedIndex];
+        const deviceId = selectedOption.dataset.deviceId;
+        if (deviceId) {
+          mappings[`js${jsNum}`] = deviceId;
+        }
+      }
+    });
+
+    // Save mappings
+    this.saveJoystickMappings(mappings);
+
+    // Also update the device mapping config for XML export
+    const mappingConfig = this.loadDeviceMappingConfig();
+    mappingConfig.scJoystickMappings = mappings;
+
+    // Auto-detect device types based on joystick slot assignments
+    Object.entries(mappings).forEach(([jsKey, deviceId]) => {
+      const jsNum = parseInt(jsKey.replace('js', ''));
+      const lowerDeviceId = deviceId.toLowerCase();
+
+      if (lowerDeviceId.includes('x56') || lowerDeviceId.includes('x-56')) {
+        if (lowerDeviceId.includes('throttle')) {
+          mappingConfig.throttleSlot = jsNum;
+        } else if (lowerDeviceId.includes('stick') || lowerDeviceId.includes('rhino')) {
+          mappingConfig.stickSlot = jsNum;
+        }
+      } else if (lowerDeviceId.includes('x52')) {
+        if (!mappingConfig.stickSlot) {
+          mappingConfig.stickSlot = jsNum;
+        }
+      } else if (lowerDeviceId.includes('vkb') || lowerDeviceId.includes('gladiator')) {
+        if (lowerDeviceId.includes('left') || lowerDeviceId.includes('evo l') || lowerDeviceId.includes(' l ')) {
+          mappingConfig.vkbLSlot = jsNum;
+        } else {
+          mappingConfig.vkbRSlot = jsNum;
+        }
+      } else if (lowerDeviceId.includes('moza') || lowerDeviceId.includes('ab9')) {
+        mappingConfig.ab9Slot = jsNum;
+      }
+    });
+
+    this.saveDeviceMappingConfig(mappingConfig);
+
+    // Hide modal and complete game switch
+    this.hideStarCitizenJoystickModal();
+    this.updateStatus('Joystick mappings saved');
+
+    if (this.pendingGameSwitch) {
+      this.switchGame(this.pendingGameSwitch);
+      this.pendingGameSwitch = null;
+    }
+  }
+
+  /**
+   * Load saved joystick mappings from localStorage
+   */
+  loadJoystickMappings() {
+    try {
+      const saved = localStorage.getItem('flycon_sc_joystick_mappings');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load joystick mappings:', e);
+    }
+    return {};
+  }
+
+  /**
+   * Save joystick mappings to localStorage
+   */
+  saveJoystickMappings(mappings) {
+    try {
+      localStorage.setItem('flycon_sc_joystick_mappings', JSON.stringify(mappings));
+      this.joystickMappings = mappings;
+    } catch (e) {
+      console.error('Failed to save joystick mappings:', e);
+    }
+  }
+
+  /**
+   * Update visibility of SC joystick settings icon based on current game
+   */
+  updateScJoystickSettingsIcon() {
+    const icon = document.getElementById('sc-joystick-settings-btn');
+    if (!icon) return;
+
+    if (this.currentGame === 'star-citizen') {
+      icon.style.display = 'flex';
+    } else {
+      icon.style.display = 'none';
     }
   }
 
@@ -1932,335 +2384,6 @@ class FlyconApp {
     return hash.toString(16);
   }
 
-  /**
-   * Load saved hardware configuration from localStorage
-   */
-  loadSavedHardwareConfig() {
-    try {
-      const saved = localStorage.getItem('flycon_hardware_config');
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error('Failed to load hardware config:', e);
-    }
-    return { devices: {}, timestamp: null, skipped: false };
-  }
-
-  /**
-   * Save current hardware configuration to localStorage
-   */
-  saveHardwareConfig(devices, slotAssignments) {
-    try {
-      const config = {
-        devices: {},
-        slotAssignments: slotAssignments || {},
-        timestamp: Date.now(),
-        skipped: false
-      };
-
-      devices.forEach(device => {
-        config.devices[device.index] = {
-          id: device.id,
-          name: device.name,
-          hash: device.hash,
-          buttons: device.buttons,
-          axes: device.axes
-        };
-      });
-
-      localStorage.setItem('flycon_hardware_config', JSON.stringify(config));
-    } catch (e) {
-      console.error('Failed to save hardware config:', e);
-    }
-  }
-
-  /**
-   * Mark hardware config as skipped (user chose to skip setup)
-   */
-  markHardwareConfigAsSkipped() {
-    try {
-      const currentHardware = this.detectCurrentHardware();
-      const config = {
-        devices: {},
-        timestamp: Date.now(),
-        skipped: true
-      };
-
-      currentHardware.forEach(device => {
-        config.devices[device.index] = {
-          id: device.id,
-          name: device.name,
-          hash: device.hash,
-          buttons: device.buttons,
-          axes: device.axes
-        };
-      });
-
-      localStorage.setItem('flycon_hardware_config', JSON.stringify(config));
-    } catch (e) {
-      console.error('Failed to mark hardware config as skipped:', e);
-    }
-  }
-
-  /**
-   * Compare current hardware with saved configuration
-   * Returns array of devices with their status (new, changed, existing)
-   */
-  compareHardwareConfigs(currentDevices, savedConfig) {
-    const result = [];
-    const savedDevices = savedConfig?.devices || {};
-
-    // Check each current device against saved config
-    currentDevices.forEach(device => {
-      const savedDevice = savedDevices[device.index];
-
-      if (!savedDevice) {
-        // New device - not in saved config
-        result.push({ ...device, status: 'new' });
-      } else if (savedDevice.hash !== device.hash) {
-        // Device changed (different hash)
-        result.push({ ...device, status: 'changed', previousName: savedDevice.name });
-      } else {
-        // Device unchanged
-        result.push({ ...device, status: 'existing' });
-      }
-    });
-
-    return result;
-  }
-
-  /**
-   * Show the hardware setup wizard modal
-   */
-  showHardwareSetupWizard(isFirstTime = false) {
-    const modal = document.getElementById('hardware-setup-modal');
-    if (!modal) return;
-
-    // Update title and description based on whether it's first time
-    const titleEl = document.getElementById('setup-title');
-    const descEl = document.getElementById('setup-description');
-
-    if (isFirstTime) {
-      if (titleEl) titleEl.textContent = 'Welcome to Flycon!';
-      if (descEl) descEl.textContent = 'We detected controllers connected to your system. Let\'s configure them for use with your flight sims.';
-    } else {
-      if (titleEl) titleEl.textContent = 'Hardware Changes Detected';
-      if (descEl) descEl.textContent = 'We\'ve detected new or changed controllers connected to your system. Would you like to update your configuration?';
-    }
-
-    // Populate the detected hardware list
-    this.populateSetupHardwareList();
-
-    // Reset to step 1
-    this.showSetupWizardStep(1);
-
-    modal.classList.add('active');
-  }
-
-  /**
-   * Hide the hardware setup wizard
-   */
-  hideHardwareSetupWizard() {
-    document.getElementById('hardware-setup-modal')?.classList.remove('active');
-    this.setupWizardCurrentStep = 1;
-  }
-
-  /**
-   * Show a specific step in the setup wizard
-   */
-  showSetupWizardStep(step) {
-    this.setupWizardCurrentStep = step;
-
-    const step1 = document.getElementById('setup-step-1');
-    const step2 = document.getElementById('setup-step-2');
-
-    if (step === 1) {
-      step1?.classList.remove('hidden');
-      step2?.classList.add('hidden');
-    } else if (step === 2) {
-      step1?.classList.add('hidden');
-      step2?.classList.remove('hidden');
-      // Populate the slot selectors
-      this.populateSetupSlotSelectors();
-    }
-  }
-
-  /**
-   * Populate the detected hardware list in step 1 of the wizard
-   */
-  populateSetupHardwareList() {
-    const listContainer = document.getElementById('setup-detected-hardware');
-    if (!listContainer) return;
-
-    const currentHardware = this.detectCurrentHardware();
-
-    if (currentHardware.length === 0) {
-      listContainer.innerHTML = `
-        <div class="no-hardware-detected">
-          No controllers detected. Please connect your controllers and press a button on them to wake them up.
-        </div>
-      `;
-      return;
-    }
-
-    // Use the changes array to show status
-    const devices = this.detectedHardwareChanges.length > 0
-      ? this.detectedHardwareChanges
-      : currentHardware.map(d => ({ ...d, status: 'new' }));
-
-    listContainer.innerHTML = devices.map(device => {
-      const statusClass = device.status === 'new' ? 'new-device' : (device.status === 'changed' ? 'changed-device' : '');
-      const badgeClass = device.status === 'new' ? 'new' : (device.status === 'changed' ? 'changed' : 'existing');
-      const badgeText = device.status === 'new' ? 'New' : (device.status === 'changed' ? 'Changed' : 'Configured');
-
-      return `
-        <div class="detected-hardware-item ${statusClass}">
-          <div class="hardware-item-info">
-            <span class="hardware-item-name">${device.name}</span>
-            <span class="hardware-item-details">Index: ${device.index} | Buttons: ${device.buttons} | Axes: ${device.axes}</span>
-          </div>
-          <span class="hardware-item-badge ${badgeClass}">${badgeText}</span>
-        </div>
-      `;
-    }).join('');
-  }
-
-  /**
-   * Populate the slot selectors in step 2 of the wizard
-   */
-  populateSetupSlotSelectors() {
-    const currentHardware = this.detectCurrentHardware();
-    const savedConfig = this.loadDeviceMappingConfig();
-
-    // Get all slot selects
-    for (let i = 1; i <= 4; i++) {
-      const select = document.getElementById(`setup-slot-${i}`);
-      if (!select) continue;
-
-      // Clear and repopulate options
-      select.innerHTML = '<option value="">-- Select Controller --</option>';
-
-      currentHardware.forEach(device => {
-        const option = document.createElement('option');
-        option.value = device.index;
-        option.textContent = `${device.name} (Index ${device.index})`;
-        select.appendChild(option);
-      });
-
-      // Try to restore previous selection or auto-assign based on index
-      // Check if we have a saved assignment for this slot
-      const savedSlotDevice = savedConfig.detectedDevices?.[`js${i}`];
-      if (savedSlotDevice) {
-        // Find matching device by name
-        const matchingDevice = currentHardware.find(d => d.id.includes(savedSlotDevice.split('(')[0].trim()));
-        if (matchingDevice) {
-          select.value = matchingDevice.index;
-        }
-      } else if (currentHardware[i - 1]) {
-        // Auto-assign by index if no saved config
-        select.value = currentHardware[i - 1].index;
-      }
-    }
-  }
-
-  /**
-   * Save the configuration from the setup wizard
-   */
-  saveSetupWizardConfig() {
-    const currentHardware = this.detectCurrentHardware();
-    const slotAssignments = {};
-
-    // Get slot assignments
-    for (let i = 1; i <= 4; i++) {
-      const select = document.getElementById(`setup-slot-${i}`);
-      if (select && select.value) {
-        const deviceIndex = parseInt(select.value);
-        const device = currentHardware.find(d => d.index === deviceIndex);
-        if (device) {
-          slotAssignments[`js${i}`] = device.id;
-        }
-      }
-    }
-
-    // Save to hardware config
-    this.saveHardwareConfig(currentHardware, slotAssignments);
-
-    // Also update the device mapping config used for XML export
-    const mappingConfig = this.loadDeviceMappingConfig();
-    mappingConfig.detectedDevices = slotAssignments;
-
-    // Try to auto-detect device types and assign slots
-    for (let i = 1; i <= 4; i++) {
-      const deviceId = slotAssignments[`js${i}`] || '';
-      const lowerDeviceId = deviceId.toLowerCase();
-
-      // Auto-detect device type by name
-      if (lowerDeviceId.includes('x56') || lowerDeviceId.includes('x-56')) {
-        if (lowerDeviceId.includes('throttle')) {
-          mappingConfig.throttleSlot = i;
-        } else if (lowerDeviceId.includes('stick') || lowerDeviceId.includes('rhino')) {
-          mappingConfig.stickSlot = i;
-        }
-      } else if (lowerDeviceId.includes('x52')) {
-        // X52 stick and throttle are combined, but still need slot assignment
-        if (!mappingConfig.stickSlot) {
-          mappingConfig.stickSlot = i;
-        }
-      } else if (lowerDeviceId.includes('vkb') || lowerDeviceId.includes('gladiator')) {
-        if (lowerDeviceId.includes('left') || lowerDeviceId.includes(' l ') || lowerDeviceId.includes(' l]')) {
-          mappingConfig.vkbLSlot = i;
-        } else {
-          mappingConfig.vkbRSlot = i;
-        }
-      } else if (lowerDeviceId.includes('moza') || lowerDeviceId.includes('ab9')) {
-        mappingConfig.ab9Slot = i;
-      }
-    }
-
-    this.saveDeviceMappingConfig(mappingConfig);
-
-    // Hide the wizard
-    this.hideHardwareSetupWizard();
-    this.updateStatus('Controller configuration saved');
-
-    // Refresh device indicators
-    this.updateDeviceIndicators();
-
-    // If there was a pending hardware selection, continue to that view
-    if (this.pendingHardwareSelection) {
-      const deviceId = this.pendingHardwareSelection;
-      this.pendingHardwareSelection = null;
-
-      // Tell HOTAS visualizer which device to show
-      if (this.hotasViz && this.hotasViz.setActiveDevice) {
-        this.hotasViz.setActiveDevice(deviceId);
-      }
-
-      this.switchView('hotas');
-    }
-  }
-
-  /**
-   * Skip handler also needs to continue pending selection
-   */
-  handleSetupSkip() {
-    this.markHardwareConfigAsSkipped();
-    this.hideHardwareSetupWizard();
-
-    // If there was a pending hardware selection, continue to that view
-    if (this.pendingHardwareSelection) {
-      const deviceId = this.pendingHardwareSelection;
-      this.pendingHardwareSelection = null;
-
-      // Tell HOTAS visualizer which device to show
-      if (this.hotasViz && this.hotasViz.setActiveDevice) {
-        this.hotasViz.setActiveDevice(deviceId);
-      }
-
-      this.switchView('hotas');
-    }
-  }
 }
 
 // Initialize app when DOM is ready

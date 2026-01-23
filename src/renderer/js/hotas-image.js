@@ -16,9 +16,9 @@ class HOTASImageVisualizer {
     this.customBindings = {}; // Store custom bindings
 
     // Mode switching for X56 HOTAS
-    this.currentMode = 'm1'; // 'm1', 'm2', 's1' (no default mode)
+    this.currentMode = 'm1'; // 'm1', 'm2', 's1'
     this.modeModifiers = {
-      'm1': 'lctrl',  // Ctrl
+      'm1': null,     // No modifier (default mode)
       'm2': 'lalt',   // Alt
       's1': 'lshift'  // Shift
     };
@@ -72,9 +72,14 @@ class HOTASImageVisualizer {
     this.buttonMappings = {};
     this.loadButtonMappings();
 
+    // HID reader for X56 mode switch (buttons 34-36 beyond DirectInput limit)
+    this.hidReader = null;
+    this.hidConnected = false;
+
     this.loadCustomBindings();
     this.init();
     this.setupDebugKeyboardShortcut();
+    this.initX56HIDReader();
   }
 
   // Setup keyboard shortcut for debug mode (Ctrl+Shift+D)
@@ -85,6 +90,67 @@ class HOTASImageVisualizer {
         this.toggleDebugMode();
       }
     });
+  }
+
+  // Initialize X56 HID reader for mode switch detection
+  initX56HIDReader() {
+    // Check if the x56HIDReader singleton exists (from x56-hid.js)
+    if (typeof x56HIDReader !== 'undefined') {
+      this.hidReader = x56HIDReader;
+
+      // Register callback for mode changes
+      this.hidReader.onModeChange((newMode, previousMode) => {
+        console.log('X56 HID Mode change detected:', previousMode, '->', newMode);
+        if (newMode) {
+          this.setMode(newMode);
+          this.updateHIDModeStatus(true, newMode);
+        }
+      });
+
+      // Try to connect automatically
+      this.connectX56HID();
+    } else {
+      console.warn('X56 HID reader not available');
+    }
+  }
+
+  // Connect to X56 throttle via WebHID
+  async connectX56HID() {
+    if (!this.hidReader || !this.hidReader.isAvailable()) {
+      console.log('WebHID not available');
+      return false;
+    }
+
+    try {
+      const connected = await this.hidReader.connect();
+      this.hidConnected = connected;
+
+      if (connected) {
+        console.log('X56 HID connected successfully');
+        this.updateHIDModeStatus(true, this.hidReader.getMode());
+
+        // Enable debug logging in dev mode
+        const isDev = window.location.href.includes('localhost') || window.location.href.includes('127.0.0.1');
+        if (isDev) {
+          this.hidReader.enableDebugLogging();
+        }
+      } else {
+        console.log('X56 HID not connected (device may not be present)');
+        this.updateHIDModeStatus(false, null);
+      }
+
+      return connected;
+    } catch (error) {
+      console.error('Error connecting to X56 HID:', error);
+      this.hidConnected = false;
+      return false;
+    }
+  }
+
+  // Update the mode panel to show HID connection status
+  updateHIDModeStatus(connected, currentMode) {
+    // HID status indicator disabled - mode switch works silently in background
+    // The mode switch detection via WebHID still works, just no visual indicator
   }
 
   // Toggle debug mode for hotspot editing
@@ -472,7 +538,97 @@ class HOTASImageVisualizer {
   setActiveDevice(deviceId) {
     if (this.activeDevice !== deviceId) {
       this.activeDevice = deviceId;
+
+      // Find and switch to the correct gamepad for this device
+      this.switchToGamepadForDevice(deviceId);
+
       this.render();
+    }
+  }
+
+  /**
+   * Find and switch to the gamepad that matches the given device type
+   */
+  switchToGamepadForDevice(deviceId) {
+    if (!this.liveInput) return;
+
+    const gamepads = this.liveInput.getConnectedGamepads();
+    let targetIndex = null;
+
+    for (const gp of gamepads) {
+      const gpIdLower = gp.id.toLowerCase();
+
+      // Match device types to gamepad names
+      if (deviceId === 'vkb-left') {
+        // VKB Gladiator Left - look for "left" or "EVO L" in the name
+        if ((gpIdLower.includes('vkb') || gpIdLower.includes('gladiator')) &&
+            (gpIdLower.includes('left') || gpIdLower.includes('evo l') || gpIdLower.includes(' l '))) {
+          targetIndex = gp.index;
+          break;
+        }
+      } else if (deviceId === 'vkb-right') {
+        // VKB Gladiator Right - VKB that's not explicitly left
+        if ((gpIdLower.includes('vkb') || gpIdLower.includes('gladiator')) &&
+            !gpIdLower.includes('left') && !gpIdLower.includes('evo l') && !gpIdLower.includes(' l ')) {
+          targetIndex = gp.index;
+          break;
+        }
+      } else if (deviceId === 'ab9') {
+        // MOZA AB9 - look for "moza" or "ab9"
+        if (gpIdLower.includes('moza') || gpIdLower.includes('ab9')) {
+          targetIndex = gp.index;
+          break;
+        }
+      } else if (deviceId === 'x56-hotas') {
+        // X56 Combined - prefer stick for button detection, axes read from both
+        if (gpIdLower.includes('x-56') || gpIdLower.includes('x56')) {
+          if (gpIdLower.includes('stick') || gpIdLower.includes('rhino')) {
+            targetIndex = gp.index;
+            break;
+          }
+        }
+      } else if (deviceId === 'x56-throttle') {
+        // X56 Throttle only
+        if (gpIdLower.includes('x-56') || gpIdLower.includes('x56')) {
+          if (gpIdLower.includes('throttle')) {
+            targetIndex = gp.index;
+            break;
+          }
+        }
+      } else if (deviceId === 'x56-stick') {
+        // X56 Stick only
+        if (gpIdLower.includes('x-56') || gpIdLower.includes('x56')) {
+          if (gpIdLower.includes('stick') || gpIdLower.includes('rhino')) {
+            targetIndex = gp.index;
+            break;
+          }
+        }
+      } else if (deviceId === 'x52-hotas') {
+        // X52 Pro
+        if (gpIdLower.includes('x52') || gpIdLower.includes('x-52')) {
+          targetIndex = gp.index;
+          break;
+        }
+      } else if (deviceId === 'flight-yoke') {
+        // Logitech Flight Yoke
+        if (gpIdLower.includes('yoke') || gpIdLower.includes('flight yoke')) {
+          targetIndex = gp.index;
+          break;
+        }
+      } else if (deviceId === 'flight-throttle') {
+        // Logitech Flight Throttle Quadrant
+        if (gpIdLower.includes('throttle quadrant') || gpIdLower.includes('flight system throttle')) {
+          targetIndex = gp.index;
+          break;
+        }
+      }
+    }
+
+    if (targetIndex !== null) {
+      console.log(`Switching to gamepad ${targetIndex} for device ${deviceId}`);
+      this.liveInput.setActiveGamepad(targetIndex);
+    } else {
+      console.log(`No matching gamepad found for device ${deviceId}, available gamepads:`, gamepads.map(g => g.id));
     }
   }
 
@@ -549,7 +705,16 @@ class HOTASImageVisualizer {
     const modeIndicators = document.querySelectorAll('.x56-mode-panel .mode-current-label');
     modeIndicators.forEach(modeIndicator => {
       const modifier = this.modeModifiers[this.currentMode];
-      const modifierName = modifier === 'lctrl' ? 'Ctrl' : modifier === 'lalt' ? 'Alt' : 'Shift';
+      let modifierName;
+      if (modifier === null) {
+        modifierName = 'Default';
+      } else if (modifier === 'lalt') {
+        modifierName = 'Alt';
+      } else if (modifier === 'lshift') {
+        modifierName = 'Shift';
+      } else {
+        modifierName = modifier;
+      }
       modeIndicator.textContent = `${this.currentMode.toUpperCase()} (${modifierName})`;
     });
   }
@@ -599,10 +764,10 @@ class HOTASImageVisualizer {
     panel.innerHTML = `
       <div class="mode-header">
         <span class="mode-title">MODE SWITCH</span>
-        <span class="mode-current-label">${this.currentMode === 'm1' ? 'M1 (Ctrl)' : this.currentMode === 'm2' ? 'M2 (Alt)' : 'S1 (Shift)'}</span>
+        <span class="mode-current-label">${this.currentMode === 'm1' ? 'M1 (Default)' : this.currentMode === 'm2' ? 'M2 (Alt)' : 'S1 (Shift)'}</span>
       </div>
       <div class="mode-dial">
-        <button class="mode-btn mode-m1 ${this.currentMode === 'm1' ? 'active' : ''}" data-mode="m1" title="M1 Mode (Ctrl Modifier)">
+        <button class="mode-btn mode-m1 ${this.currentMode === 'm1' ? 'active' : ''}" data-mode="m1" title="M1 Mode (Default - No Modifier)">
           <span class="mode-label">M1</span>
         </button>
         <button class="mode-btn mode-m2 ${this.currentMode === 'm2' ? 'active' : ''}" data-mode="m2" title="M2 Mode (Alt Modifier)">
@@ -614,7 +779,7 @@ class HOTASImageVisualizer {
       </div>
       <div class="mode-info">
         <div class="mode-legend">
-          <span class="legend-item legend-m1"><span class="legend-dot"></span>M1 = Ctrl</span>
+          <span class="legend-item legend-m1"><span class="legend-dot"></span>M1 = Default</span>
           <span class="legend-item legend-m2"><span class="legend-dot"></span>M2 = Alt</span>
           <span class="legend-item legend-s1"><span class="legend-dot"></span>S1 = Shift</span>
         </div>
@@ -759,6 +924,12 @@ class HOTASImageVisualizer {
     }
 
     this.render();
+
+    // Switch to the correct gamepad for the initial active device
+    // Use a short delay to allow gamepads to be detected
+    setTimeout(() => {
+      this.switchToGamepadForDevice(this.activeDevice);
+    }, 500);
   }
 
   handleBindingChanged(buttonId, bindings) {
@@ -823,17 +994,7 @@ class HOTASImageVisualizer {
     wrapper.className = 'hotas-image-container';
 
     // Device selector removed - now using hardware selection screen instead
-
-    // Connection status
-    const status = document.createElement('div');
-    status.className = 'gamepad-status-bar';
-    status.id = 'hotas-status';
-    status.innerHTML = `
-      <div class="status-indicator disconnected"></div>
-      <span class="status-text">No HOTAS connected</span>
-      <span class="status-hint">Connect your HOTAS to see live input</span>
-    `;
-    wrapper.appendChild(status);
+    // Connection status bar removed - live input shows in axis panel
 
     // Device visualization
     const visual = document.createElement('div');
@@ -925,18 +1086,63 @@ class HOTASImageVisualizer {
       <div class="live-input-content">
         <div class="axis-displays x56-axis-displays">
           <div class="axis-display-group">
-            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_left" title="Click to bind Throttle 1">Throttle 1</button>
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_left" title="Click to bind Throttle 1">Throttle L</button>
             <div class="trigger-bar throttle-lever-bar">
               <div class="trigger-fill" id="x56-throttle1-fill"></div>
             </div>
             <span class="trigger-value" id="x56-throttle1-val">0%</span>
           </div>
           <div class="axis-display-group">
-            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_right" title="Click to bind Throttle 2">Throttle 2</button>
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_right" title="Click to bind Throttle 2">Throttle R</button>
             <div class="trigger-bar throttle-lever-bar">
               <div class="trigger-fill" id="x56-throttle2-fill"></div>
             </div>
             <span class="trigger-value" id="x56-throttle2-val">0%</span>
+          </div>
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_top_knob" title="Click to bind Top Knob">Top Knob</button>
+            <div class="axis-bar centered-axis-bar" id="x56-top-knob-bar">
+              <div class="axis-center-line"></div>
+              <div class="axis-fill centered-fill" id="x56-top-knob-fill"></div>
+            </div>
+            <span class="axis-value" id="x56-top-knob-val">0.00</span>
+          </div>
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_bottom_knob" title="Click to bind Bottom Knob">Bot Knob</button>
+            <div class="axis-bar centered-axis-bar" id="x56-bottom-knob-bar">
+              <div class="axis-center-line"></div>
+              <div class="axis-fill centered-fill" id="x56-bottom-knob-fill"></div>
+            </div>
+            <span class="axis-value" id="x56-bottom-knob-val">0.00</span>
+          </div>
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_rty3" title="Click to bind Rotary 3 (Dial)">Dial</button>
+            <div class="axis-bar centered-axis-bar" id="x56-rotary3-bar">
+              <div class="axis-center-line"></div>
+              <div class="axis-fill centered-fill" id="x56-rotary3-fill"></div>
+            </div>
+            <span class="axis-value" id="x56-rotary3-val">0.00</span>
+          </div>
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_rty4" title="Click to bind Rotary 4 (Slider)">Slider</button>
+            <div class="trigger-bar slider-bar">
+              <div class="trigger-fill" id="x56-slider-fill"></div>
+            </div>
+            <span class="trigger-value" id="x56-slider-val">0%</span>
+          </div>
+        </div>
+        <div class="ministick-display">
+          <div class="ministick-label">Ministick</div>
+          <div class="ministick-container">
+            <div class="ministick-area" id="x56-ministick-area">
+              <div class="ministick-center-v"></div>
+              <div class="ministick-center-h"></div>
+              <div class="ministick-dot" id="x56-ministick-dot"></div>
+            </div>
+            <div class="ministick-values">
+              <span>X: <span id="x56-ministick-x-val">0.00</span></span>
+              <span>Y: <span id="x56-ministick-y-val">0.00</span></span>
+            </div>
           </div>
         </div>
         <div class="button-input-display">
@@ -1084,63 +1290,110 @@ class HOTASImageVisualizer {
     liveInputPanel.className = 'live-input-panel x56-live-input-panel';
     liveInputPanel.innerHTML = `
       <div class="live-input-header">Live Input</div>
-      <div class="live-input-content">
-        <div class="axis-displays x56-axis-displays">
-          <div class="axis-display-group">
-            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_left" title="Click to bind Throttle 1">Throttle 1</button>
-            <div class="trigger-bar throttle-lever-bar">
-              <div class="trigger-fill" id="x56-throttle1-fill"></div>
-            </div>
-            <span class="trigger-value" id="x56-throttle1-val">0%</span>
-          </div>
-          <div class="axis-display-group">
-            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_right" title="Click to bind Throttle 2">Throttle 2</button>
-            <div class="trigger-bar throttle-lever-bar">
-              <div class="trigger-fill" id="x56-throttle2-fill"></div>
-            </div>
-            <span class="trigger-value" id="x56-throttle2-val">0%</span>
-          </div>
-          <div class="axis-display-group">
-            <div class="axis-label-row">
-              <button class="axis-display-label axis-bind-btn" data-axis="x56_js_pitch" title="Click to bind Pitch">Pitch</button>
-              <span class="axis-label-separator">/</span>
-              <button class="axis-display-label axis-bind-btn" data-axis="x56_js_roll" title="Click to bind Roll">Roll</button>
-            </div>
-            <div class="axis-visual">
-              <div class="axis-crosshair"></div>
-              <div class="axis-dot" id="x56-stick-dot"></div>
-            </div>
-            <div class="axis-values">
-              <span>P: <span id="x56-pitch-val">0.00</span></span>
-              <span>R: <span id="x56-roll-val">0.00</span></span>
-            </div>
-          </div>
-          <div class="axis-display-group">
-            <button class="axis-display-label axis-bind-btn" data-axis="x56_js_yaw" title="Click to bind Yaw">Yaw (Twist)</button>
-            <div class="axis-bar horizontal-axis-bar">
-              <div class="axis-bar-fill" id="x56-yaw-fill"></div>
-              <div class="axis-bar-center"></div>
-            </div>
-            <span class="axis-value" id="x56-yaw-val">0.00</span>
-          </div>
-          <div class="axis-display-group thumbstick-group">
-            <button class="axis-display-label axis-bind-btn" data-axis="x56_js_thumbstick_press" title="Click to bind Thumbstick Press">Thumb</button>
-            <div class="thumbstick-axes">
-              <div class="thumbstick-axis-item">
-                <button class="axis-display-label axis-bind-btn small" data-axis="x56_js_thumbstick_x" title="Click to bind Thumbstick X">X</button>
-                <div class="axis-bar horizontal-axis-bar compact">
-                  <div class="axis-bar-fill" id="x56-thumbstick-x-fill"></div>
-                  <div class="axis-bar-center"></div>
-                </div>
-                <span class="axis-value" id="x56-thumbstick-x-val">0.00</span>
+      <div class="live-input-content x56-combined-content">
+        <div class="x56-input-section throttle-section">
+          <div class="section-label">Throttle</div>
+          <div class="axis-displays x56-axis-displays">
+            <div class="axis-display-group">
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_left" title="Click to bind Throttle L">Thr L</button>
+              <div class="trigger-bar throttle-lever-bar">
+                <div class="trigger-fill" id="x56-throttle1-fill"></div>
               </div>
-              <div class="thumbstick-axis-item">
-                <button class="axis-display-label axis-bind-btn small" data-axis="x56_js_thumbstick_y" title="Click to bind Thumbstick Y">Y</button>
-                <div class="axis-bar horizontal-axis-bar compact">
-                  <div class="axis-bar-fill" id="x56-thumbstick-y-fill"></div>
-                  <div class="axis-bar-center"></div>
+              <span class="trigger-value" id="x56-throttle1-val">0%</span>
+            </div>
+            <div class="axis-display-group">
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_th_throttle_right" title="Click to bind Throttle R">Thr R</button>
+              <div class="trigger-bar throttle-lever-bar">
+                <div class="trigger-fill" id="x56-throttle2-fill"></div>
+              </div>
+              <span class="trigger-value" id="x56-throttle2-val">0%</span>
+            </div>
+            <div class="axis-display-group">
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_th_top_knob" title="Click to bind Top Knob">Top</button>
+              <div class="axis-bar centered-axis-bar" id="x56-top-knob-bar">
+                <div class="axis-center-line"></div>
+                <div class="axis-fill centered-fill" id="x56-top-knob-fill"></div>
+              </div>
+              <span class="axis-value" id="x56-top-knob-val">0.00</span>
+            </div>
+            <div class="axis-display-group">
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_th_bottom_knob" title="Click to bind Bottom Knob">Bot</button>
+              <div class="axis-bar centered-axis-bar" id="x56-bottom-knob-bar">
+                <div class="axis-center-line"></div>
+                <div class="axis-fill centered-fill" id="x56-bottom-knob-fill"></div>
+              </div>
+              <span class="axis-value" id="x56-bottom-knob-val">0.00</span>
+            </div>
+            <div class="axis-display-group">
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_th_rty3" title="Click to bind RTY3 (Slider)">RTY3</button>
+              <div class="axis-bar centered-axis-bar" id="x56-rotary3-bar">
+                <div class="axis-center-line"></div>
+                <div class="axis-fill centered-fill" id="x56-rotary3-fill"></div>
+              </div>
+              <span class="axis-value" id="x56-rotary3-val">0.00</span>
+            </div>
+            <div class="axis-display-group">
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_th_rty4" title="Click to bind RTY4 (Dial)">RTY4</button>
+              <div class="axis-bar centered-axis-bar" id="x56-rotary4-bar">
+                <div class="axis-center-line"></div>
+                <div class="axis-fill centered-fill" id="x56-rotary4-fill"></div>
+              </div>
+              <span class="axis-value" id="x56-rotary4-val">0.00</span>
+            </div>
+          </div>
+          <div class="ministick-display compact">
+            <button class="axis-display-label axis-bind-btn" data-axis="x56_th_ministick" title="Click to bind Ministick">Ministick</button>
+            <div class="ministick-container">
+              <div class="ministick-area small" id="x56-ministick-area">
+                <div class="ministick-center-v"></div>
+                <div class="ministick-center-h"></div>
+                <div class="ministick-dot" id="x56-ministick-dot"></div>
+              </div>
+              <div class="ministick-values">
+                <span>X: <span id="x56-ministick-x-val">0.00</span></span>
+                <span>Y: <span id="x56-ministick-y-val">0.00</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="x56-input-section stick-section">
+          <div class="section-label">Stick</div>
+          <div class="axis-displays x56-axis-displays">
+            <div class="axis-display-group">
+              <div class="axis-label-row">
+                <button class="axis-display-label axis-bind-btn" data-axis="x56_js_pitch" title="Click to bind Pitch">Pitch</button>
+                <span class="axis-label-separator">/</span>
+                <button class="axis-display-label axis-bind-btn" data-axis="x56_js_roll" title="Click to bind Roll">Roll</button>
+              </div>
+              <div class="axis-visual">
+                <div class="axis-crosshair"></div>
+                <div class="axis-dot" id="x56-stick-dot"></div>
+              </div>
+              <div class="axis-values">
+                <span>P: <span id="x56-pitch-val">0.00</span></span>
+                <span>R: <span id="x56-roll-val">0.00</span></span>
+              </div>
+            </div>
+            <div class="axis-display-group">
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_js_yaw" title="Click to bind Yaw">Yaw</button>
+              <div class="axis-bar horizontal-axis-bar">
+                <div class="axis-bar-fill" id="x56-yaw-fill"></div>
+                <div class="axis-bar-center"></div>
+              </div>
+              <span class="axis-value" id="x56-yaw-val">0.00</span>
+            </div>
+            <div class="ministick-display compact">
+              <button class="axis-display-label axis-bind-btn" data-axis="x56_js_thumbstick" title="Click to bind Thumbstick">Thumb</button>
+              <div class="ministick-container">
+                <div class="ministick-area small" id="x56-thumbstick-area">
+                  <div class="ministick-center-v"></div>
+                  <div class="ministick-center-h"></div>
+                  <div class="ministick-dot" id="x56-thumbstick-dot"></div>
                 </div>
-                <span class="axis-value" id="x56-thumbstick-y-val">0.00</span>
+                <div class="ministick-values">
+                  <span>X: <span id="x56-thumbstick-x-val">0.00</span></span>
+                  <span>Y: <span id="x56-thumbstick-y-val">0.00</span></span>
+                </div>
               </div>
             </div>
           </div>
@@ -1376,7 +1629,7 @@ class HOTASImageVisualizer {
 
   renderVKBLeft() {
     const wrapper = document.createElement('div');
-    wrapper.className = 'vkb-wrapper';
+    wrapper.className = 'vkb-wrapper vkb-left-layout';
 
     const container = document.createElement('div');
     container.className = 'hotas-device-pair vkb-left-single';
@@ -1416,12 +1669,35 @@ class HOTASImageVisualizer {
           </div>
         </div>
         <div class="axis-display-group">
-          <button class="axis-display-label axis-bind-btn" data-axis="vkb_l_yaw" title="Click to bind Yaw">Yaw (Twist)</button>
+          <button class="axis-display-label axis-bind-btn" data-axis="vkb_l_yaw" title="Click to bind Yaw (Z Rotation)">Yaw (Twist)</button>
           <div class="axis-bar horizontal-axis-bar">
             <div class="axis-bar-fill" id="vkb-left-yaw-fill"></div>
             <div class="axis-bar-center"></div>
           </div>
           <span class="axis-value" id="vkb-left-yaw-val">0.00</span>
+        </div>
+        <div class="axis-display-group">
+          <button class="axis-display-label axis-bind-btn" data-axis="vkb_l_slider" title="Click to bind Middle Slider">Middle Slider</button>
+          <div class="axis-bar horizontal-axis-bar">
+            <div class="axis-bar-fill" id="vkb-left-slider-fill"></div>
+            <div class="axis-bar-center"></div>
+          </div>
+          <span class="axis-value" id="vkb-left-slider-val">0.00</span>
+        </div>
+        <div class="axis-display-group">
+          <div class="axis-label-row">
+            <button class="axis-display-label axis-bind-btn" data-axis="vkb_l_pov_x" title="Click to bind POV X">POV X</button>
+            <span class="axis-label-separator">/</span>
+            <button class="axis-display-label axis-bind-btn" data-axis="vkb_l_pov_y" title="Click to bind POV Y">POV Y</button>
+          </div>
+          <div class="axis-visual axis-visual-small">
+            <div class="axis-crosshair"></div>
+            <div class="axis-dot" id="vkb-left-pov-dot"></div>
+          </div>
+          <div class="axis-values">
+            <span>X: <span id="vkb-left-pov-x-val">0.00</span></span>
+            <span>Y: <span id="vkb-left-pov-y-val">0.00</span></span>
+          </div>
         </div>
       </div>
       <div class="button-input-display">
@@ -1451,7 +1727,7 @@ class HOTASImageVisualizer {
 
   renderVKBRight() {
     const wrapper = document.createElement('div');
-    wrapper.className = 'vkb-wrapper';
+    wrapper.className = 'vkb-wrapper vkb-right-layout';
 
     const container = document.createElement('div');
     container.className = 'hotas-device-pair vkb-right-single';
@@ -1491,12 +1767,35 @@ class HOTASImageVisualizer {
           </div>
         </div>
         <div class="axis-display-group">
-          <button class="axis-display-label axis-bind-btn" data-axis="vkb_r_yaw" title="Click to bind Yaw">Yaw (Twist)</button>
+          <button class="axis-display-label axis-bind-btn" data-axis="vkb_r_yaw" title="Click to bind Yaw (Z Rotation)">Yaw (Twist)</button>
           <div class="axis-bar horizontal-axis-bar">
             <div class="axis-bar-fill" id="vkb-right-yaw-fill"></div>
             <div class="axis-bar-center"></div>
           </div>
           <span class="axis-value" id="vkb-right-yaw-val">0.00</span>
+        </div>
+        <div class="axis-display-group">
+          <button class="axis-display-label axis-bind-btn" data-axis="vkb_r_slider" title="Click to bind Middle Slider">Middle Slider</button>
+          <div class="axis-bar horizontal-axis-bar">
+            <div class="axis-bar-fill" id="vkb-right-slider-fill"></div>
+            <div class="axis-bar-center"></div>
+          </div>
+          <span class="axis-value" id="vkb-right-slider-val">0.00</span>
+        </div>
+        <div class="axis-display-group">
+          <div class="axis-label-row">
+            <button class="axis-display-label axis-bind-btn" data-axis="vkb_r_pov_x" title="Click to bind POV X">POV X</button>
+            <span class="axis-label-separator">/</span>
+            <button class="axis-display-label axis-bind-btn" data-axis="vkb_r_pov_y" title="Click to bind POV Y">POV Y</button>
+          </div>
+          <div class="axis-visual axis-visual-small">
+            <div class="axis-crosshair"></div>
+            <div class="axis-dot" id="vkb-right-pov-dot"></div>
+          </div>
+          <div class="axis-values">
+            <span>X: <span id="vkb-right-pov-x-val">0.00</span></span>
+            <span>Y: <span id="vkb-right-pov-y-val">0.00</span></span>
+          </div>
         </div>
       </div>
       <div class="button-input-display">
@@ -1570,6 +1869,20 @@ class HOTASImageVisualizer {
             <div class="axis-values">
               <span>P: <span id="ab9-pitch-val">0.00</span></span>
               <span>R: <span id="ab9-roll-val">0.00</span></span>
+            </div>
+          </div>
+          <div class="axis-display-group">
+            <button class="axis-display-label axis-bind-btn" data-axis="ab9_pov" title="Click to bind POV Hat">POV Hat</button>
+            <div class="pov-hat-display" id="ab9-pov-hat">
+              <div class="pov-direction" data-dir="up">&#8593;</div>
+              <div class="pov-direction" data-dir="up-right">&#8599;</div>
+              <div class="pov-direction" data-dir="right">&#8594;</div>
+              <div class="pov-direction" data-dir="down-right">&#8600;</div>
+              <div class="pov-direction" data-dir="down">&#8595;</div>
+              <div class="pov-direction" data-dir="down-left">&#8601;</div>
+              <div class="pov-direction" data-dir="left">&#8592;</div>
+              <div class="pov-direction" data-dir="up-left">&#8598;</div>
+              <div class="pov-center" id="ab9-pov-center">&#9679;</div>
             </div>
           </div>
         </div>
@@ -2023,7 +2336,13 @@ class HOTASImageVisualizer {
       'x56_th_thumb_btn': 'x56-Throttle_0008_Thumb-button.png',
       'x56_th_thumb_dpad': 'x56-Throttle_0009_thumb-dpad-switch.png',
       'x56_th_rear_ministick': 'x56-Throttle_0010_Rear-Thumb-Funky.png',
-      'x56_th_thumb_ministick': 'x56-Throttle_0011_Thumb-funky.png'
+      'x56_th_thumb_ministick': 'x56-Throttle_0011_Thumb-funky.png',
+      // New buttons - index, middle, pinky
+      'x56_th_index_btn': 'x56-Throttle_0000_index-button.png',
+      'x56_th_pinky_encoder': 'x56-Throttle_0001_pink-encoder.png',
+      'x56_th_pinky_down': 'x56-Throttle_0002_pinky-down.png',
+      'x56_th_pinky_up': 'x56-Throttle_0003_pinky-up.png',
+      'x56_th_middle_btn': 'x56-Throttle_0004_middle-button.png'
     };
 
     const highlightLayer = document.getElementById('x56-throttle-highlight-layer');
@@ -2067,21 +2386,36 @@ class HOTASImageVisualizer {
       { id: 'sw3_sw4', label: 'SW3 Up / SW4 Down', x: 28, y: 52, w: 10, h: 7, type: 'dual-switch', highlightId: 'x56_th_sw3_sw4', actions: ['sw3_up', 'sw4_down'] },
       { id: 'sw5_sw6', label: 'SW5 Up / SW6 Down', x: 38, y: 56, w: 10, h: 6, type: 'dual-switch', highlightId: 'x56_th_sw5_sw6', actions: ['sw5_up', 'sw6_down'] },
 
-      // Toggles (TGL1-4) - on the right side
-      { id: 'tgl1', label: 'Toggle 1 (TGL1)', x: 65.5, y: 48, w: 7, h: 10, type: 'button', highlightId: 'x56_th_tgl1' },
-      { id: 'tgl2', label: 'Toggle 2 (TGL2)', x: 75, y: 47.5, w: 8, h: 8, type: 'button', highlightId: 'x56_th_tgl2' },
-      { id: 'tgl3', label: 'Toggle 3 (TGL3)', x: 76, y: 38, w: 7, h: 10, type: 'button', highlightId: 'x56_th_tgl3' },
-      { id: 'tgl4', label: 'Toggle 4 (TGL4)', x: 85, y: 43, w: 7, h: 10, type: 'button', highlightId: 'x56_th_tgl4' },
+      // Toggles (TGL1-4) - on the right side - each has up/down positions
+      { id: 'tgl1', label: 'TGL1 Up / Down', x: 65.5, y: 48, w: 7, h: 10, type: 'dual-switch', highlightId: 'x56_th_tgl1', actions: ['tgl1_up', 'tgl1_down'] },
+      { id: 'tgl2', label: 'TGL2 Up / Down', x: 75, y: 47.5, w: 8, h: 8, type: 'dual-switch', highlightId: 'x56_th_tgl2', actions: ['tgl2_up', 'tgl2_down'] },
+      { id: 'tgl3', label: 'TGL3 Up / Down', x: 76, y: 38, w: 7, h: 10, type: 'dual-switch', highlightId: 'x56_th_tgl3', actions: ['tgl3_up', 'tgl3_down'] },
+      { id: 'tgl4', label: 'TGL4 Up / Down', x: 85, y: 43, w: 7, h: 10, type: 'dual-switch', highlightId: 'x56_th_tgl4', actions: ['tgl4_up', 'tgl4_down'] },
+
+      // Index button (H button) - on the throttle grip
+      { id: 'index_btn', label: 'Index Button (H)', x: 55.3, y: 18.1, w: 8.1, h: 5.6, type: 'button', highlightId: 'x56_th_index_btn', actions: ['index_btn'] },
+
+      // Middle button (I button) - on the throttle grip
+      { id: 'middle_btn', label: 'Middle Button (I)', x: 47.4, y: 18, w: 7.8, h: 5, type: 'button', highlightId: 'x56_th_middle_btn', actions: ['middle_btn'] },
+
+      // Pinky up button
+      { id: 'pinky_up', label: 'Pinky Up', x: 40.1, y: 14, w: 3.9, h: 6.8, type: 'button', highlightId: 'x56_th_pinky_up', actions: ['pinky_up'] },
+
+      // Pinky down button
+      { id: 'pinky_down', label: 'Pinky Down', x: 41, y: 19, w: 3.1, h: 7.9, type: 'button', highlightId: 'x56_th_pinky_down', actions: ['pinky_down'] },
+
+      // Pinky encoder/scroll wheel - has up and down scroll actions
+      { id: 'pinky_encoder', label: 'Pinky Encoder Up / Down', x: 34.6, y: 17.6, w: 2.7, h: 7.1, type: 'dual-switch', highlightId: 'x56_th_pinky_encoder', actions: ['encoder_up', 'encoder_down'] },
 
       // Thumb Button - center top area
-      { id: 'thumb_btn', label: 'Thumb Button', x: 57, y: 28, w: 9, h: 8, type: 'button', highlightId: 'x56_th_thumb_btn' },
+      { id: 'thumb_btn', label: 'Thumb Button', x: 57, y: 28, w: 9, h: 8, type: 'button', highlightId: 'x56_th_thumb_btn', actions: ['thumb_btn'] },
 
       // Thumb D-Pad Switch - separate entity
-      { id: 'thumb_dpad', label: 'Thumb D-Pad Switch', x: 62, y: 38.5, w: 8, h: 8, type: 'hat', highlightId: 'x56_th_thumb_dpad' },
+      { id: 'thumb_dpad', label: 'Thumb D-Pad Switch', x: 62, y: 38.5, w: 8, h: 8, type: 'hat', highlightId: 'x56_th_thumb_dpad', actions: ['thumb_dpad_up', 'thumb_dpad_down', 'thumb_dpad_left', 'thumb_dpad_right'] },
 
       // Ministicks
-      { id: 'rear_ministick', label: 'Rear Stick', x: 52, y: 38, w: 8, h: 10, type: 'hat', highlightId: 'x56_th_rear_ministick' },
-      { id: 'thumb_ministick', label: 'Thumb Ministick', x: 67, y: 31, w: 8, h: 7, type: 'hat', highlightId: 'x56_th_thumb_ministick' },
+      { id: 'rear_ministick', label: 'Rear Stick', x: 52, y: 38, w: 8, h: 10, type: 'hat', highlightId: 'x56_th_rear_ministick', actions: ['rear_ministick_up', 'rear_ministick_down', 'rear_ministick_left', 'rear_ministick_right', 'rear_ministick_press'] },
+      { id: 'thumb_ministick', label: 'Thumb Ministick', x: 67, y: 31, w: 8, h: 7, type: 'hat', highlightId: 'x56_th_thumb_ministick', actions: ['thumb_ministick_up', 'thumb_ministick_down', 'thumb_ministick_left', 'thumb_ministick_right', 'thumb_ministick_press'] },
     ];
 
     this.createX56ThrottleHotspots(overlay, hotspots);
@@ -2325,11 +2659,16 @@ class HOTASImageVisualizer {
     const hotspots = [
       { id: 'trigger', label: 'Trigger (2-stage)', x: 68.2, y: 21.4, w: 16.4, h: 3.1, type: 'button', highlightId: 'vkb_l_trigger' },
       { id: 'b1_side', label: 'B1 Side Button', x: 71.8, y: 10.7, w: 7.5, h: 7, type: 'button', highlightId: 'vkb_l_b1_side' },
+      { id: 'index_fwd', label: 'Index Finger Forward', x: 79, y: 17, w: 5, h: 4, type: 'button', highlightId: 'vkb_l_index_fwd' },
+      { id: 'index_back', label: 'Index Finger Back', x: 79, y: 22, w: 5, h: 4, type: 'button', highlightId: 'vkb_l_index_back' },
       { id: 'd1_pinky', label: 'D1 Pinky Button', x: 48.9, y: 38.6, w: 6.4, h: 9.9, type: 'button', highlightId: 'vkb_l_d1_pinky' },
       { id: 'base_switch', label: 'Base Switch', x: 26.1, y: 70.7, w: 5, h: 10, type: 'button', highlightId: 'vkb_l_base_switch' },
       { id: 'f2', label: 'F2 Encoder', x: 27.9, y: 60.4, w: 5, h: 6, type: 'button', highlightId: 'vkb_l_f2' },
+      { id: 'encoder1_up', label: 'Encoder 1 Up', x: 27.9, y: 55, w: 5, h: 4, type: 'button', highlightId: 'vkb_l_encoder1_up' },
+      { id: 'encoder1_down', label: 'Encoder 1 Down', x: 27.9, y: 67, w: 5, h: 4, type: 'button', highlightId: 'vkb_l_encoder1_down' },
       { id: 'f1', label: 'F1 Button', x: 33.6, y: 60.5, w: 5, h: 6, type: 'button', highlightId: 'vkb_l_f1' },
       { id: 'f3', label: 'F3 Button', x: 35, y: 67, w: 7.2, h: 5.8, type: 'button', highlightId: 'vkb_l_f3' },
+      { id: 'pov_hat', label: 'POV Hat (8-way)', x: 40, y: 60, w: 8, h: 8, type: 'hat', highlightId: 'vkb_l_pov_hat' },
       { id: 'c1_thumb_hat', label: 'C1 Thumb Hat (4-way)', x: 47.2, y: 30.6, w: 8, h: 8, type: 'hat', highlightId: 'vkb_l_c1_thumb_hat' },
       { id: 'a2_red', label: 'A2 Top Red Button', x: 61.4, y: 29.3, w: 6, h: 6, type: 'button', highlightId: 'vkb_l_a2_red' },
       { id: 'a3_center_hat', label: 'A3 Center Hat (5-way)', x: 59.8, y: 21.2, w: 6.6, h: 7.2, type: 'hat', highlightId: 'vkb_l_a3_center_hat' },
@@ -2523,16 +2862,24 @@ class HOTASImageVisualizer {
       { id: 'trigger', label: 'Trigger (2-stage)', x: 15.4, y: 21.4, w: 16.4, h: 3.1, type: 'button', highlightId: 'vkb_r_trigger' },
       // B1 Side button
       { id: 'b1_side', label: 'B1 Side Button', x: 20.7, y: 10.7, w: 7.5, h: 7, type: 'button', highlightId: 'vkb_r_b1_side' },
+      // Index finger forward/back buttons (mirrored from left: 79 -> 100-79-5 = 16)
+      { id: 'index_fwd', label: 'Index Finger Forward', x: 16, y: 17, w: 5, h: 4, type: 'button', highlightId: 'vkb_r_index_fwd' },
+      { id: 'index_back', label: 'Index Finger Back', x: 16, y: 22, w: 5, h: 4, type: 'button', highlightId: 'vkb_r_index_back' },
       // D1 Pinky button - Button 7
       { id: 'd1_pinky', label: 'D1 Pinky Button', x: 44.7, y: 38.6, w: 6.4, h: 9.9, type: 'button', highlightId: 'vkb_r_d1_pinky' },
       // Base switch
       { id: 'base_switch', label: 'Base Switch', x: 68.9, y: 70.7, w: 5, h: 10, type: 'button', highlightId: 'vkb_r_base_switch' },
       // F2 Encoder - Button 12 (press)
       { id: 'f2', label: 'F2 Encoder', x: 67.1, y: 60.4, w: 5, h: 6, type: 'button', highlightId: 'vkb_r_f2' },
+      // Encoder 1 up/down (mirrored from left: 27.9 -> 100-27.9-5 = 67.1)
+      { id: 'encoder1_up', label: 'Encoder 1 Up', x: 67.1, y: 55, w: 5, h: 4, type: 'button', highlightId: 'vkb_r_encoder1_up' },
+      { id: 'encoder1_down', label: 'Encoder 1 Down', x: 67.1, y: 67, w: 5, h: 4, type: 'button', highlightId: 'vkb_r_encoder1_down' },
       // F1 button
       { id: 'f1', label: 'F1 Button', x: 61.4, y: 60.5, w: 5, h: 6, type: 'button', highlightId: 'vkb_r_f1' },
       // F3 button
       { id: 'f3', label: 'F3 Button', x: 57.8, y: 67, w: 7.2, h: 5.8, type: 'button', highlightId: 'vkb_r_f3' },
+      // POV Hat (8-way) on base - mirrored x: 100 - 40 - 8 = 52
+      { id: 'pov_hat', label: 'POV Hat (8-way)', x: 52, y: 60, w: 8, h: 8, type: 'hat', highlightId: 'vkb_r_pov_hat' },
       // C1 Thumb hat
       { id: 'c1_thumb_hat', label: 'C1 Thumb Hat (4-way)', x: 44.8, y: 30.6, w: 8, h: 8, type: 'hat', highlightId: 'vkb_r_c1_thumb_hat' },
       // A2 Top Red button - Button 3
@@ -3059,6 +3406,9 @@ class HOTASImageVisualizer {
     const directionLabel = this.formatDirection(direction);
     const actionLabel = this.formatActionName(action);
 
+    // Get the actual SC input mapping (e.g., js1_button8)
+    const scInput = this.getScInputForBinding(key);
+
     const item = document.createElement('div');
     item.className = 'sidebar-binding-item';
     item.dataset.buttonId = buttonId;
@@ -3066,6 +3416,7 @@ class HOTASImageVisualizer {
     item.innerHTML = `
       <span class="sidebar-binding-button">${buttonLabel}</span>
       <span class="sidebar-binding-direction">${directionLabel}</span>
+      ${scInput ? `<span class="sidebar-binding-input">${scInput}</span>` : ''}
       <span class="sidebar-binding-action">${actionLabel}</span>
       <button class="sidebar-binding-clear" title="Clear binding">&times;</button>
     `;
@@ -3086,6 +3437,32 @@ class HOTASImageVisualizer {
     });
 
     container.appendChild(item);
+  }
+
+  /**
+   * Get the Star Citizen input format (e.g., js1_button8) for a binding key
+   */
+  getScInputForBinding(key) {
+    // Use the app's parseBindingKey method if available
+    if (window.app && typeof window.app.parseBindingKey === 'function' && typeof window.app.getDeviceConfiguration === 'function') {
+      try {
+        // Strip mode prefix if present (m1_, m2_, s1_, mode1_, mode2_, mode3_)
+        let actualKey = key;
+        const modeMatch = key.match(/^(m1|m2|s1|mode1|mode2|mode3)_(.+)$/);
+        if (modeMatch) {
+          actualKey = modeMatch[2];
+        }
+
+        const deviceConfig = window.app.getDeviceConfiguration();
+        const result = window.app.parseBindingKey(actualKey, deviceConfig);
+        if (result && result.input) {
+          return result.input;
+        }
+      } catch (e) {
+        console.warn('Failed to get SC input for binding:', key, e);
+      }
+    }
+    return null;
   }
 
   clearSingleBinding(key) {
@@ -3242,10 +3619,15 @@ class HOTASImageVisualizer {
       'x56_th_sw1_sw2': 'SW1 Up / SW2 Down',
       'x56_th_sw3_sw4': 'SW3 Up / SW4 Down',
       'x56_th_sw5_sw6': 'SW5 Up / SW6 Down',
-      'x56_th_tgl1': 'Toggle 1',
-      'x56_th_tgl2': 'Toggle 2',
-      'x56_th_tgl3': 'Toggle 3',
-      'x56_th_tgl4': 'Toggle 4',
+      'x56_th_tgl1': 'TGL1 Up / Down',
+      'x56_th_tgl2': 'TGL2 Up / Down',
+      'x56_th_tgl3': 'TGL3 Up / Down',
+      'x56_th_tgl4': 'TGL4 Up / Down',
+      'x56_th_index_btn': 'Index Button (H)',
+      'x56_th_middle_btn': 'Middle Button (I)',
+      'x56_th_pinky_up': 'Pinky Up',
+      'x56_th_pinky_down': 'Pinky Down',
+      'x56_th_pinky_encoder': 'Pinky Encoder Up / Down',
       'x56_th_thumb_btn': 'Thumb Button',
       'x56_th_thumb_dpad': 'Thumb D-Pad',
       'x56_th_rear_ministick': 'Rear Stick',
@@ -3396,22 +3778,8 @@ class HOTASImageVisualizer {
   }
 
   updateConnectionStatus(connected, deviceName = '') {
-    const statusBar = document.getElementById('hotas-status');
-    if (!statusBar) return;
-
-    const indicator = statusBar.querySelector('.status-indicator');
-    const text = statusBar.querySelector('.status-text');
-    const hint = statusBar.querySelector('.status-hint');
-
-    if (connected) {
-      indicator.className = 'status-indicator connected';
-      text.textContent = deviceName;
-      hint.textContent = 'Live input active';
-    } else {
-      indicator.className = 'status-indicator disconnected';
-      text.textContent = 'No HOTAS connected';
-      hint.textContent = 'Connect your HOTAS to see live input';
-    }
+    // Connection status bar has been removed - live input shows in axis panel
+    // This method is kept for API compatibility but does nothing
   }
 
   updateLiveInput(data) {
@@ -3442,107 +3810,335 @@ class HOTASImageVisualizer {
   }
 
   // X56 Stick standalone - when stick is its own gamepad
-  // Typical axis mapping: 0=Roll, 1=Pitch, 2=Twist/Yaw
+  // Axis mapping: 0=Roll, 1=Pitch, 2=Twist/Yaw, 3=Thumbstick X, 4=Thumbstick Y
   updateX56StickAxes(axes, buttons) {
+    // Directly poll the stick gamepad to ensure we get stick data
+    const gamepads = navigator.getGamepads();
+    let stickGamepad = null;
+
+    for (const gp of gamepads) {
+      if (!gp) continue;
+      const gpIdLower = gp.id.toLowerCase();
+      // Must contain x-56 or x56, must contain "stick" or "rhino", but NOT "throttle"
+      const isX56 = gpIdLower.includes('x-56') || gpIdLower.includes('x56');
+      const isStickDevice = gpIdLower.includes('stick') || gpIdLower.includes('rhino');
+      const isThrottle = gpIdLower.includes('throttle');
+      if (isX56 && isStickDevice && !isThrottle) {
+        stickGamepad = gp;
+        break;
+      }
+    }
+
+    if (!stickGamepad) {
+      // Couldn't find by name - try to find by axis count (stick has more axes)
+      for (const gp of gamepads) {
+        if (!gp) continue;
+        const gpIdLower = gp.id.toLowerCase();
+        const isX56 = gpIdLower.includes('x-56') || gpIdLower.includes('x56') || gpIdLower.includes('saitek');
+        // Stick typically has 10 axes, throttle has 8
+        if (isX56 && gp.axes.length >= 10) {
+          stickGamepad = gp;
+          break;
+        }
+      }
+    }
+
+    if (!stickGamepad) {
+      return;
+    }
+
+    const stickAxes = stickGamepad.axes;
+
     const stickDot = document.getElementById('x56-stick-dot');
     const pitchVal = document.getElementById('x56-pitch-val');
     const rollVal = document.getElementById('x56-roll-val');
 
     if (stickDot) {
       // axes[0] = Roll (X), axes[1] = Pitch (Y)
-      const rollPos = axes[0] ? ((axes[0].value + 1) / 2) * 100 : 50;
-      const pitchPos = axes[1] ? ((axes[1].value + 1) / 2) * 100 : 50;
+      const rollPos = stickAxes[0] !== undefined ? ((stickAxes[0] + 1) / 2) * 100 : 50;
+      const pitchPos = stickAxes[1] !== undefined ? ((stickAxes[1] + 1) / 2) * 100 : 50;
       stickDot.style.left = `${rollPos}%`;
       stickDot.style.top = `${pitchPos}%`;
     }
 
-    if (pitchVal && axes[1]) pitchVal.textContent = axes[1].value.toFixed(2);
-    if (rollVal && axes[0]) rollVal.textContent = axes[0].value.toFixed(2);
+    if (pitchVal && stickAxes[1] !== undefined) pitchVal.textContent = stickAxes[1].toFixed(2);
+    if (rollVal && stickAxes[0] !== undefined) rollVal.textContent = stickAxes[0].toFixed(2);
 
-    // Yaw/Twist axis - axis 2 on standalone stick
-    if (axes[2]) {
-      this.updateCenteredAxisBar('x56-yaw', axes[2].value);
+    // Yaw/Twist axis - axis 5 on standalone stick
+    if (stickAxes[5] !== undefined) {
+      this.updateCenteredAxisBar('x56-yaw', stickAxes[5]);
     }
+
+    // Thumbstick on the X56 stick - axes 3 and 4 (2D display like ministick)
+    const thumbstickDot = document.getElementById('x56-thumbstick-dot');
+    if (thumbstickDot && stickAxes[3] !== undefined && stickAxes[4] !== undefined) {
+      const thumbstickX = ((stickAxes[3] + 1) / 2) * 100;
+      const thumbstickY = ((stickAxes[4] + 1) / 2) * 100;
+      thumbstickDot.style.left = `${thumbstickX}%`;
+      thumbstickDot.style.top = `${thumbstickY}%`;
+    }
+    const thumbstickXVal = document.getElementById('x56-thumbstick-x-val');
+    const thumbstickYVal = document.getElementById('x56-thumbstick-y-val');
+    if (thumbstickXVal && stickAxes[3] !== undefined) thumbstickXVal.textContent = stickAxes[3].toFixed(2);
+    if (thumbstickYVal && stickAxes[4] !== undefined) thumbstickYVal.textContent = stickAxes[4].toFixed(2);
   }
 
   // X56 Throttle standalone - when throttle is its own gamepad
-  // Typical axis mapping: 0=Left Throttle, 1=Right Throttle, 2+=Rotaries
+  // Axis mapping:
+  //   0,1 (X/Y): Combined throttle levers position
+  //   2 (Z): Top knob
+  //   3 (Z rotation): Bottom knob
+  //   4,5 (X/Y rotation): Rear ministick
+  //   6 (Rotary 3): Dial
+  //   7 (Rotary 4): Slider
   updateX56ThrottleAxes(axes, buttons) {
-    // Throttle 1 (left) - axis 0 on standalone throttle
-    if (axes[0]) {
-      const throttle1Val = ((axes[0].value + 1) / 2) * 100; // Convert -1...1 to 0...100
+    // Directly poll the throttle gamepad to ensure we get throttle data
+    const gamepads = navigator.getGamepads();
+    let throttleGamepad = null;
+
+    for (const gp of gamepads) {
+      if (!gp) continue;
+      const gpIdLower = gp.id.toLowerCase();
+      const isX56 = gpIdLower.includes('x-56') || gpIdLower.includes('x56') || gpIdLower.includes('saitek');
+      if (isX56 && gpIdLower.includes('throttle')) {
+        throttleGamepad = gp;
+        break;
+      }
+    }
+
+    if (!throttleGamepad) {
+      // Fallback: find by axis count (throttle has 8 axes)
+      for (const gp of gamepads) {
+        if (!gp) continue;
+        const gpIdLower = gp.id.toLowerCase();
+        const isX56 = gpIdLower.includes('x-56') || gpIdLower.includes('x56') || gpIdLower.includes('saitek');
+        if (isX56 && gp.axes.length === 8) {
+          throttleGamepad = gp;
+          break;
+        }
+      }
+    }
+
+    if (!throttleGamepad) return;
+
+    const throttleAxes = throttleGamepad.axes;
+
+    // X56 Throttle Axis Mapping (based on actual hardware):
+    // Axis 0: Throttle Left (-1 to 1)
+    // Axis 1: Throttle Right (1 to -1, inverted)
+    // Axis 2: Top knob (if present)
+    // Axis 3: Ministick X
+    // Axis 4: Ministick Y
+    // Axis 5: Bottom knob (-1 to 1)
+    // Axis 6: Dial/RTY4 (-1 to 1)
+    // Axis 7: Slider/RTY3 (-1 to 1)
+
+    // Throttle Left - Axis 0 (1 to -1, inverted - so we negate it)
+    if (throttleAxes[0] !== undefined) {
+      const throttle1Val = ((-throttleAxes[0] + 1) / 2) * 100;
       const throttle1Fill = document.getElementById('x56-throttle1-fill');
       const throttle1Display = document.getElementById('x56-throttle1-val');
       if (throttle1Fill) throttle1Fill.style.height = `${throttle1Val}%`;
       if (throttle1Display) throttle1Display.textContent = `${Math.round(throttle1Val)}%`;
     }
 
-    // Throttle 2 (right) - axis 1 on standalone throttle
-    if (axes[1]) {
-      const throttle2Val = ((axes[1].value + 1) / 2) * 100;
+    // Throttle Right - Axis 1 (1 to -1, inverted - so we negate it)
+    if (throttleAxes[1] !== undefined) {
+      const throttle2Val = ((-throttleAxes[1] + 1) / 2) * 100;
       const throttle2Fill = document.getElementById('x56-throttle2-fill');
       const throttle2Display = document.getElementById('x56-throttle2-val');
       if (throttle2Fill) throttle2Fill.style.height = `${throttle2Val}%`;
       if (throttle2Display) throttle2Display.textContent = `${Math.round(throttle2Val)}%`;
+    }
+
+    // Top knob - Axis 2 (if present)
+    if (throttleAxes[2] !== undefined) {
+      this.updateCenteredAxisBar('x56-top-knob', throttleAxes[2]);
+      const topKnobVal = document.getElementById('x56-top-knob-val');
+      if (topKnobVal) topKnobVal.textContent = throttleAxes[2].toFixed(2);
+    }
+
+    // Ministick - Axes 3, 4
+    const ministickDot = document.getElementById('x56-ministick-dot');
+    if (ministickDot && throttleAxes[3] !== undefined && throttleAxes[4] !== undefined) {
+      const ministickX = ((throttleAxes[3] + 1) / 2) * 100;
+      const ministickY = ((throttleAxes[4] + 1) / 2) * 100;
+      ministickDot.style.left = `${ministickX}%`;
+      ministickDot.style.top = `${ministickY}%`;
+    }
+    const ministickXVal = document.getElementById('x56-ministick-x-val');
+    const ministickYVal = document.getElementById('x56-ministick-y-val');
+    if (ministickXVal && throttleAxes[3] !== undefined) ministickXVal.textContent = throttleAxes[3].toFixed(2);
+    if (ministickYVal && throttleAxes[4] !== undefined) ministickYVal.textContent = throttleAxes[4].toFixed(2);
+
+    // Bottom knob - Axis 5 (-1 to 1)
+    if (throttleAxes[5] !== undefined) {
+      this.updateCenteredAxisBar('x56-bottom-knob', throttleAxes[5]);
+      const bottomKnobVal = document.getElementById('x56-bottom-knob-val');
+      if (bottomKnobVal) bottomKnobVal.textContent = throttleAxes[5].toFixed(2);
+    }
+
+    // RTY4 (Dial) - Axis 6 (-1 to 1)
+    if (throttleAxes[6] !== undefined) {
+      this.updateCenteredAxisBar('x56-rotary4', throttleAxes[6]);
+      const rotary4Val = document.getElementById('x56-rotary4-val');
+      if (rotary4Val) rotary4Val.textContent = throttleAxes[6].toFixed(2);
+    }
+
+    // RTY3 (Slider) - Axis 7 (-1 to 1)
+    if (throttleAxes[7] !== undefined) {
+      this.updateCenteredAxisBar('x56-rotary3', throttleAxes[7]);
+      const rotary3Val = document.getElementById('x56-rotary3-val');
+      if (rotary3Val) rotary3Val.textContent = throttleAxes[7].toFixed(2);
     }
   }
 
   // X56 Combined view - when viewing both stick and throttle together
-  // This assumes the data is aggregated or from first gamepad found
+  // Reads from BOTH gamepads: stick for pitch/roll/yaw, throttle for throttle levers
   updateX56CombinedAxes(axes, buttons) {
-    // For combined view, we try to handle both stick and throttle
-    // Stick pitch/roll (X=roll, Y=pitch) - axes 0,1
-    const stickDot = document.getElementById('x56-stick-dot');
-    const pitchVal = document.getElementById('x56-pitch-val');
-    const rollVal = document.getElementById('x56-roll-val');
+    // Get fresh gamepad data for both X56 devices
+    const gamepads = navigator.getGamepads();
+    let stickGamepad = null;
+    let throttleGamepad = null;
 
-    if (stickDot) {
-      const rollPos = axes[0] ? ((axes[0].value + 1) / 2) * 100 : 50;
-      const pitchPos = axes[1] ? ((axes[1].value + 1) / 2) * 100 : 50;
-      stickDot.style.left = `${rollPos}%`;
-      stickDot.style.top = `${pitchPos}%`;
+    for (const gp of gamepads) {
+      if (!gp) continue;
+      const gpIdLower = gp.id.toLowerCase();
+      const isX56 = gpIdLower.includes('x-56') || gpIdLower.includes('x56') || gpIdLower.includes('saitek');
+      if (isX56) {
+        // Check throttle FIRST since both devices have "stick" in the product line name
+        if (gpIdLower.includes('throttle')) {
+          throttleGamepad = gp;
+        } else if (gpIdLower.includes('stick') || gpIdLower.includes('rhino')) {
+          stickGamepad = gp;
+        }
+      }
     }
 
-    if (pitchVal && axes[1]) pitchVal.textContent = axes[1].value.toFixed(2);
-    if (rollVal && axes[0]) rollVal.textContent = axes[0].value.toFixed(2);
-
-    // Yaw/Twist axis - axis 2 (Z rotation)
-    if (axes[2]) {
-      this.updateCenteredAxisBar('x56-yaw', axes[2].value);
+    // Fallback detection by axis count if name detection failed
+    if (!stickGamepad || !throttleGamepad) {
+      for (const gp of gamepads) {
+        if (!gp) continue;
+        const gpIdLower = gp.id.toLowerCase();
+        const isX56 = gpIdLower.includes('x-56') || gpIdLower.includes('x56') || gpIdLower.includes('saitek');
+        if (isX56) {
+          // Stick has 10 axes, throttle has 8
+          if (!stickGamepad && gp.axes.length >= 10) {
+            stickGamepad = gp;
+          } else if (!throttleGamepad && gp.axes.length === 8) {
+            throttleGamepad = gp;
+          }
+        }
+      }
     }
 
-    // Thumbstick on the X56 stick - uses X Rotation (axis 3) and Y Rotation (axis 4)
-    const thumbstickXVal = document.getElementById('x56-thumbstick-x-val');
-    const thumbstickYVal = document.getElementById('x56-thumbstick-y-val');
+    // Update stick axes from stick gamepad
+    if (stickGamepad) {
+      const stickAxes = stickGamepad.axes;
+      const stickDot = document.getElementById('x56-stick-dot');
+      const pitchVal = document.getElementById('x56-pitch-val');
+      const rollVal = document.getElementById('x56-roll-val');
 
-    // Update thumbstick X axis bar
-    if (axes[3]) {
-      this.updateCenteredAxisBar('x56-thumbstick-x', axes[3].value);
-      if (thumbstickXVal) thumbstickXVal.textContent = axes[3].value.toFixed(2);
+      if (stickDot) {
+        const rollPos = stickAxes[0] !== undefined ? ((stickAxes[0] + 1) / 2) * 100 : 50;
+        const pitchPos = stickAxes[1] !== undefined ? ((stickAxes[1] + 1) / 2) * 100 : 50;
+        stickDot.style.left = `${rollPos}%`;
+        stickDot.style.top = `${pitchPos}%`;
+      }
+
+      if (pitchVal && stickAxes[1] !== undefined) pitchVal.textContent = stickAxes[1].toFixed(2);
+      if (rollVal && stickAxes[0] !== undefined) rollVal.textContent = stickAxes[0].toFixed(2);
+
+      // Yaw/Twist axis - axis 5 on stick
+      if (stickAxes[5] !== undefined) {
+        this.updateCenteredAxisBar('x56-yaw', stickAxes[5]);
+      }
+
+      // Thumbstick on the X56 stick - axes 3 and 4 (2D display like ministick)
+      const thumbstickDot = document.getElementById('x56-thumbstick-dot');
+      if (thumbstickDot && stickAxes[3] !== undefined && stickAxes[4] !== undefined) {
+        const thumbstickX = ((stickAxes[3] + 1) / 2) * 100;
+        const thumbstickY = ((stickAxes[4] + 1) / 2) * 100;
+        thumbstickDot.style.left = `${thumbstickX}%`;
+        thumbstickDot.style.top = `${thumbstickY}%`;
+      }
+      const thumbstickXVal = document.getElementById('x56-thumbstick-x-val');
+      const thumbstickYVal = document.getElementById('x56-thumbstick-y-val');
+      if (thumbstickXVal && stickAxes[3] !== undefined) thumbstickXVal.textContent = stickAxes[3].toFixed(2);
+      if (thumbstickYVal && stickAxes[4] !== undefined) thumbstickYVal.textContent = stickAxes[4].toFixed(2);
     }
 
-    // Update thumbstick Y axis bar
-    if (axes[4]) {
-      this.updateCenteredAxisBar('x56-thumbstick-y', axes[4].value);
-      if (thumbstickYVal) thumbstickYVal.textContent = axes[4].value.toFixed(2);
-    }
+    // Update throttle axes from throttle gamepad
+    // X56 Throttle Axis Mapping (based on actual hardware):
+    // Axis 0: Throttle Left (-1 to 1)
+    // Axis 1: Throttle Right (1 to -1, inverted)
+    // Axis 2: Top knob (if present)
+    // Axis 3: Ministick X
+    // Axis 4: Ministick Y
+    // Axis 5: Bottom knob (-1 to 1)
+    // Axis 6: Dial/RTY4 (-1 to 1)
+    // Axis 7: Slider/RTY3 (-1 to 1)
+    if (throttleGamepad) {
+      const throttleAxes = throttleGamepad.axes;
 
-    // Throttle 1 (left) - axis 6 (Slider 0)
-    if (axes[6]) {
-      const throttle1Val = ((axes[6].value + 1) / 2) * 100;
-      const throttle1Fill = document.getElementById('x56-throttle1-fill');
-      const throttle1Display = document.getElementById('x56-throttle1-val');
-      if (throttle1Fill) throttle1Fill.style.height = `${throttle1Val}%`;
-      if (throttle1Display) throttle1Display.textContent = `${Math.round(throttle1Val)}%`;
-    }
+      // Throttle Left - Axis 0 (1 to -1, inverted - so we negate it)
+      if (throttleAxes[0] !== undefined) {
+        const throttle1Val = ((-throttleAxes[0] + 1) / 2) * 100;
+        const throttle1Fill = document.getElementById('x56-throttle1-fill');
+        const throttle1Display = document.getElementById('x56-throttle1-val');
+        if (throttle1Fill) throttle1Fill.style.height = `${throttle1Val}%`;
+        if (throttle1Display) throttle1Display.textContent = `${Math.round(throttle1Val)}%`;
+      }
 
-    // Throttle 2 (right) - axis 7 (Slider 1)
-    if (axes[7]) {
-      const throttle2Val = ((axes[7].value + 1) / 2) * 100;
-      const throttle2Fill = document.getElementById('x56-throttle2-fill');
-      const throttle2Display = document.getElementById('x56-throttle2-val');
-      if (throttle2Fill) throttle2Fill.style.height = `${throttle2Val}%`;
-      if (throttle2Display) throttle2Display.textContent = `${Math.round(throttle2Val)}%`;
+      // Throttle Right - Axis 1 (1 to -1, inverted - so we negate it)
+      if (throttleAxes[1] !== undefined) {
+        const throttle2Val = ((-throttleAxes[1] + 1) / 2) * 100;
+        const throttle2Fill = document.getElementById('x56-throttle2-fill');
+        const throttle2Display = document.getElementById('x56-throttle2-val');
+        if (throttle2Fill) throttle2Fill.style.height = `${throttle2Val}%`;
+        if (throttle2Display) throttle2Display.textContent = `${Math.round(throttle2Val)}%`;
+      }
+
+      // Top knob - Axis 2 (if present)
+      if (throttleAxes[2] !== undefined) {
+        this.updateCenteredAxisBar('x56-top-knob', throttleAxes[2]);
+        const topKnobVal = document.getElementById('x56-top-knob-val');
+        if (topKnobVal) topKnobVal.textContent = throttleAxes[2].toFixed(2);
+      }
+
+      // Ministick - Axes 3, 4
+      const ministickDot = document.getElementById('x56-ministick-dot');
+      if (ministickDot && throttleAxes[3] !== undefined && throttleAxes[4] !== undefined) {
+        const ministickX = ((throttleAxes[3] + 1) / 2) * 100;
+        const ministickY = ((throttleAxes[4] + 1) / 2) * 100;
+        ministickDot.style.left = `${ministickX}%`;
+        ministickDot.style.top = `${ministickY}%`;
+      }
+      const ministickXVal = document.getElementById('x56-ministick-x-val');
+      const ministickYVal = document.getElementById('x56-ministick-y-val');
+      if (ministickXVal && throttleAxes[3] !== undefined) ministickXVal.textContent = throttleAxes[3].toFixed(2);
+      if (ministickYVal && throttleAxes[4] !== undefined) ministickYVal.textContent = throttleAxes[4].toFixed(2);
+
+      // Bottom knob - Axis 5 (-1 to 1)
+      if (throttleAxes[5] !== undefined) {
+        this.updateCenteredAxisBar('x56-bottom-knob', throttleAxes[5]);
+        const bottomKnobVal = document.getElementById('x56-bottom-knob-val');
+        if (bottomKnobVal) bottomKnobVal.textContent = throttleAxes[5].toFixed(2);
+      }
+
+      // RTY4 (Dial) - Axis 6 (-1 to 1)
+      if (throttleAxes[6] !== undefined) {
+        this.updateCenteredAxisBar('x56-rotary4', throttleAxes[6]);
+        const rotary4Val = document.getElementById('x56-rotary4-val');
+        if (rotary4Val) rotary4Val.textContent = throttleAxes[6].toFixed(2);
+      }
+
+      // RTY3 (Slider) - Axis 7 (-1 to 1)
+      if (throttleAxes[7] !== undefined) {
+        this.updateCenteredAxisBar('x56-rotary3', throttleAxes[7]);
+        const rotary3Val = document.getElementById('x56-rotary3-val');
+        if (rotary3Val) rotary3Val.textContent = throttleAxes[7].toFixed(2);
+      }
     }
   }
 
@@ -3595,9 +4191,31 @@ class HOTASImageVisualizer {
     if (leftPitchVal && axes[1]) leftPitchVal.textContent = axes[1].value.toFixed(2);
     if (leftRollVal && axes[0]) leftRollVal.textContent = axes[0].value.toFixed(2);
 
-    // VKB Left twist (yaw) - typically axis 2 or 5
+    // VKB Left twist (yaw) - Z rotation axis 5
+    if (axes[5]) {
+      this.updateCenteredAxisBar('vkb-left-yaw', axes[5].value);
+    }
+
+    // VKB Left middle slider - axis 2
     if (axes[2]) {
-      this.updateCenteredAxisBar('vkb-left-yaw', axes[2].value);
+      this.updateCenteredAxisBar('vkb-left-slider', axes[2].value);
+    }
+
+    // VKB Left POV hat - axes 3 and 4 (Y inverted)
+    const leftPovDot = document.getElementById('vkb-left-pov-dot');
+    const leftPovXVal = document.getElementById('vkb-left-pov-x-val');
+    const leftPovYVal = document.getElementById('vkb-left-pov-y-val');
+
+    if (leftPovDot && axes[3] && axes[4]) {
+      const povX = axes[3].value;
+      const povY = -axes[4].value; // Invert Y axis
+      const povXPos = ((povX + 1) / 2) * 100;
+      const povYPos = ((-povY + 1) / 2) * 100; // Invert for display
+      leftPovDot.style.left = `${povXPos}%`;
+      leftPovDot.style.top = `${povYPos}%`;
+
+      if (leftPovXVal) leftPovXVal.textContent = povX.toFixed(2);
+      if (leftPovYVal) leftPovYVal.textContent = povY.toFixed(2);
     }
 
     // VKB Right stick pitch/roll (would need multi-device support for separate devices)
@@ -3616,9 +4234,31 @@ class HOTASImageVisualizer {
     if (rightPitchVal && axes[4]) rightPitchVal.textContent = axes[4].value.toFixed(2);
     if (rightRollVal && axes[3]) rightRollVal.textContent = axes[3].value.toFixed(2);
 
-    // VKB Right twist (yaw)
+    // VKB Right twist (yaw) - Z rotation axis 5
     if (axes[5]) {
       this.updateCenteredAxisBar('vkb-right-yaw', axes[5].value);
+    }
+
+    // VKB Right middle slider - axis 2
+    if (axes[2]) {
+      this.updateCenteredAxisBar('vkb-right-slider', axes[2].value);
+    }
+
+    // VKB Right POV hat - axes 3 and 4 (Y inverted)
+    const rightPovDot = document.getElementById('vkb-right-pov-dot');
+    const rightPovXVal = document.getElementById('vkb-right-pov-x-val');
+    const rightPovYVal = document.getElementById('vkb-right-pov-y-val');
+
+    if (rightPovDot && axes[3] && axes[4]) {
+      const povX = axes[3].value;
+      const povY = -axes[4].value; // Invert Y axis
+      const povXPos = ((povX + 1) / 2) * 100;
+      const povYPos = ((-povY + 1) / 2) * 100; // Invert for display
+      rightPovDot.style.left = `${povXPos}%`;
+      rightPovDot.style.top = `${povYPos}%`;
+
+      if (rightPovXVal) rightPovXVal.textContent = povX.toFixed(2);
+      if (rightPovYVal) rightPovYVal.textContent = povY.toFixed(2);
     }
 
     // Update button lists for VKB Left and Right
@@ -3746,6 +4386,51 @@ class HOTASImageVisualizer {
 
     if (pitchVal && axes[1]) pitchVal.textContent = axes[1].value.toFixed(2);
     if (rollVal && axes[0]) rollVal.textContent = axes[0].value.toFixed(2);
+
+    // AB9 POV hat - single axis 9 encoding all 8 directions
+    // Values: center=1.29, left=0.71, up-left=1.00, up=-1.00, up-right=-0.71,
+    //         right=-0.43, down-right=-0.14, down=0.14, down-left=0.43
+    if (axes[9]) {
+      const povValue = axes[9].value;
+      const direction = this.decodeAB9PovDirection(povValue);
+      this.updateAB9PovDisplay(direction);
+    }
+  }
+
+  decodeAB9PovDirection(value) {
+    // Map axis 9 values to directions with tolerance
+    const tolerance = 0.1;
+
+    if (Math.abs(value - 1.29) < tolerance || value > 1.2) return 'center';
+    if (Math.abs(value - (-1.00)) < tolerance) return 'up';
+    if (Math.abs(value - (-0.71)) < tolerance) return 'up-right';
+    if (Math.abs(value - (-0.43)) < tolerance) return 'right';
+    if (Math.abs(value - (-0.14)) < tolerance) return 'down-right';
+    if (Math.abs(value - 0.14) < tolerance) return 'down';
+    if (Math.abs(value - 0.43) < tolerance) return 'down-left';
+    if (Math.abs(value - 0.71) < tolerance) return 'left';
+    if (Math.abs(value - 1.00) < tolerance) return 'up-left';
+
+    return 'center'; // Default
+  }
+
+  updateAB9PovDisplay(direction) {
+    const povHat = document.getElementById('ab9-pov-hat');
+    if (!povHat) return;
+
+    // Clear all active states
+    povHat.querySelectorAll('.pov-direction, .pov-center').forEach(el => {
+      el.classList.remove('active');
+    });
+
+    // Set active direction
+    if (direction === 'center') {
+      const center = document.getElementById('ab9-pov-center');
+      if (center) center.classList.add('active');
+    } else {
+      const dirEl = povHat.querySelector(`[data-dir="${direction}"]`);
+      if (dirEl) dirEl.classList.add('active');
+    }
   }
 
   updateHorizontalAxis(prefix, value) {
@@ -3795,8 +4480,19 @@ class HOTASImageVisualizer {
     const pressedButtons = [];
     const currentPressedIndices = new Set();
 
+    // Buttons to ignore per device (0-based indices)
+    const ignoredButtons = {
+      'x56-stick': [14], // Button 15 on X56 stick is always pressed/stuck
+    };
+    const buttonsToIgnore = ignoredButtons[this.activeDevice] || [];
+
     if (buttons && Array.isArray(buttons)) {
       buttons.forEach((btn, index) => {
+        // Skip ignored buttons for this device
+        if (buttonsToIgnore.includes(index)) {
+          return;
+        }
+
         if (btn && btn.pressed) {
           pressedButtons.push(`Btn ${index + 1}`);
           currentPressedIndices.add(index);
@@ -3987,8 +4683,7 @@ class HOTASImageVisualizer {
       const throttle = 'X56 Throttle';
 
       // X56 Stick controls
-      steps.push({ hotspotId: 'x56_js_trigger', label: 'Trigger - Stage 1', description: 'Pull the trigger halfway', device: stick });
-      steps.push({ hotspotId: 'x56_js_trigger_stage2', label: 'Trigger - Stage 2', description: 'Pull the trigger fully', device: stick });
+      steps.push({ hotspotId: 'x56_js_trigger', label: 'Trigger', description: 'Pull the trigger', device: stick });
       steps.push({ hotspotId: 'x56_js_missile_btn', label: 'Missile Button', description: 'Press the red missile button', device: stick });
       steps.push({ hotspotId: 'x56_js_pinky_switch', label: 'Pinky Switch', description: 'Press the pinky switch', device: stick });
 
@@ -4007,11 +4702,25 @@ class HOTASImageVisualizer {
       // X56 Throttle controls
       steps.push({ hotspotId: 'x56_th_thumb_btn', label: 'Thumb Button (E)', description: 'Press the thumb button (E)', device: throttle });
 
-      // Toggles
-      steps.push({ hotspotId: 'x56_th_tgl1', label: 'Toggle 1 (TGL1)', description: 'Press Toggle 1', device: throttle });
-      steps.push({ hotspotId: 'x56_th_tgl2', label: 'Toggle 2 (TGL2)', description: 'Press Toggle 2', device: throttle });
-      steps.push({ hotspotId: 'x56_th_tgl3', label: 'Toggle 3 (TGL3)', description: 'Press Toggle 3', device: throttle });
-      steps.push({ hotspotId: 'x56_th_tgl4', label: 'Toggle 4 (TGL4)', description: 'Press Toggle 4', device: throttle });
+      // Index and Middle buttons
+      steps.push({ hotspotId: 'x56_th_index_btn', label: 'Index Button (H)', description: 'Press the index button (H)', device: throttle });
+      steps.push({ hotspotId: 'x56_th_middle_btn', label: 'Middle Button (I)', description: 'Press the middle button (I)', device: throttle });
+
+      // Pinky buttons and encoder
+      steps.push({ hotspotId: 'x56_th_pinky_up', label: 'Pinky Up', description: 'Press the pinky UP button', device: throttle });
+      steps.push({ hotspotId: 'x56_th_pinky_down', label: 'Pinky Down', description: 'Press the pinky DOWN button', device: throttle });
+      steps.push({ hotspotId: 'x56_th_pinky_encoder_up', label: 'Pinky Encoder - Up', description: 'Scroll the pinky encoder UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_pinky_encoder_down', label: 'Pinky Encoder - Down', description: 'Scroll the pinky encoder DOWN', device: throttle });
+
+      // Toggles (TGL1-4) - each has up/down
+      steps.push({ hotspotId: 'x56_th_tgl1_up', label: 'TGL1 - Up', description: 'Flip Toggle 1 UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_tgl1_down', label: 'TGL1 - Down', description: 'Flip Toggle 1 DOWN', device: throttle });
+      steps.push({ hotspotId: 'x56_th_tgl2_up', label: 'TGL2 - Up', description: 'Flip Toggle 2 UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_tgl2_down', label: 'TGL2 - Down', description: 'Flip Toggle 2 DOWN', device: throttle });
+      steps.push({ hotspotId: 'x56_th_tgl3_up', label: 'TGL3 - Up', description: 'Flip Toggle 3 UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_tgl3_down', label: 'TGL3 - Down', description: 'Flip Toggle 3 DOWN', device: throttle });
+      steps.push({ hotspotId: 'x56_th_tgl4_up', label: 'TGL4 - Up', description: 'Flip Toggle 4 UP', device: throttle });
+      steps.push({ hotspotId: 'x56_th_tgl4_down', label: 'TGL4 - Down', description: 'Flip Toggle 4 DOWN', device: throttle });
 
       // Switches
       steps.push({ hotspotId: 'x56_th_sw1', label: 'Switch 1 (SW1 Up)', description: 'Flip switch pair 1-2 UP', device: throttle });
@@ -4149,6 +4858,8 @@ class HOTASImageVisualizer {
 
       // Buttons
       steps.push({ hotspotId: 'vkb_l_b1_side', label: 'B1 Side Button', description: 'Press the side button', device });
+      steps.push({ hotspotId: 'vkb_l_index_fwd', label: 'Index Finger Forward', description: 'Press the index finger FORWARD button', device });
+      steps.push({ hotspotId: 'vkb_l_index_back', label: 'Index Finger Back', description: 'Press the index finger BACK button', device });
       steps.push({ hotspotId: 'vkb_l_a2_red', label: 'A2 Red Button', description: 'Press the red button', device });
       steps.push({ hotspotId: 'vkb_l_d1_pinky', label: 'D1 Pinky Button', description: 'Press the pinky button', device });
 
@@ -4157,6 +4868,8 @@ class HOTASImageVisualizer {
       steps.push({ hotspotId: 'vkb_l_base_switch_down', label: 'Base Switch - Down', description: 'Push the base switch DOWN', device });
       steps.push({ hotspotId: 'vkb_l_f1', label: 'F1 Button', description: 'Press the F1 button', device });
       steps.push({ hotspotId: 'vkb_l_f2', label: 'F2 Encoder Press', description: 'Press the F2 encoder', device });
+      steps.push({ hotspotId: 'vkb_l_encoder1_up', label: 'Encoder 1 Up', description: 'Rotate encoder 1 UP/clockwise', device });
+      steps.push({ hotspotId: 'vkb_l_encoder1_down', label: 'Encoder 1 Down', description: 'Rotate encoder 1 DOWN/counter-clockwise', device });
       steps.push({ hotspotId: 'vkb_l_f3', label: 'F3 Button', description: 'Press the F3 button', device });
 
       // C1 Thumb Hat (4-way)
@@ -4178,6 +4891,16 @@ class HOTASImageVisualizer {
       steps.push({ hotspotId: 'vkb_l_a4_top_hat_left', label: 'A4 Top Hat - Left', description: 'Push the top hat LEFT', device });
       steps.push({ hotspotId: 'vkb_l_a4_top_hat_right', label: 'A4 Top Hat - Right', description: 'Push the top hat RIGHT', device });
 
+      // POV Hat (8-way) on base
+      steps.push({ hotspotId: 'vkb_l_pov_hat_up', label: 'POV Hat - Up', description: 'Push the POV hat UP', device });
+      steps.push({ hotspotId: 'vkb_l_pov_hat_down', label: 'POV Hat - Down', description: 'Push the POV hat DOWN', device });
+      steps.push({ hotspotId: 'vkb_l_pov_hat_left', label: 'POV Hat - Left', description: 'Push the POV hat LEFT', device });
+      steps.push({ hotspotId: 'vkb_l_pov_hat_right', label: 'POV Hat - Right', description: 'Push the POV hat RIGHT', device });
+      steps.push({ hotspotId: 'vkb_l_pov_hat_up_left', label: 'POV Hat - Up-Left', description: 'Push the POV hat UP-LEFT', device });
+      steps.push({ hotspotId: 'vkb_l_pov_hat_up_right', label: 'POV Hat - Up-Right', description: 'Push the POV hat UP-RIGHT', device });
+      steps.push({ hotspotId: 'vkb_l_pov_hat_down_left', label: 'POV Hat - Down-Left', description: 'Push the POV hat DOWN-LEFT', device });
+      steps.push({ hotspotId: 'vkb_l_pov_hat_down_right', label: 'POV Hat - Down-Right', description: 'Push the POV hat DOWN-RIGHT', device });
+
       // A1 Mini-stick (5-way)
       steps.push({ hotspotId: 'vkb_l_a1_ministick_up', label: 'A1 Mini-stick - Up', description: 'Push the mini-stick UP', device });
       steps.push({ hotspotId: 'vkb_l_a1_ministick_down', label: 'A1 Mini-stick - Down', description: 'Push the mini-stick DOWN', device });
@@ -4193,6 +4916,8 @@ class HOTASImageVisualizer {
 
       // Buttons
       steps.push({ hotspotId: 'vkb_r_b1_side', label: 'B1 Side Button', description: 'Press the side button', device });
+      steps.push({ hotspotId: 'vkb_r_index_fwd', label: 'Index Finger Forward', description: 'Press the index finger FORWARD button', device });
+      steps.push({ hotspotId: 'vkb_r_index_back', label: 'Index Finger Back', description: 'Press the index finger BACK button', device });
       steps.push({ hotspotId: 'vkb_r_a2_red', label: 'A2 Red Button', description: 'Press the red button', device });
       steps.push({ hotspotId: 'vkb_r_d1_pinky', label: 'D1 Pinky Button', description: 'Press the pinky button', device });
 
@@ -4201,6 +4926,8 @@ class HOTASImageVisualizer {
       steps.push({ hotspotId: 'vkb_r_base_switch_down', label: 'Base Switch - Down', description: 'Push the base switch DOWN', device });
       steps.push({ hotspotId: 'vkb_r_f1', label: 'F1 Button', description: 'Press the F1 button', device });
       steps.push({ hotspotId: 'vkb_r_f2', label: 'F2 Encoder Press', description: 'Press the F2 encoder', device });
+      steps.push({ hotspotId: 'vkb_r_encoder1_up', label: 'Encoder 1 Up', description: 'Rotate encoder 1 UP/clockwise', device });
+      steps.push({ hotspotId: 'vkb_r_encoder1_down', label: 'Encoder 1 Down', description: 'Rotate encoder 1 DOWN/counter-clockwise', device });
       steps.push({ hotspotId: 'vkb_r_f3', label: 'F3 Button', description: 'Press the F3 button', device });
 
       // C1 Thumb Hat (4-way)
@@ -4221,6 +4948,16 @@ class HOTASImageVisualizer {
       steps.push({ hotspotId: 'vkb_r_a4_top_hat_down', label: 'A4 Top Hat - Down', description: 'Push the top hat DOWN', device });
       steps.push({ hotspotId: 'vkb_r_a4_top_hat_left', label: 'A4 Top Hat - Left', description: 'Push the top hat LEFT', device });
       steps.push({ hotspotId: 'vkb_r_a4_top_hat_right', label: 'A4 Top Hat - Right', description: 'Push the top hat RIGHT', device });
+
+      // POV Hat (8-way) on base
+      steps.push({ hotspotId: 'vkb_r_pov_hat_up', label: 'POV Hat - Up', description: 'Push the POV hat UP', device });
+      steps.push({ hotspotId: 'vkb_r_pov_hat_down', label: 'POV Hat - Down', description: 'Push the POV hat DOWN', device });
+      steps.push({ hotspotId: 'vkb_r_pov_hat_left', label: 'POV Hat - Left', description: 'Push the POV hat LEFT', device });
+      steps.push({ hotspotId: 'vkb_r_pov_hat_right', label: 'POV Hat - Right', description: 'Push the POV hat RIGHT', device });
+      steps.push({ hotspotId: 'vkb_r_pov_hat_up_left', label: 'POV Hat - Up-Left', description: 'Push the POV hat UP-LEFT', device });
+      steps.push({ hotspotId: 'vkb_r_pov_hat_up_right', label: 'POV Hat - Up-Right', description: 'Push the POV hat UP-RIGHT', device });
+      steps.push({ hotspotId: 'vkb_r_pov_hat_down_left', label: 'POV Hat - Down-Left', description: 'Push the POV hat DOWN-LEFT', device });
+      steps.push({ hotspotId: 'vkb_r_pov_hat_down_right', label: 'POV Hat - Down-Right', description: 'Push the POV hat DOWN-RIGHT', device });
 
       // A1 Mini-stick (5-way)
       steps.push({ hotspotId: 'vkb_r_a1_ministick_up', label: 'A1 Mini-stick - Up', description: 'Push the mini-stick UP', device });

@@ -22,6 +22,7 @@
       <div class="game-selector">
         <label for="game-select">Game:</label>
         <select id="game-select" class="game-dropdown">
+          <option value="" disabled selected>Select your game</option>
           <option value="star-citizen">Star Citizen</option>
           <option value="msfs2024">MSFS 2024</option>
           <option value="dcs-world">DCS World</option>
@@ -43,9 +44,9 @@
           <button id="btn-export" class="action-btn-sm export-btn" title="Export Bindings">💾</button>
           <span class="action-label">Save Bindings</span>
         </div>
-        <div class="action-group">
-          <button id="btn-device-mapping" class="action-btn-sm device-btn" title="Configure Controllers">🎮</button>
-          <span class="action-label">Controllers</span>
+        <div class="action-group sc-settings-group" id="sc-joystick-settings-btn" style="display: none;" title="Star Citizen Joystick Settings">
+          <button class="action-btn-sm sc-settings-btn">🕹️</button>
+          <span class="action-label">JS Setup</span>
         </div>
         <div class="action-group target-group">
           <button id="btn-select-folder" class="action-btn-sm folder-btn" title="Select Export Folder">📁</button>
@@ -361,90 +362,51 @@
       </div>
     </div>
 
-    <!-- Hardware Setup Wizard Modal -->
-    <div class="modal" id="hardware-setup-modal">
-      <div class="modal-content hardware-setup-modal-content">
+    <!-- Star Citizen Joystick Mapping Modal -->
+    <div class="modal" id="sc-joystick-modal">
+      <div class="modal-content sc-joystick-modal-content">
         <div class="modal-header">
-          <h2>🎮 Hardware Setup</h2>
+          <h2>Star Citizen Device Setup</h2>
+          <button class="modal-close" id="close-sc-joystick-modal">&times;</button>
         </div>
         <div class="modal-body">
-          <div class="setup-wizard-step" id="setup-step-1">
-            <div class="setup-message">
-              <p class="setup-title" id="setup-title">New Hardware Detected</p>
-              <p class="setup-description" id="setup-description">
-                We've detected new or changed controllers connected to your system.
-                Let's configure them for use with Flycon.
-              </p>
-            </div>
+          <div class="sc-setup-info">
+            <p class="sc-setup-title">Star Citizen designates Joysticks by device IDs</p>
+            <p class="sc-setup-description">To find your device IDs, you'll need to run a console command in Star Citizen.</p>
+          </div>
 
-            <div class="detected-hardware-list" id="setup-detected-hardware">
-              <!-- Detected devices will be populated here -->
-            </div>
-
-            <div class="setup-instructions">
-              <p>📌 <strong>Tip:</strong> Make sure all your controllers are connected and powered on before continuing.</p>
-            </div>
-
-            <div class="setup-actions">
-              <button class="btn-secondary" id="btn-setup-skip">Skip for Now</button>
-              <button class="btn-primary" id="btn-setup-configure">Configure Controllers</button>
+          <div class="sc-command-section">
+            <p class="sc-command-label">Please copy this command:</p>
+            <div class="sc-command-box">
+              <code id="sc-dump-command">i_DumpDeviceInformation</code>
+              <button class="btn-copy" id="btn-copy-sc-command" title="Copy to clipboard">
+                <span class="copy-icon">📋</span>
+                <span class="copy-text">Copy</span>
+              </button>
             </div>
           </div>
 
-          <div class="setup-wizard-step hidden" id="setup-step-2">
-            <div class="setup-message">
-              <p class="setup-title">Assign Your Controllers</p>
-              <p class="setup-description">
-                Drag and drop or select which joystick slot (JS1-JS4) each controller should use in Star Citizen.
-              </p>
+          <div class="sc-instructions">
+            <p><strong>Instructions:</strong></p>
+            <ol>
+              <li>Start Star Citizen</li>
+              <li>Press the <kbd>~</kbd> key (tilde) to open the console</li>
+              <li>Paste the command and press Enter</li>
+              <li>A list of devices will appear - note which Joystick number each device is assigned</li>
+            </ol>
+            <p class="sc-note">You can configure up to 3 devices. Star Citizen supports joystick IDs 1-8.</p>
+          </div>
+
+          <div class="sc-mapping-section">
+            <p class="sc-mapping-title">Match your devices to their Star Citizen joystick numbers:</p>
+            <div class="sc-mapping-list" id="sc-mapping-list">
+              <!-- JS mappings will be populated here -->
             </div>
+          </div>
 
-            <div class="setup-slot-assignments">
-              <div class="setup-slot" data-slot="1">
-                <div class="slot-header">
-                  <span class="slot-number">JS1</span>
-                  <span class="slot-label">Primary Stick</span>
-                </div>
-                <select class="setup-slot-select" id="setup-slot-1">
-                  <option value="">-- Select Controller --</option>
-                </select>
-              </div>
-
-              <div class="setup-slot" data-slot="2">
-                <div class="slot-header">
-                  <span class="slot-number">JS2</span>
-                  <span class="slot-label">Throttle / Left Stick</span>
-                </div>
-                <select class="setup-slot-select" id="setup-slot-2">
-                  <option value="">-- Select Controller --</option>
-                </select>
-              </div>
-
-              <div class="setup-slot" data-slot="3">
-                <div class="slot-header">
-                  <span class="slot-number">JS3</span>
-                  <span class="slot-label">Additional Controller</span>
-                </div>
-                <select class="setup-slot-select" id="setup-slot-3">
-                  <option value="">-- Select Controller --</option>
-                </select>
-              </div>
-
-              <div class="setup-slot" data-slot="4">
-                <div class="slot-header">
-                  <span class="slot-number">JS4</span>
-                  <span class="slot-label">Additional Controller</span>
-                </div>
-                <select class="setup-slot-select" id="setup-slot-4">
-                  <option value="">-- Select Controller --</option>
-                </select>
-              </div>
-            </div>
-
-            <div class="setup-actions">
-              <button class="btn-secondary" id="btn-setup-back">← Back</button>
-              <button class="btn-primary" id="btn-setup-save">Save & Continue</button>
-            </div>
+          <div class="sc-setup-actions">
+            <button class="btn-secondary" id="btn-sc-skip">Skip for Now</button>
+            <button class="btn-primary" id="btn-sc-save">Save & Continue</button>
           </div>
         </div>
       </div>
@@ -509,6 +471,7 @@
   <script src="js/gamepad-context-menu.js"></script>
   <script src="js/gamepad-image.js"></script>
   <script src="js/binding-context-menu.js"></script>
+  <script src="js/x56-hid.js"></script>
   <script src="js/hotas-image.js"></script>
   <script src="js/license-ui.js"></script>
   <script src="js/app.js"></script>

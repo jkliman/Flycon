@@ -220,7 +220,7 @@ body {
 
 /* Sidebar */
 .sidebar {
-  width: 280px;
+  width: 340px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -386,6 +386,17 @@ body {
 .sidebar-binding-direction {
   color: var(--text-muted);
   flex-shrink: 0;
+}
+
+.sidebar-binding-input {
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 10px;
+  color: var(--accent-secondary, #66b3ff);
+  background: rgba(102, 179, 255, 0.1);
+  padding: 1px 4px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-left: 4px;
 }
 
 .sidebar-binding-action {
@@ -1882,4 +1893,297 @@ body {
 .setup-slot-select option {
   padding: 8px;
   background: var(--bg-secondary);
+}
+
+/* ===== Star Citizen Joystick Mapping Modal ===== */
+.sc-joystick-modal-content {
+  width: 600px;
+  max-width: 95%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.sc-joystick-modal-content .modal-header {
+  background: linear-gradient(180deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sc-setup-info {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.sc-setup-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.sc-setup-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.sc-command-section {
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.sc-command-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.sc-command-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+
+.sc-command-box code {
+  flex: 1;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 14px;
+  color: var(--accent-primary);
+  font-weight: 600;
+}
+
+.btn-copy {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--accent-primary);
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-copy:hover {
+  background: var(--accent-secondary);
+  transform: scale(1.02);
+}
+
+.btn-copy.copied {
+  background: var(--accent-secondary);
+}
+
+.btn-copy .copy-icon {
+  font-size: 14px;
+}
+
+.sc-instructions {
+  background: var(--bg-primary);
+  border-radius: 6px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border-left: 3px solid var(--accent-primary);
+}
+
+.sc-instructions p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 10px 0;
+  line-height: 1.5;
+}
+
+.sc-instructions ol {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.sc-instructions ol li {
+  margin-bottom: 4px;
+}
+
+.sc-instructions kbd {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-family: 'Consolas', monospace;
+  font-size: 12px;
+  color: var(--accent-primary);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.sc-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 12px !important;
+}
+
+.sc-mapping-section {
+  margin-bottom: 24px;
+}
+
+.sc-mapping-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.sc-mapping-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sc-mapping-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-tertiary);
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.sc-js-select {
+  min-width: 100px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sc-js-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.sc-mapping-arrow {
+  color: var(--text-muted);
+  font-size: 18px;
+}
+
+.sc-device-select {
+  flex: 1;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sc-device-select:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.sc-device-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sc-device-select option.used {
+  color: var(--text-muted);
+}
+
+.sc-mapping-row {
+  position: relative;
+}
+
+.sc-remove-row-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sc-remove-row-btn:hover {
+  background: rgba(220, 53, 69, 0.1);
+  border-color: #dc3545;
+  color: #dc3545;
+}
+
+.sc-add-device-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  background: transparent;
+  border: 2px dashed var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sc-add-device-btn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: rgba(0, 162, 255, 0.05);
+}
+
+.sc-setup-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color);
+}
+
+.sc-setup-actions .btn-secondary,
+.sc-setup-actions .btn-primary {
+  width: auto;
+  padding: 12px 24px;
+}
+
+/* ===== SC Joystick Settings Button in Header ===== */
+.sc-settings-group {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sc-settings-group:hover {
+  transform: scale(1.05);
+}
+
+.sc-settings-btn {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7931e 100%);
+  border: none;
+  font-size: 16px;
+}
+
+.sc-settings-btn:hover {
+  background: linear-gradient(135deg, #ff8c5a 0%, #ffb347 100%);
 }

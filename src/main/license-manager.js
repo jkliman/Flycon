@@ -8,8 +8,15 @@ const https = require('https');
 // License API endpoint - UPDATE THIS after deploying Cloud Functions
 const LICENSE_API_URL = process.env.LICENSE_API_URL || 'https://us-central1-solar-modem-484815-m0.cloudfunctions.net/flycon-license-api';
 
-// License file location
-const LICENSE_FILE = path.join(app.getPath('userData'), 'license.json');
+// License file location (lazy-loaded after app is ready)
+let LICENSE_FILE = null;
+
+function getLicenseFilePath() {
+  if (!LICENSE_FILE) {
+    LICENSE_FILE = path.join(app.getPath('userData'), 'license.json');
+  }
+  return LICENSE_FILE;
+}
 
 class LicenseManager {
   constructor() {
@@ -155,8 +162,9 @@ class LicenseManager {
    */
   loadSavedLicense() {
     try {
-      if (fs.existsSync(LICENSE_FILE)) {
-        const data = fs.readFileSync(LICENSE_FILE, 'utf8');
+      const licenseFile = getLicenseFilePath();
+      if (fs.existsSync(licenseFile)) {
+        const data = fs.readFileSync(licenseFile, 'utf8');
         this.license = JSON.parse(data);
         return this.license;
       }
@@ -171,7 +179,7 @@ class LicenseManager {
    */
   saveLicense(license) {
     try {
-      fs.writeFileSync(LICENSE_FILE, JSON.stringify(license, null, 2));
+      fs.writeFileSync(getLicenseFilePath(), JSON.stringify(license, null, 2));
       this.license = license;
     } catch (error) {
       console.error('Error saving license:', error);
@@ -184,8 +192,9 @@ class LicenseManager {
    */
   clearLicense() {
     try {
-      if (fs.existsSync(LICENSE_FILE)) {
-        fs.unlinkSync(LICENSE_FILE);
+      const licenseFile = getLicenseFilePath();
+      if (fs.existsSync(licenseFile)) {
+        fs.unlinkSync(licenseFile);
       }
       this.license = null;
     } catch (error) {
