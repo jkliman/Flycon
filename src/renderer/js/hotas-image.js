@@ -4557,7 +4557,7 @@ class HOTASImageVisualizer {
           // Stick buttons are indices 0-16, throttle buttons are 17+ (offset by 17)
           let buttonLabel;
           if (this.activeDevice === 'x56-hotas') {
-            const THROTTLE_OFFSET = 17; // X56 stick has 17 buttons (0-16)
+            const THROTTLE_OFFSET = 19; // X56 stick has 19 button entries in gamepad API (0-18)
             if (index < THROTTLE_OFFSET) {
               buttonLabel = `Js Btn ${index + 1}`;
             } else {
@@ -5194,6 +5194,22 @@ class HOTASImageVisualizer {
   }
 
   /**
+   * Format a button index as a display label
+   * For X56 HOTAS combined view, shows device-specific labels (Stick Btn X / Throttle Btn X)
+   */
+  formatButtonLabel(buttonIndex) {
+    if (this.activeDevice === 'x56-hotas') {
+      const THROTTLE_OFFSET = 19; // X56 stick has 19 button entries in gamepad API (0-18)
+      if (buttonIndex < THROTTLE_OFFSET) {
+        return `Stick Btn ${buttonIndex + 1}`;
+      } else {
+        return `Throttle Btn ${buttonIndex - THROTTLE_OFFSET + 1}`;
+      }
+    }
+    return `Button ${buttonIndex + 1}`;
+  }
+
+  /**
    * Get the HTML for current wizard step
    */
   getWizardStepHTML() {
@@ -5210,6 +5226,9 @@ class HOTASImageVisualizer {
     const currentDevice = step.device || '';
     const remainingStepsInDevice = this.countRemainingStepsInDevice(currentStep, steps);
     const canSkipDevice = remainingStepsInDevice > 1; // More than just the current step
+
+    // Format button label for display (handles X56 combined view)
+    const buttonLabel = detectedButton !== null ? this.formatButtonLabel(detectedButton) : '';
 
     return `
       <div class="wizard-overlay"></div>
@@ -5231,7 +5250,7 @@ class HOTASImageVisualizer {
             ${detectedButton !== null
               ? `<div class="wizard-detected">
                    <span class="detected-icon">✓</span>
-                   <span class="detected-text">Detected: Button ${detectedButton + 1}</span>
+                   <span class="detected-text">Detected: ${buttonLabel}</span>
                  </div>`
               : `<div class="wizard-waiting">
                    <div class="waiting-pulse"></div>
