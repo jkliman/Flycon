@@ -4545,6 +4545,10 @@ class HOTASImageVisualizer {
     };
     const buttonsToIgnore = ignoredButtons[this.activeDevice] || [];
 
+    // Get button mappings for label lookup
+    const deviceKey = this.getDeviceMappingKey();
+    const deviceMappings = this.buttonMappings[deviceKey] || {};
+
     if (buttons && Array.isArray(buttons)) {
       buttons.forEach((btn, index) => {
         // Skip ignored buttons for this device
@@ -4553,19 +4557,34 @@ class HOTASImageVisualizer {
         }
 
         if (btn && btn.pressed) {
-          // For X56 combined view, show device-specific button labels
-          // Stick buttons are indices 0-16, throttle buttons are 17+ (offset by 17)
           let buttonLabel;
-          if (this.activeDevice === 'x56-hotas') {
-            const THROTTLE_OFFSET = 17; // X56 stick has 17 buttons (0-16)
-            if (index < THROTTLE_OFFSET) {
-              buttonLabel = `Js Btn ${index + 1}`;
-            } else {
-              buttonLabel = `Th Btn ${index - THROTTLE_OFFSET + 1}`;
+
+          // First, check if we have a mapped label for this button
+          const mapping = deviceMappings[index];
+          if (mapping) {
+            // Handle both new format (object with hotspotId/label) and old format (just hotspotId string)
+            if (typeof mapping === 'object' && mapping.label) {
+              buttonLabel = mapping.label;
+            } else if (typeof mapping === 'string') {
+              // Old format - use hotspotId as fallback, make it more readable
+              buttonLabel = this.formatHotspotIdAsLabel(mapping);
             }
-          } else {
-            buttonLabel = `Btn ${index + 1}`;
           }
+
+          // Fallback to generic button label if no mapping found
+          if (!buttonLabel) {
+            if (this.activeDevice === 'x56-hotas') {
+              const THROTTLE_OFFSET = 17; // X56 stick has 17 buttons (0-16)
+              if (index < THROTTLE_OFFSET) {
+                buttonLabel = `Js Btn ${index + 1}`;
+              } else {
+                buttonLabel = `Th Btn ${index - THROTTLE_OFFSET + 1}`;
+              }
+            } else {
+              buttonLabel = `Btn ${index + 1}`;
+            }
+          }
+
           pressedButtons.push(buttonLabel);
           currentPressedIndices.add(index);
 
@@ -4627,25 +4646,30 @@ class HOTASImageVisualizer {
 
     // Find hotspot IDs for all pressed buttons
     pressedButtonIndices.forEach(buttonIndex => {
-      const hotspotId = deviceMappings[buttonIndex];
-      if (hotspotId) {
-        // Get the base hotspot ID (remove directional suffixes for highlight lookup)
-        let baseHotspotId = hotspotId.replace(/_up|_down|_left|_right|_forward|_back|_press|_stage1|_stage2/, '');
+      const mapping = deviceMappings[buttonIndex];
+      if (mapping) {
+        // Handle both new format (object with hotspotId/label) and old format (just hotspotId string)
+        const hotspotId = typeof mapping === 'object' ? mapping.hotspotId : mapping;
 
-        // Map individual switch IDs to combined hotspot IDs
-        if (switchToCombinedHotspot[baseHotspotId]) {
-          baseHotspotId = switchToCombinedHotspot[baseHotspotId];
-        }
+        if (hotspotId) {
+          // Get the base hotspot ID (remove directional suffixes for highlight lookup)
+          let baseHotspotId = hotspotId.replace(/_up|_down|_left|_right|_forward|_back|_press|_stage1|_stage2/, '');
 
-        hotspotIdsToHighlight.add(baseHotspotId);
-
-        // Extract the direction from the hotspot ID
-        const directionMatch = hotspotId.match(/_(up|down|left|right|forward|back|press|stage1|stage2)$/);
-        if (directionMatch) {
-          if (!hotspotDirections[baseHotspotId]) {
-            hotspotDirections[baseHotspotId] = new Set();
+          // Map individual switch IDs to combined hotspot IDs
+          if (switchToCombinedHotspot[baseHotspotId]) {
+            baseHotspotId = switchToCombinedHotspot[baseHotspotId];
           }
-          hotspotDirections[baseHotspotId].add(directionMatch[1]);
+
+          hotspotIdsToHighlight.add(baseHotspotId);
+
+          // Extract the direction from the hotspot ID
+          const directionMatch = hotspotId.match(/_(up|down|left|right|forward|back|press|stage1|stage2)$/);
+          if (directionMatch) {
+            if (!hotspotDirections[baseHotspotId]) {
+              hotspotDirections[baseHotspotId] = new Set();
+            }
+            hotspotDirections[baseHotspotId].add(directionMatch[1]);
+          }
         }
       }
     });
@@ -4766,6 +4790,34 @@ class HOTASImageVisualizer {
       return 'x56_hotas';
     }
     return this.activeDevice;
+  }
+
+  /**
+   * Convert a hotspotId to a human-readable label (for backwards compatibility with old mappings)
+   * e.g., 'x56_js_trigger' -> 'Trigger', 'x56_th_thumb_btn' -> 'Thumb Btn'
+   */
+  formatHotspotIdAsLabel(hotspotId) {
+    if (!hotspotId) return null;
+
+    // Remove device prefixes (x56_js_, x56_th_, ab9_, vkb_l_, vkb_r_, etc.)
+    let label = hotspotId
+      .replace(/^x56_js_/, '')
+      .replace(/^x56_th_/, '')
+      .replace(/^x52_js_/, '')
+      .replace(/^x52_th_/, '')
+      .replace(/^ab9_/, '')
+      .replace(/^vkb_l_/, '')
+      .replace(/^vkb_r_/, '')
+      .replace(/^yoke_/, '')
+      .replace(/^throttle_/, '');
+
+    // Replace underscores with spaces and capitalize each word
+    label = label
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+    return label;
   }
 
   /**
@@ -5371,7 +5423,11 @@ class HOTASImageVisualizer {
       if (!this.buttonMappings[deviceKey]) {
         this.buttonMappings[deviceKey] = {};
       }
-      this.buttonMappings[deviceKey][detectedButton] = step.hotspotId;
+      // Store both hotspotId and label for display purposes
+      this.buttonMappings[deviceKey][detectedButton] = {
+        hotspotId: step.hotspotId,
+        label: step.label
+      };
     }
 
     // Move to next step or finish
