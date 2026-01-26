@@ -1804,7 +1804,7 @@ class FlyconApp {
 
     // X56 Throttle mappings
     // Windows button numbers (1-based) for X56 Throttle:
-    // TGL1: Up=15, Down=16 | TGL2: Up=17, Down=14 | TGL3: Up=19, Down=20 | TGL4: Up=18, Down=21
+    // TGL1: Up=15, Down=16 | TGL2: Up=17, Down=14 | TGL3: Up=19, Down=20 | TGL4: Up=18, Down=19
     // SW1=5, SW2=6, SW3=7, SW4=8, SW5=9, SW6=10
     // Thumb button=11, Index button (H)=12, Middle button (I)=13
     // Pinky Encoder: Up=27, Down=28, Press=29 | Pinky Up=25, Pinky Down=26
@@ -1816,7 +1816,7 @@ class FlyconApp {
         'tgl1': direction === 'up' ? 'js2_button15' : 'js2_button16',
         'tgl2': direction === 'up' ? 'js2_button17' : 'js2_button14',
         'tgl3': direction === 'up' ? 'js2_button19' : 'js2_button20',
-        'tgl4': direction === 'up' ? 'js2_button18' : 'js2_button21',
+        'tgl4': direction === 'up' ? 'js2_button18' : 'js2_button19',
         'sw1_sw2': direction === 'sw1_up' ? 'js2_button5' : 'js2_button6',
         'sw3_sw4': direction === 'sw3_up' ? 'js2_button7' : 'js2_button8',
         'sw5_sw6': direction === 'sw5_up' ? 'js2_button9' : 'js2_button10',
@@ -1828,7 +1828,15 @@ class FlyconApp {
         'pinky_encoder': direction === 'up' ? 'js2_button27' : (direction === 'down' ? 'js2_button28' : 'js2_button29'),
         'rear_ministick': direction === 'press' ? 'js2_button22' : this.mapHatDirection('js2_hat1', direction),
         'thumb_ministick': direction === 'press' ? 'js2_button23' : this.mapHatDirection('js2_hat2', direction),
-        'thumb_dpad': direction === 'press' ? 'js2_button24' : this.mapHatDirection('js2_hat3', direction)
+        'thumb_dpad': direction === 'press' ? 'js2_button24' : this.mapHatDirection('js2_hat3', direction),
+        // Throttle axes - Left=Z axis, Right=Y axis
+        'throttle_left': 'js2_z',
+        'throttle_right': 'js2_y',
+        // Rotary knobs
+        'top_knob': 'js2_rotx',
+        'bottom_knob': 'js2_roty',
+        'rty3': 'js2_rotz',
+        'rty4': 'js2_slider'
       };
       return x56ThrottleMap[buttonName] || `js2_${buttonName}`;
     }

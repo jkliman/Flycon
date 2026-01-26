@@ -4557,7 +4557,7 @@ class HOTASImageVisualizer {
           // Stick buttons are indices 0-16, throttle buttons are 17+ (offset by 17)
           let buttonLabel;
           if (this.activeDevice === 'x56-hotas') {
-            const THROTTLE_OFFSET = 19; // X56 stick has 19 button entries in gamepad API (0-18)
+            const THROTTLE_OFFSET = 17; // X56 stick has 17 button entries in gamepad API (0-16)
             if (index < THROTTLE_OFFSET) {
               buttonLabel = `Js Btn ${index + 1}`;
             } else {
@@ -5199,7 +5199,7 @@ class HOTASImageVisualizer {
    */
   formatButtonLabel(buttonIndex) {
     if (this.activeDevice === 'x56-hotas') {
-      const THROTTLE_OFFSET = 19; // X56 stick has 19 button entries in gamepad API (0-18)
+      const THROTTLE_OFFSET = 17; // X56 stick has 17 button entries in gamepad API (0-16)
       if (buttonIndex < THROTTLE_OFFSET) {
         return `Stick Btn ${buttonIndex + 1}`;
       } else {
