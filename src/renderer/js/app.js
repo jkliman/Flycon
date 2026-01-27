@@ -1802,54 +1802,87 @@ class FlyconApp {
       return vkbRightMap[buttonName] || `js1_${buttonName}`;
     }
 
-    // X56 Throttle mappings
-    // Windows button numbers (1-based) for X56 Throttle:
-    // TGL1: Up=15, Down=16 | TGL2: Up=17, Down=14 | TGL3: Up=19, Down=20 | TGL4: Up=18, Down=19
-    // SW1=5, SW2=6, SW3=7, SW4=8, SW5=9, SW6=10
-    // Thumb button=11, Index button (H)=12, Middle button (I)=13
-    // Pinky Encoder: Up=27, Down=28, Press=29 | Pinky Up=25, Pinky Down=26
-    // Rear ministick: Hat directions + Press=22
-    // Thumb ministick: Hat directions + Press=23
-    // Thumb D-pad: Hat directions + Press=24
+    // X56 Throttle mappings - Verified Windows button numbers (1-based)
+    // TGL1: Up=12, Down=13 | TGL2: Up=14, Down=15 | TGL3: Up=16, Down=17 | TGL4: Up=18, Down=19
+    // SW1=6, SW2=7, SW3=8, SW4=9, SW5=10, SW6=11
+    // Button E (thumb)=1, Button H (index)=5, Button I (middle)=4
+    // Pinky: Up=28, Down=29 | Encoder: Up=31, Down=30
+    // Thumb Ministick: Up=24, Down=26, Left=27, Right=25, Press=32
+    // Thumb D-pad: Up=20, Down=22, Left=23, Right=21
+    // Top Axis Push=2, Bottom Axis Push=3
     if (devicePrefix === 'x56_th') {
       const x56ThrottleMap = {
-        'tgl1': direction === 'up' ? 'js2_button15' : 'js2_button16',
-        'tgl2': direction === 'up' ? 'js2_button17' : 'js2_button14',
-        'tgl3': direction === 'up' ? 'js2_button19' : 'js2_button20',
+        // Toggle switches
+        'tgl1': direction === 'up' ? 'js2_button12' : 'js2_button13',
+        'tgl2': direction === 'up' ? 'js2_button14' : 'js2_button15',
+        'tgl3': direction === 'up' ? 'js2_button16' : 'js2_button17',
         'tgl4': direction === 'up' ? 'js2_button18' : 'js2_button19',
-        'sw1_sw2': direction === 'sw1_up' ? 'js2_button5' : 'js2_button6',
-        'sw3_sw4': direction === 'sw3_up' ? 'js2_button7' : 'js2_button8',
-        'sw5_sw6': direction === 'sw5_up' ? 'js2_button9' : 'js2_button10',
-        'thumb_btn': 'js2_button11',
-        'index_btn': 'js2_button12',
-        'middle_btn': 'js2_button13',
-        'pinky_up': 'js2_button25',
-        'pinky_down': 'js2_button26',
-        'pinky_encoder': direction === 'up' ? 'js2_button27' : (direction === 'down' ? 'js2_button28' : 'js2_button29'),
-        'rear_ministick': direction === 'press' ? 'js2_button22' : this.mapHatDirection('js2_hat1', direction),
-        'thumb_ministick': direction === 'press' ? 'js2_button23' : this.mapHatDirection('js2_hat2', direction),
-        'thumb_dpad': direction === 'press' ? 'js2_button24' : this.mapHatDirection('js2_hat3', direction),
-        // Throttle axes - Left=Z axis, Right=Y axis
+        // Rocker switches (SW1=6, SW2=7, SW3=8, SW4=9, SW5=10, SW6=11)
+        'sw1_sw2': direction === 'sw1_up' ? 'js2_button6' : 'js2_button7',
+        'sw3_sw4': direction === 'sw3_up' ? 'js2_button8' : 'js2_button9',
+        'sw5_sw6': direction === 'sw5_up' ? 'js2_button10' : 'js2_button11',
+        // Main buttons
+        'thumb_btn': 'js2_button1',      // Button E
+        'index_btn': 'js2_button5',      // Button H
+        'middle_btn': 'js2_button4',     // Button I
+        // Pinky controls
+        'pinky_up': 'js2_button28',
+        'pinky_down': 'js2_button29',
+        'pinky_encoder': direction === 'up' ? 'js2_button31' : 'js2_button30',
+        // Thumb ministick (button-based directions)
+        'thumb_ministick': direction === 'press' ? 'js2_button32' :
+                          direction === 'up' ? 'js2_button24' :
+                          direction === 'down' ? 'js2_button26' :
+                          direction === 'left' ? 'js2_button27' :
+                          direction === 'right' ? 'js2_button25' : 'js2_button32',
+        // Thumb D-pad (button-based directions)
+        'thumb_dpad': direction === 'up' ? 'js2_button20' :
+                     direction === 'down' ? 'js2_button22' :
+                     direction === 'left' ? 'js2_button23' :
+                     direction === 'right' ? 'js2_button21' : 'js2_button20',
+        // Throttle axes
         'throttle_left': 'js2_z',
         'throttle_right': 'js2_y',
-        // Rotary knobs
+        // Rotary knobs (axes only, no push)
         'top_knob': 'js2_rotx',
         'bottom_knob': 'js2_roty',
         'rty3': 'js2_rotz',
-        'rty4': 'js2_slider'
+        'rty4': 'js2_slider',
+        // Axis push buttons
+        'top_axis_push': 'js2_button2',
+        'bottom_axis_push': 'js2_button3'
       };
       return x56ThrottleMap[buttonName] || `js2_${buttonName}`;
     }
 
-    // X56 Stick mappings
+    // X56 Stick mappings - Verified Windows button numbers (1-based)
+    // Trigger=1, Missile=2, Index=3, Thumbstick Push=4, Pinky Switch=5, Pinky Button=6
+    // Thumb Hat: Up=7, Right=8, Down=9, Left=10
+    // Thumb Dpad: Up=11, Right=12, Down=13, Left=14
+    // Thumb Stick (POV): pov1_u, pov1_r, pov1_d, pov1_l
     if (devicePrefix === 'x56_js') {
       const x56StickMap = {
-        'trigger': direction === 'stage1' ? 'js1_button1' : 'js1_button2',
-        'missile_btn': 'js1_button3',
-        'thumb_hat': this.mapHatDirection('js1_hat1', direction),
-        'thumb_dpad': this.mapHatDirection('js1_hat2', direction),
-        'thumb_funky': this.mapHatDirection('js1_hat3', direction),
-        'pinky_switch': direction === 'up' ? 'js1_button4' : 'js1_button5'
+        'trigger': 'js1_button1',
+        'missile_btn': 'js1_button2',
+        'index_btn': 'js1_button3',
+        'thumbstick_push': 'js1_button4',
+        'pinky_switch': 'js1_button5',
+        'pinky_btn': 'js1_button6',
+        // Thumb hat (button-based)
+        'thumb_hat': direction === 'up' ? 'js1_button7' :
+                    direction === 'right' ? 'js1_button8' :
+                    direction === 'down' ? 'js1_button9' :
+                    direction === 'left' ? 'js1_button10' : 'js1_button7',
+        // Thumb dpad (button-based)
+        'thumb_dpad': direction === 'up' ? 'js1_button11' :
+                     direction === 'right' ? 'js1_button12' :
+                     direction === 'down' ? 'js1_button13' :
+                     direction === 'left' ? 'js1_button14' : 'js1_button11',
+        // Thumb stick (POV hat)
+        'thumb_funky': direction === 'up' ? 'js1_pov1_u' :
+                      direction === 'right' ? 'js1_pov1_r' :
+                      direction === 'down' ? 'js1_pov1_d' :
+                      direction === 'left' ? 'js1_pov1_l' : 'js1_pov1_u'
       };
       return x56StickMap[buttonName] || `js1_${buttonName}`;
     }
